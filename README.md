@@ -1,6 +1,5 @@
 # BLE Sync Cycle
 
-[![Rust Report Card](https://rust-reportcard.xuri.me/badge/github.com/richbl/ble-sync-cycle)](https://rust-reportcard.xuri.me/report/github.com/richbl/ble-sync-cycle)
 ![GitHub Release](https://img.shields.io/github/v/release/richbl/ble-sync-cycle?include_prereleases&sort=semver)
 
 ## Overview
