@@ -154,7 +154,6 @@ func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 
 // processBLESpeed processes raw BLE CSC speed data and returns the adjusted current speed
 func (m *BLEController) processBLESpeed(data []byte) float64 {
-
 	if len(data) < 1 {
 		return 0.0
 	}
@@ -162,74 +161,38 @@ func (m *BLEController) processBLESpeed(data []byte) float64 {
 	log.Println("| Processing speed data from BLE peripheral...")
 
 	flags := data[0]
-	hasWheelRev := (flags & 0x01) != 0
-	hasCrankRev := (flags & 0x02) != 0
-	offset := 1
-	var speed float64
+	hasWheelRev := flags&0x01 != 0
 
-	// Calculate wheel speed
-	if hasWheelRev && len(data) >= offset+6 {
-		wheelRevs := binary.LittleEndian.Uint32(data[offset:])
-		wheelEventTime := binary.LittleEndian.Uint16(data[offset+4:])
+	if !hasWheelRev || len(data) < 7 {
+		return 0.0
+	}
 
-		// Calculate speed if we have previous measurements
-		if lastWheelTime != 0 {
+	wheelRevs := binary.LittleEndian.Uint32(data[1:])
+	wheelEventTime := binary.LittleEndian.Uint16(data[5:])
 
-			timeDiff := uint16(wheelEventTime - lastWheelTime)
-
-			if timeDiff != 0 {
-				revDiff := wheelRevs - lastWheelRevs
-
-				// Convert speed units (kph)
-				speedConversion := 3.6
-
-				// Convert speed units (mph)
-				if m.speedConfig.SpeedUnits == "mph" {
-					speedConversion = 2.23694
-				}
-
-				// Calculate speed
-				speed = float64(revDiff) * float64(m.speedConfig.WheelCircumferenceMM) * speedConversion / float64(timeDiff)
-
-				log.Println("| BLE sensor speed:", math.Round(speed*100)/100, m.speedConfig.SpeedUnits)
-			}
-
-		}
-
+	if lastWheelTime == 0 {
 		lastWheelRevs = wheelRevs
 		lastWheelTime = wheelEventTime
-		offset += 6
-
+		return 0.0
 	}
 
-	// Calculate crank speed (future functionality)
-	//
-	if hasCrankRev && len(data) >= offset+4 {
-
-		log.Println("Crank/cadence event!")
-		crankRevs := binary.LittleEndian.Uint16(data[offset:])
-		crankEventTime := binary.LittleEndian.Uint16(data[offset+2:])
-
-		// Calculate cadence if we have previous measurements
-		if lastCrankTime != 0 {
-
-			// Handle timer wraparound (16-bit timer)
-			timeDiff := uint16(crankEventTime - lastCrankTime)
-
-			if timeDiff != 0 {
-				revDiff := crankRevs - lastCrankRevs
-
-				// Calculate cadence (RPM)
-				cadence := float64(revDiff) * 60 * 1024 / float64(timeDiff)
-				log.Println("| BLE sensor cadence:", math.Round(cadence*100)/100, "RPM")
-			}
-
-		}
-
-		lastCrankRevs = crankRevs
-		lastCrankTime = crankEventTime
+	timeDiff := uint16(wheelEventTime - lastWheelTime)
+	if timeDiff == 0 {
+		return 0.0
 	}
+
+	revDiff := int32(wheelRevs - lastWheelRevs)
+	speedConversion := 3.6
+	if m.speedConfig.SpeedUnits == "mph" {
+		speedConversion = 2.23694
+	}
+
+	speed := float64(revDiff) * float64(m.speedConfig.WheelCircumferenceMM) * speedConversion / float64(timeDiff)
+
+	log.Println("| BLE sensor speed:", math.Round(speed*100)/100, m.speedConfig.SpeedUnits)
+
+	lastWheelRevs = wheelRevs
+	lastWheelTime = wheelEventTime
 
 	return speed
-
 }
