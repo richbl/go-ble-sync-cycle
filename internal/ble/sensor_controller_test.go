@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	config "ble-sync-cycle/internal/configuration"
-	"ble-sync-cycle/internal/speed"
+	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 func TestNewBLEController(t *testing.T) {

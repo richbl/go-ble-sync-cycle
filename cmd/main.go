@@ -8,10 +8,10 @@ import (
 	"sync"
 	"syscall"
 
-	ble "ble-sync-cycle/internal/ble"
-	config "ble-sync-cycle/internal/configuration"
-	speed "ble-sync-cycle/internal/speed"
-	video "ble-sync-cycle/internal/video-player"
+	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
+	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
+	video "github.com/richbl/go-ble-sync-cycle/internal/video-player"
 
 	"tinygo.org/x/bluetooth"
 )

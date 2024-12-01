@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	config "ble-sync-cycle/internal/configuration"
-	speed "ble-sync-cycle/internal/speed"
+	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

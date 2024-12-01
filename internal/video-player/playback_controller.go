@@ -6,8 +6,8 @@ import (
 	"math"
 	"time"
 
-	config "ble-sync-cycle/internal/configuration"
-	speed "ble-sync-cycle/internal/speed"
+	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 
 	"github.com/gen2brain/go-mpv"
 )

@@ -1,4 +1,4 @@
-module ble-sync-cycle
+module github.com/richbl/go-ble-sync-cycle
 
 go 1.22.5
 
