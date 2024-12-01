@@ -18,20 +18,20 @@ import (
 
 func main() {
 
-	// TODO: add version number
-
 	// Disable logging
 	// log.SetOutput(io.Discard)
+
+	log.Println("- Starting BLE Sync Cycle 0.5.0")
 
 	// Load configuration file (TOML)
 	cfg, err := config.LoadFile("internal/configuration/config.toml")
 	if err != nil {
-		log.Fatalln("Failed to load configuration:", err)
+		log.Fatalln("- Failed to load configuration:", err)
 	}
 
 	// Verify video file exists for playback
 	if _, err = os.Stat(cfg.Video.FilePath); os.IsNotExist(err) {
-		log.Fatalln("Video file does not exist:", err)
+		log.Fatalln("- Video file does not exist:", err)
 	}
 
 	// Create contexts to manage goroutines and system interrupts
@@ -46,7 +46,7 @@ func main() {
 	// Create video player component
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		log.Fatalln("\\ Failed to create video player component:", err)
+		log.Fatalln("/ Failed to create video player component:", err)
 	}
 
 	// Create BLE controller component
@@ -73,7 +73,7 @@ func main() {
 
 	// Start video playback
 	if err := playVideo(ctx, &wg, videoPlayer, speedController, rootCancel); err != nil {
-		log.Printf("\\ Failed to start video playback: %v", err)
+		log.Printf("/ Failed to start video playback: %v", err)
 		return
 	}
 
