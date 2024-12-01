@@ -12,7 +12,7 @@
   speed_units = "mph"           # "km/h" or "mph"
 
 [video]
-  file_path = "cycling_test.webm" # Path to the video file to play
+  file_path = "cycling_test.mp4" # Path to the video file to play
   update_interval_sec = 1        # Seconds to wait between video player updates
   speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to
                                  # video playback speed (0.0 = stopped, 1.0 = normal speed)
