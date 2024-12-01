@@ -6,42 +6,42 @@
 
 ## Overview
 
-**BLE Sync Cycle** is a Go application that synchronizes video playback with wireless real-time cycling data obtained from a Bluetooth Low Energy (BLE) device such as a cycling speed and cadence (CSC) sensor. This allows users to create an immersive indoor cycling experience by matching video playback to their actual cycling pace, providing an engaging experience when cycling outdoors isn't an option.
+**BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with an immersive indoor cycling experience by matching video playback with their actual cycling pace, making it a valuable option when outdoor cycling isn't feasible.
 
 <p align="center">
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9"><img src="[https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9)" width=700></picture>
 </p>
 
-## 🚲 Features
+## Features
 
 - Real-time synchronization between cycling speed and video playback
 - Support for compliant Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensors
 - TOML-based configuration for easy application customization that includes:
     - BLE sensor identification (UUID)
     - Bluetooth device scanning timeout
-    - Wheel circumference for accurate speed conversion
+    - Wheel circumference, for accurate speed conversion
     - Support for different speed units: miles per hour (mph), kilometers per hour (kph)
-    - Speed smoothing for natural and seamless video playback
+    - Speed smoothing option for natural and seamless video playback
     - Choice of video file for playback
 - Simple command-line interface provides real-time component feedback
 - Graceful handling of connection interrupts and system signals ensures all components shut down cleanly
 
 ## Rationale
 
-This project was created to serve a very specific need: **how can I continue to stay engaged in cycling when the weather outside is not particularly cooperative?**
+This project was developed to address a specific need: **how can I remain engaged in cycling when the weather outside is less than ideal?**
 
-While there are quite a few existing solutions that permit me to cycle indoors "virtually," such as [Zwift](https://www.zwift.com/) and [Rouvy](https://rouvy.com/), they typically require the purchase of dedicated training hardware (often preventing you from using your own bike), a compatible online virtual cycling services membership subscription, and a stable broadband Internet connection. My requirements were different:
+While there are several existing solutions that allow for "virtual" indoor cycling, such as [Zwift](https://www.zwift.com/) and [Rouvy](https://rouvy.com/), these typically require the purchase of specialized training equipment (often preventing the use of your own bike), a subscription to compatible online virtual cycling services, and a reliable broadband Internet connection. My needs, however, are different:
 
-- I want to use my own bicycle while training: since I prefer riding recumbents, it'd make zero sense for me to "train" on a purpose-built upright trainer
-- I want a solution that can run standalone and doesn't require an Internet connection, as I live in a rural part of the Pacific Northwest where both electricity and Internet access are temperamental at best
+- I want to train using my own bicycle. Since I prefer riding recumbents, it wouldn’t make sense for me to "train" on a traditional upright trainer
+- I need a solution that can operate independently without requiring an Internet connection, as I live in a rural area of the Pacific Northwest where both electricity and Internet access can be unreliable at best
 
 > Check out my [**Watchfile Remote [Rust Edition] project**](https://github.com/richbl/rust-watchfile-remote) for an example of how I handle our regular loss of Internet service
 
 - I want flexibility in the solutions and components that I use, as I typically like to tweak the systems I work with (I suspect it's my nature as an engineer)
 
-Since I already use an old (and very analog) portable fluid bicycle trainer while riding indoors, it made sense to find a way to pair my existing Bluetooth cycling sensors with a local computer which could then drive some kind of interesting feedback while cycling. This project was created to fit that need.
+Since I already use a mechanical (no electronics) portable bicycle trainer while riding indoors, it made sense for me to find a way to pair my existing Bluetooth cycling sensors with a local computer which could then drive some kind of interesting feedback while cycling. This project was created to fit that need.
 
-## 📋 Requirements
+## Requirements
 
 ### Hardware Components
 
@@ -49,16 +49,16 @@ Since I already use an old (and very analog) portable fluid bicycle trainer whil
 - A Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensor, configured for speed
 - A computer that supports Bluetooth (4.0+), preferably with a big screen display to watch video playback
 
-For my own indoor cycling configuration, I use an old _Performance Travel Trac 3_ fluid trainer. The BLE sensor used is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work. For an overview of Bluetooth BLE, [read the article "Introduction to Bluetooth Low Energy" by Kevin Townsend](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction). Finally, I'm running **BLE Sync Cycle** on a Lenovo ThinkPad T15 laptop running Ubuntu 24.04 (LTS) connected to a big screen monitor via HDMI.
+For my own indoor cycling configuration, I use a Performance Travel Trac 3 trainer. The BLE sensor used is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work. For an overview of Bluetooth BLE, refer to the article ["Introduction to Bluetooth Low Energy" by Kevin Townsend](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction). Finally, I'm running **BLE Sync Cycle** on a Lenovo ThinkPad laptop running Ubuntu 24.04 (LTS) connected to a big screen monitor via HDMI.
 
 ### Software Components
 
 - The open source, cross-platform [mpv media player](https://mpv.io/), installed and operational
-- A local video file for playback using mpv, preferably a first-person view cycling video. Check out [YouTube with the query "first person cycling"](https://www.youtube.com/results?search_query=first+person+cycling) for some ideas
-- This application. While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on an Intel Core i7 processor, it should work on any recent Unix-like platform
+- A local video file for playback using mpv, preferably a first-person view cycling video. Check out [YouTube with this query: "first person cycling"](https://www.youtube.com/results?search_query=first+person+cycling) for some ideas
+- This application. While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on an Intel processor (amd64), it should work across any recent Unix-like platform and architecture
     - In order to compile this project, an operational [Go language](https://go.dev/) environment is required (this release was developed using Go 1.23.2)
 
-## 🛠️ Installation
+## Installation
 
 ### Building the Application
 
@@ -88,7 +88,8 @@ The resulting `build` command will create the`ble-sync-cycle` executable in the 
 Edit the `config.toml` file found in the `internal/configuration` directory. The default file (with a different sensor UUID) is shown below:
 
 ```toml
-# TOML configuration file for the ble-sync-cycle application
+# BLE Sync Cycle TOML configuration
+# 0.5.0
 
 [ble]
   sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
@@ -142,11 +143,11 @@ The `[video]` section defines the configuration for the MPV video player compone
 
 ## Basic Usage
 
-At a high level, **BLE Sync Cycle** will do the following:
+At a high level, **BLE Sync Cycle** will perform the following:
 
 1. Scan for your BLE cycling sensor
 2. Connect to the sensor and start receiving speed data
-3. Launch video playback
+3. Launch MPV video playback
 4. Automatically adjust video speed based on your cycling speed
 5. Gracefully shutdown on interrupt (Ctrl+C)
 
@@ -162,11 +163,12 @@ Or, if the application hasn't yet been built using the `go build` command, you c
 go run cmd/main.go
 ```
 
-> Be sure that your Bluetooth devices are enabled before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device.
+> Be sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device
 
 At this point, you should see the following output:
 
   ```bash
+2024/11/30 17:28:50 \ Starting BLE Sync Cycle 0.5.0
 2024/11/30 17:28:50 \ Created new BLE central controller
 2024/11/30 17:28:50 \ Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16 ...
 2024/11/30 17:28:50 \ Found BLE peripheral F1:42:D8:DE:35:16
@@ -177,9 +179,10 @@ At this point, you should see the following output:
 2024/11/30 17:29:03 \ BLE peripheral scan failed: timeout on DiscoverServices
   ```
 
-In this first instance, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
+In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
   ```bash
+2024/11/30 17:30:37 \ Starting BLE Sync Cycle 0.5.0
 2024/11/30 17:30:37 \ Created new BLE central controller
 2024/11/30 17:30:37 \ Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16 ...
 2024/11/30 17:30:37 \ Found BLE peripheral F1:42:D8:DE:35:16
@@ -249,7 +252,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2024/11/30 17:32:07 - Application shutdown complete. Goodbye!
 ```
 
-## ⚠️ FAQ
+## FAQ
 
 Q: What is **BLE Sync Cycle**?
 A: In its simplest form, this application makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower. And, when you stop your bike, video playback pauses.
@@ -269,15 +272,16 @@ A: See the [Editing the TOML File](#editing-the-toml-file) section above
 ## Roadmap
 
 - Add support for other video players (e.g., VLC)
-- Add flag in `config.toml` to enable/disable logging messages
+- Add flag in `config.toml` to enable/disable logging messages (or perhaps moving to a different logging package)
 - Add optional check for battery status of BLE peripheral device
 - Add support for non-BLE peripheral devices
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Thanks to the [TinyGo Go Bluetooth package maintainers](https://github.com/tinygo-org/bluetooth)
-- Inspired by indoor cycling training needs, the amazing first-person view cycling videos found on YouTube and elsewhere, and the desire to bring the two together
+- **BLE Sync Cycle** was inspired by indoor cycling training needs, the amazing first-person view cycling videos found on YouTube and elsewhere, and the desire to bring the two together
 
-## 📝 License
+- A special thanks to the [TinyGo Go Bluetooth package maintainers](https://github.com/tinygo-org/bluetooth) for making BLE device integration in Go relatively straight forward
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
