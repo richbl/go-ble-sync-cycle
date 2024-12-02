@@ -281,6 +281,7 @@ A: See the [Editing the TOML File](#editing-the-toml-file) section above
 - **BLE Sync Cycle** was inspired by indoor cycling training needs, the amazing first-person view cycling videos found on YouTube and elsewhere, and the desire to bring the two together
 
 - A special thanks to the [TinyGo Go Bluetooth package maintainers](https://github.com/tinygo-org/bluetooth) for making BLE device integration in Go relatively straight forward
+- Thanks also to the [Gen2Brain team for developing go-mpv](https://github.com/gen2brain/go-mpv), which provides access to the [mpv media player](https://mpv.io/) via their Go package
 
 ## License
 
