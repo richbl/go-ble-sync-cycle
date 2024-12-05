@@ -36,19 +36,10 @@ func main() {
 	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Create speed controller component
-	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
-
-	// Create video player component
-	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
+	// Create component controllers
+	speedController, videoPlayer, bleController, err := createControllers(*cfg)
 	if err != nil {
-		logger.Fatal("[VIDEO] Failed to create video player component: " + err.Error())
-	}
-
-	// Create BLE controller component
-	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
-	if err != nil {
-		logger.Fatal("[BLE] Failed to create BLE controller component: " + err.Error())
+		logger.Fatal("[APP] Failed to create controllers: " + err.Error())
 	}
 
 	// Scan for BLE peripheral and return CSC speed characteristic
@@ -82,6 +73,28 @@ func main() {
 	// Wait for all goroutines to complete
 	wg.Wait()
 	logger.Info("[APP] Application shutdown complete. Goodbye!")
+
+}
+
+// createControllers creates the speed controller, video player, and BLE controller
+func createControllers(cfg config.Config) (*speed.SpeedController, *video.PlaybackController, *ble.BLEController, error) {
+
+	// Create speed controller component
+	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
+
+	// Create video player component
+	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Create BLE controller component
+	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return speedController, videoPlayer, bleController, nil
 
 }
 

@@ -1,7 +1,7 @@
 # BLE Sync Cycle
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle)
-[![codebeat badge](https://codebeat.co/badges/0c10be82-57f6-42df-8033-084e289fec62)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev)
+[![codebeat badge](https://codebeat.co/badges/e840d9ca-937a-41e0-ade2-d2ebf0426720)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/richbl/go-ble-sync-cycle?include_prereleases)
 
 ## Overview
@@ -212,7 +212,8 @@ In this first example, while the application was able to find the BLE peripheral
 2024/12/04 16:39:07 INFO [VIDEO] Starting MPV video player...
 2024/12/04 16:39:07 INFO [VIDEO] Loading video file: cycling_test.mp4
 2024/12/04 16:39:07 INFO [VIDEO] Entering MPV playback loop...
-2024/12/04 16:39:08 INFO [VIDEO] New sensor speed: 0.00[VIDEO] Last sensor speed: 0.00
+2024/12/04 16:39:08 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
+2024/12/04 16:39:08 INFO [VIDEO] Smoothed sensor speed: 0.00
 2024/12/04 16:39:08 INFO [VIDEO] No speed detected, so pausing video...
 2024/12/04 16:39:08 INFO [VIDEO] Video paused successfully
   ```
@@ -221,24 +222,27 @@ In the example above, the application is now running in a loop, periodically que
 
 ```bash
 ...
-2024/12/04 16:40:20 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:20 INFO [SPEED] BLE sensor speed: 7.80 mph
-2024/12/04 16:40:21 INFO [VIDEO] New sensor speed: 3.11[VIDEO] Last sensor speed: 0.63
-2024/12/04 16:40:21 INFO [VIDEO] Adjusting video speed to 0.19
-2024/12/04 16:40:21 INFO [VIDEO] Video speed updated successfully
-2024/12/04 16:40:21 INFO [VIDEO] Video resumed successfully
-2024/12/04 16:40:21 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:21 INFO [SPEED] BLE sensor speed: 11.74 mph
-2024/12/04 16:40:22 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:22 INFO [SPEED] BLE sensor speed: 11.76 mph
-2024/12/04 16:40:22 INFO [VIDEO] New sensor speed: 7.81[VIDEO] Last sensor speed: 3.11
-2024/12/04 16:40:22 INFO [VIDEO] Adjusting video speed to 0.47
-2024/12/04 16:40:22 INFO [VIDEO] Video speed updated successfully
-2024/12/04 16:40:22 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:22 INFO [SPEED] BLE sensor speed: 12.98 mph
-2024/12/04 16:40:23 INFO [VIDEO] New sensor speed: 9.77[VIDEO] Last sensor speed: 7.81
-2024/12/04 16:40:23 INFO [VIDEO] Adjusting video speed to 0.59
-2024/12/04 16:40:23 INFO [VIDEO] Video speed updated successfully
+2024/12/04 19:31:52 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:52 INFO [SPEED] BLE sensor speed: 10.49 mph
+2024/12/04 19:31:53 INFO [VIDEO] Sensor speed buffer: [3.17 10.78 10.57 10.34 10.49]
+2024/12/04 19:31:53 INFO [VIDEO] Smoothed sensor speed: 9.07
+2024/12/04 19:31:53 INFO [VIDEO] Adjusting video speed to 0.54
+2024/12/04 19:31:53 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:53 INFO [SPEED] BLE sensor speed: 11.10 mph
+2024/12/04 19:31:54 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:54 INFO [SPEED] BLE sensor speed: 11.91 mph
+2024/12/04 19:31:54 INFO [VIDEO] Sensor speed buffer: [10.57 10.34 10.49 11.10 11.91]
+2024/12/04 19:31:54 INFO [VIDEO] Smoothed sensor speed: 10.88
+2024/12/04 19:31:54 INFO [VIDEO] Adjusting video speed to 0.65
+2024/12/04 19:31:54 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:54 INFO [SPEED] BLE sensor speed: 12.53 mph
+2024/12/04 19:31:55 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:55 INFO [SPEED] BLE sensor speed: 12.11 mph
+2024/12/04 19:31:55 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:31:55 INFO [SPEED] BLE sensor speed: 12.49 mph
+2024/12/04 19:31:55 INFO [VIDEO] Sensor speed buffer: [11.10 11.91 12.53 12.11 12.49]
+2024/12/04 19:31:55 INFO [VIDEO] Smoothed sensor speed: 12.02
+2024/12/04 19:31:55 INFO [VIDEO] Adjusting video speed to 0.72
 ...
 ```
 
@@ -248,24 +252,30 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 ```bash
 ...
-2024/12/04 16:40:24 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:24 INFO [SPEED] BLE sensor speed: 18.71 mph
-2024/12/04 16:40:25 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:25 INFO [SPEED] BLE sensor speed: 17.79 mph
-2024/12/04 16:40:25 INFO [VIDEO] New sensor speed: 17.51[VIDEO] Last sensor speed: 15.16
-2024/12/04 16:40:25 INFO [VIDEO] Adjusting video speed to 1.05
-2024/12/04 16:40:25 INFO [VIDEO] Video speed updated successfully
-2024/12/04 16:40:25 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:25 INFO [SPEED] BLE sensor speed: 18.47 mph
-2024/12/04 16:40:25 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:26 INFO [VIDEO] New sensor speed: 14.67[VIDEO] Last sensor speed: 17.51
-2024/12/04 16:40:26 INFO [VIDEO] Adjusting video speed to 0.88
-2024/12/04 16:40:26 INFO [VIDEO] Video speed updated successfully
-2024/12/04 16:40:26 INFO [SPEED] Processing speed data from BLE peripheral...
-^C2024/12/04 16:40:27 INFO [APP] Shutdown signal received
-2024/12/04 16:40:27 INFO [VIDEO] Context cancelled. Shutting down video player component
-2024/12/04 16:40:27 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 16:40:27 INFO [APP] Application shutdown complete. Goodbye!
+2024/12/04 19:32:07 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:07 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 8.34 0.00 0.00]
+2024/12/04 19:32:07 INFO [VIDEO] Smoothed sensor speed: 1.67
+2024/12/04 19:32:07 INFO [VIDEO] Adjusting video speed to 0.10
+2024/12/04 19:32:07 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:08 INFO [VIDEO] Sensor speed buffer: [0.00 8.34 0.00 0.00 0.00]
+2024/12/04 19:32:08 INFO [VIDEO] Smoothed sensor speed: 1.67
+2024/12/04 19:32:08 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:10 INFO [VIDEO] Smoothed sensor speed: 0.00
+2024/12/04 19:32:10 INFO [VIDEO] No speed detected, so pausing video...
+2024/12/04 19:32:10 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:10 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:11 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
+2024/12/04 19:32:11 INFO [VIDEO] Smoothed sensor speed: 0.00
+2024/12/04 19:32:11 INFO [VIDEO] No speed detected, so pausing video...
+2024/12/04 19:32:11 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:12 INFO [SPEED] Processing speed data from BLE peripheral...
+2024/12/04 19:32:12 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
+2024/12/04 19:32:12 INFO [VIDEO] Smoothed sensor speed: 0.00
+2024/12/04 19:32:12 INFO [VIDEO] No speed detected, so pausing video...
+2024/12/04 19:32:12 INFO [SPEED] Processing speed data from BLE peripheral...
+^C2024/12/04 19:32:12 INFO [APP] Shutdown signal received
+2024/12/04 19:32:12 INFO [VIDEO] Context cancelled. Shutting down video player component
+2024/12/04 19:32:12 INFO [APP] Application shutdown complete. Goodbye!
 ```
 
 ## FAQ

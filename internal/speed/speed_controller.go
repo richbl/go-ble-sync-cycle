@@ -2,6 +2,7 @@ package speed
 
 import (
 	"container/ring"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -66,5 +67,22 @@ func (t *SpeedController) GetSmoothedSpeed() float64 {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.smoothedSpeed
+
+}
+
+// GetSpeedBuffer returns the speed buffer as an array of string
+func (t *SpeedController) GetSpeedBuffer() []string {
+
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	var speeds []string
+	t.speeds.Do(func(x interface{}) {
+		if x != nil {
+			speeds = append(speeds, fmt.Sprintf("%.2f", x.(float64)))
+		}
+	})
+
+	return speeds
 
 }
