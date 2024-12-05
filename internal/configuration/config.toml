@@ -1,6 +1,10 @@
 # BLE Sync Cycle TOML configuration
 # 0.5.0
 
+[app]
+  logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
+                          # where "debug" is the most verbose and "error" is least verbose
+
 [ble]
   sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
   scan_timeout_secs = 30            # Seconds to wait for peripheral response before generating error
@@ -13,6 +17,8 @@
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
+  display_speed = true           # Display video playback speed on the screen (true/false)
+  window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
   update_interval_sec = 1        # Seconds to wait between video player updates
-  speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to
-                                 # video playback speed (0.0 = stopped, 1.0 = normal speed)
+  speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to video
+                                 # playback speed (0.0 = stopped, 1.0 = normal speed)

@@ -10,6 +10,7 @@ import (
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 	video "github.com/richbl/go-ble-sync-cycle/internal/video-player"
 
@@ -18,21 +19,16 @@ import (
 
 func main() {
 
-	// Disable logging
-	// log.SetOutput(io.Discard)
-
-	log.Println("- Starting BLE Sync Cycle 0.5.0")
+	log.Println("Starting BLE Sync Cycle 0.5.0")
 
 	// Load configuration file (TOML)
 	cfg, err := config.LoadFile("internal/configuration/config.toml")
 	if err != nil {
-		log.Fatalln("- Failed to load configuration:", err)
+		log.Fatal("FATAL - Failed to load TOML configuration: " + err.Error())
 	}
 
-	// Verify video file exists for playback
-	if _, err = os.Stat(cfg.Video.FilePath); os.IsNotExist(err) {
-		log.Fatalln("- Video file does not exist:", err)
-	}
+	// Initialize logger
+	logger.Initialize(cfg.App.LogLevel)
 
 	// Create contexts to manage goroutines and system interrupts
 	rootCtx, rootCancel := context.WithCancel(context.Background())
@@ -46,19 +42,19 @@ func main() {
 	// Create video player component
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		log.Fatalln("/ Failed to create video player component:", err)
+		logger.Fatal("[VIDEO] Failed to create video player component: " + err.Error())
 	}
 
 	// Create BLE controller component
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		log.Fatalln("\\ Failed to create BLE controller component:", err)
+		logger.Fatal("[BLE] Failed to create BLE controller component: " + err.Error())
 	}
 
 	// Scan for BLE peripheral and return CSC speed characteristic
 	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, speedController, bleController)
 	if err != nil {
-		log.Printf("\\ BLE peripheral scan failed: %v", err)
+		logger.Error("[BLE] BLE peripheral scan failed: " + err.Error())
 		return
 	}
 
@@ -67,25 +63,25 @@ func main() {
 
 	// Start BLE peripheral speed monitoring
 	if err := monitorBLESpeed(ctx, &wg, bleController, speedController, bleSpeedCharacter, rootCancel); err != nil {
-		log.Printf("\\ Failed to start BLE speed monitoring: %v", err)
+		logger.Error("[BLE] Failed to start BLE speed monitoring: ", err.Error())
 		return
 	}
 
 	// Start video playback
 	if err := playVideo(ctx, &wg, videoPlayer, speedController, rootCancel); err != nil {
-		log.Printf("/ Failed to start video playback: %v", err)
+		logger.Error("[VIDEO] Failed to start video playback: ", err.Error())
 		return
 	}
 
 	// Set up interrupt handling, allowing for user interrupts and graceful component shutdown
 	if err := interruptHandler(ctx, rootCancel); err != nil {
-		log.Printf("- Failed to set up interrupt handling: %v", err)
+		logger.Error("[APP] Failed to set up interrupt handling: ", err.Error())
 		return
 	}
 
 	// Wait for all goroutines to complete
 	wg.Wait()
-	log.Println("- Application shutdown complete. Goodbye!")
+	logger.Info("[APP] Application shutdown complete. Goodbye!")
 
 }
 
@@ -110,7 +106,7 @@ func scanForBLESpeedCharacteristic(ctx context.Context, speedController *speed.S
 		if err != nil {
 
 			if ctx.Err() != nil {
-				log.Printf("\\ BLE speed characteristic scan cancelled: %v", ctx.Err())
+				logger.Error("[BLE] BLE speed characteristic scan cancelled: ", ctx.Err())
 				return nil, ctx.Err()
 			}
 			return nil, err
@@ -136,7 +132,7 @@ func monitorBLESpeed(ctx context.Context, wg *sync.WaitGroup, bleController *ble
 		defer wg.Done()
 
 		if err := bleController.GetBLEUpdates(ctx, speedController, bleSpeedCharacter); err != nil {
-			log.Printf("\\ BLE speed characteristic monitoring error: %v", err)
+			logger.Error("[BLE] BLE speed characteristic monitoring error: ", err.Error())
 			errChan <- err
 			cancel()
 			return
@@ -169,7 +165,7 @@ func playVideo(ctx context.Context, wg *sync.WaitGroup, videoPlayer *video.Playb
 		defer wg.Done()
 
 		if err := videoPlayer.Start(ctx, speedController); err != nil {
-			log.Printf("/ Video playback error: %v", err)
+			logger.Error("[VIDEO] Video playback error: ", err.Error())
 			errChan <- err
 			cancel()
 			return
@@ -203,7 +199,7 @@ func interruptHandler(ctx context.Context, cancel context.CancelFunc) error {
 
 		select {
 		case <-sigChan:
-			log.Println("- Shutdown signal received")
+			logger.Info("[APP] Shutdown signal received")
 			cancel()
 			errChan <- nil
 		case <-ctx.Done():

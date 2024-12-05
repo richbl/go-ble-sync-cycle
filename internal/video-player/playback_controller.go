@@ -2,11 +2,13 @@ package video
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 
 	"github.com/gen2brain/go-mpv"
@@ -41,13 +43,14 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 	// Defer player cleanup
 	defer p.player.TerminateDestroy()
 
-	log.Println("/ Starting MPV video player...")
+	logger.Info("[VIDEO] Starting MPV video player...")
 
-	if err := p.player.SetOption("window-scale", mpv.FormatDouble, 0.5); err != nil {
+	// Scale MPV playback window size
+	if err := p.player.SetOption("window-scale", mpv.FormatDouble, p.config.WindowScaleFactor); err != nil {
 		return err
 	}
 
-	log.Println("/ Loading video file:", p.config.FilePath)
+	logger.Info("[VIDEO] Loading video file: " + p.config.FilePath)
 
 	if err := p.player.Command([]string{"loadfile", p.config.FilePath}); err != nil {
 		return err
@@ -55,7 +58,7 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 
 	// Start video playback (unpause video)
 	if err := p.setPauseStatus(false); err != nil {
-		log.Println("/ Failed to start video playback:", err)
+		logger.Error("[VIDEO] Failed to start video playback: " + err.Error())
 	}
 
 	// Start interval timer for updating video speed
@@ -64,25 +67,26 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 
 	lastSpeed := 0.0
 
-	log.Println("/ Entering MPV playback loop...")
+	logger.Info("[VIDEO] Entering MPV playback loop...")
 
 	// Main loop for updating video speed
 	for {
 
 		select {
 		case <-ctx.Done():
-			log.Println("/ Context cancelled. Shutting down video player component")
+			logger.Info("[VIDEO] Context cancelled. Shutting down video player component")
 			return nil
 		case <-ticker.C:
 			currentSpeed := speedController.GetSmoothedSpeed()
-			log.Printf("/ Current sensor speed: %.2f ... Last sensor speed: %.2f\n", currentSpeed, lastSpeed)
+
+			logger.Info("[VIDEO] New sensor speed: " + strconv.FormatFloat(currentSpeed, 'f', 2, 64) + "[VIDEO] Last sensor speed: " + strconv.FormatFloat(lastSpeed, 'f', 2, 64))
 
 			// Pause video if no speed is detected
 			if currentSpeed == 0 {
-				log.Println("/ No speed detected, so pausing video...")
+				logger.Info("[VIDEO] No speed detected, so pausing video...")
 
 				if err := p.setPauseStatus(true); err != nil {
-					log.Println("/ Failed to pause video playback:", err)
+					logger.Info("[VIDEO] Failed to pause video playback: " + err.Error())
 				}
 
 				continue
@@ -92,17 +96,26 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 			if math.Abs(currentSpeed-lastSpeed) > p.speedConfig.SpeedThreshold {
 				newSpeed := (currentSpeed * p.config.SpeedMultiplier) / 10.0
 
-				log.Printf("/ Adjusting video speed to %.2f\n", newSpeed)
+				logger.Info("[VIDEO] Adjusting video speed to " + strconv.FormatFloat(newSpeed, 'f', 2, 64))
 
 				if err := p.player.SetProperty("speed", mpv.FormatDouble, newSpeed); err != nil {
-					log.Println("/ Failed to update video speed:", err)
+					logger.Error("[VIDEO] Failed to update video speed: " + err.Error())
 				} else {
-					log.Println("/ Video speed updated successfully")
+					logger.Info("[VIDEO] Video speed updated successfully")
+				}
+
+				// Display speed on mpv OSD (optional)
+				if p.config.DisplaySpeed {
+
+					if err := p.player.SetOptionString("osd-msg1", "Speed: "+fmt.Sprintf("%.2f", newSpeed)); err != nil {
+						return err
+					}
+
 				}
 
 				// Resume playback if paused
 				if err := p.setPauseStatus(false); err != nil {
-					log.Println("/ Failed to resume video playback:", err)
+					logger.Error("[VIDEO] Failed to resume video playback: " + err.Error())
 				}
 
 			}
@@ -119,7 +132,7 @@ func (p *PlaybackController) setPauseStatus(pause bool) error {
 	// Check the current pause status
 	currentPause, err := p.player.GetProperty("pause", mpv.FormatFlag)
 	if err != nil {
-		log.Println("/ Failed to get pause status:", err)
+		logger.Error("[VIDEO] Failed to get pause status: " + err.Error())
 		return err
 	}
 
@@ -130,22 +143,24 @@ func (p *PlaybackController) setPauseStatus(pause bool) error {
 
 	// Set the pause status
 	if err := p.player.SetProperty("pause", mpv.FormatFlag, pause); err != nil {
-		log.Printf("/ Failed to %s video: %v", func() string {
+		result := func() string {
 			if pause {
-				return "pause"
+				return "paused"
 			}
-			return "resume"
-		}(), err)
+			return "resumed"
+		}()
+		logger.Error("[VIDEO] Failed to " + result + " video: " + err.Error())
 		return err
 	}
 
 	// Log the success message... and punch out
-	log.Printf("/ Video %s successfully", func() string {
+	result := func() string {
 		if pause {
 			return "paused"
 		}
 		return "resumed"
-	}())
+	}()
+	logger.Info("[VIDEO] Video " + result + " successfully")
 
 	return nil
 
