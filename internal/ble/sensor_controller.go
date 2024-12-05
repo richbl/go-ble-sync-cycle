@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"log"
 	"math"
+	"strconv"
 	"time"
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 
 	"tinygo.org/x/bluetooth"
@@ -25,8 +26,6 @@ var (
 	// CSC speed tracking variables
 	lastWheelRevs uint32
 	lastWheelTime uint16
-	lastCrankRevs uint16
-	lastCrankTime uint16
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -37,7 +36,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 		return nil, err
 	}
 
-	log.Println("\\ Created new BLE central controller")
+	logger.Info("[BLE] Created new BLE central controller")
 
 	return &BLEController{
 		bleConfig:   bleConfig,
@@ -56,7 +55,7 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 		return nil, err
 	}
 
-	log.Println("\\ Connecting to BLE peripheral device", result.Address)
+	logger.Info("[BLE] Connecting to BLE peripheral device " + result.Address.String())
 
 	// Connect to BLE peripheral device
 	var device bluetooth.Device
@@ -64,26 +63,26 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 		return nil, err
 	}
 
-	log.Println("\\ BLE peripheral device connected")
-	log.Println("\\ Discovering CSC services", bluetooth.New16BitUUID(0x1816))
+	logger.Info("[BLE] BLE peripheral device connected")
+	logger.Info("[BLE] Discovering CSC services " + bluetooth.New16BitUUID(0x1816).String())
 
 	// Find CSC service and characteristic
 	svc, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x1816)})
 	if err != nil {
-		log.Println("\\ CSC services discovery failed:", err)
+		logger.Warn("[BLE] CSC services discovery failed: " + err.Error())
 		return nil, err
 	}
 
-	log.Println("\\ Found CSC service", svc[0].UUID().String())
-	log.Println("\\ Discovering CSC characteristics", bluetooth.New16BitUUID(0x2A5B))
+	logger.Info("[BLE] Found CSC service " + svc[0].UUID().String())
+	logger.Info("[BLE] Discovering CSC characteristics " + bluetooth.New16BitUUID(0x2A5B).String())
 
 	char, err := svc[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
 	if err != nil {
-		log.Println("\\ CSC characteristics discovery failed:", err)
+		logger.Warn("[BLE] CSC characteristics discovery failed: ", err.Error())
 		return nil, err
 	}
 
-	log.Println("\\ Found CSC characteristic", char[0].UUID().String())
+	logger.Info("[BLE] Found CSC characteristic " + char[0].UUID().String())
 
 	return &char[0], nil
 
@@ -92,7 +91,7 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 // GetBLEUpdates enables BLE peripheral monitoring to report real-time sensor data
 func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *speed.SpeedController, char *bluetooth.DeviceCharacteristic) error {
 
-	log.Println("\\ Starting real-time monitoring of BLE sensor notifications...")
+	logger.Info("[BLE] Starting real-time monitoring of BLE sensor notifications...")
 
 	// Subscribe to live BLE sensor notifications
 	if err := char.EnableNotifications(func(buf []byte) {
@@ -117,14 +116,14 @@ func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 
 	go func() {
 
-		log.Println("\\ Now scanning the ether for BLE peripheral UUID of", m.bleConfig.SensorUUID, "...")
+		logger.Info("[BLE] Now scanning the ether for BLE peripheral UUID of " + m.bleConfig.SensorUUID + "...")
 
 		err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
 
 			if result.Address.String() == m.bleConfig.SensorUUID {
 
 				if err := m.bleAdapter.StopScan(); err != nil {
-					log.Println("\\ Failed to stop scan:", err)
+					logger.Error("[BLE] Failed to stop scan: " + err.Error())
 				}
 
 				found <- result
@@ -133,7 +132,7 @@ func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 		})
 
 		if err != nil {
-			log.Println("\\ Scan error:", err)
+			logger.Error("[BLE] Scan error: " + err.Error())
 		}
 
 	}()
@@ -141,11 +140,11 @@ func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 	// Wait for the scan to complete or context cancellation
 	select {
 	case result := <-found:
-		log.Println("\\ Found BLE peripheral", result.Address.String())
+		logger.Info("[BLE] Found BLE peripheral " + result.Address.String())
 		return result, nil
 	case <-scanCtx.Done():
 		if err := m.bleAdapter.StopScan(); err != nil {
-			log.Println("\\ Failed to stop scan:", err)
+			logger.Info("[BLE] Failed to stop scan: " + err.Error())
 		}
 		return bluetooth.ScanResult{}, errors.New("scanning time limit reached")
 	}
@@ -158,7 +157,7 @@ func (m *BLEController) processBLESpeed(data []byte) float64 {
 		return 0.0
 	}
 
-	log.Println("| Processing speed data from BLE peripheral...")
+	logger.Info("[SPEED] Processing speed data from BLE peripheral...")
 
 	flags := data[0]
 	hasWheelRev := flags&0x01 != 0
@@ -189,7 +188,7 @@ func (m *BLEController) processBLESpeed(data []byte) float64 {
 
 	speed := float64(revDiff) * float64(m.speedConfig.WheelCircumferenceMM) * speedConversion / float64(timeDiff)
 
-	log.Println("| BLE sensor speed:", math.Round(speed*100)/100, m.speedConfig.SpeedUnits)
+	logger.Info("[SPEED] BLE sensor speed: " + strconv.FormatFloat(math.Round(speed*100)/100, 'f', 2, 64) + " " + m.speedConfig.SpeedUnits)
 
 	lastWheelRevs = wheelRevs
 	lastWheelTime = wheelEventTime

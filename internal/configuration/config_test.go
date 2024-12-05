@@ -19,7 +19,7 @@ func TestLoadFile(t *testing.T) {
 	speed_units = "km/h"
 
 	[video]
-	file_path = "/path/to/video.mp4"
+	file_path = "[VIDEO]path/to/video.mp4"
 	update_interval_sec = 1
 	speed_multiplier = 2.0
 `)
@@ -50,8 +50,8 @@ func TestLoadFile(t *testing.T) {
 	if cfg.Speed.SmoothingWindow != 5 {
 		t.Errorf("Speed smoothing window mismatch: expected %d, got %d", 5, cfg.Speed.SmoothingWindow)
 	}
-	if cfg.Video.FilePath != "/path/to/video.mp4" {
-		t.Errorf("Video file path mismatch: expected %q, got %q", "/path/to/video.mp4", cfg.Video.FilePath)
+	if cfg.Video.FilePath != "[VIDEO]path/to/video.mp4" {
+		t.Errorf("Video file path mismatch: expected %q, got %q", "[VIDEO]path/to/video.mp4", cfg.Video.FilePath)
 	}
 }
 

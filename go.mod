@@ -24,6 +24,8 @@ require (
 
 require (
 	github.com/gen2brain/go-mpv v0.2.3
+	github.com/golang/glog v1.2.3
+	github.com/jba/slog v0.2.0
 	github.com/stretchr/testify v1.10.0
 	tinygo.org/x/bluetooth v0.10.0
 )
