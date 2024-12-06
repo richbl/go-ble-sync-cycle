@@ -300,6 +300,8 @@ A: See the [Editing the TOML File](#editing-the-toml-file) section above
 - Add support for other video players (e.g., VLC)
 - Add optional check for battery status of BLE peripheral device
 - Add support for non-BLE peripheral devices
+- Create a desktop application (GUI) for **BLE Sync Cycle**
+- As an exercise, refactor using [the Rust language](https://www.rust-lang.org/)
 
 ## Acknowledgments
 
