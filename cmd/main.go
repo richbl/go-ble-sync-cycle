@@ -19,6 +19,8 @@ import (
 
 func main() {
 
+	// TODO add/update test for logging/speed/playback/config
+
 	log.Println("Starting BLE Sync Cycle 0.5.0")
 
 	// Load configuration file (TOML)
@@ -54,19 +56,19 @@ func main() {
 
 	// Start BLE peripheral speed monitoring
 	if err := monitorBLESpeed(ctx, &wg, bleController, speedController, bleSpeedCharacter, rootCancel); err != nil {
-		logger.Error("[BLE] Failed to start BLE speed monitoring: ", err.Error())
+		logger.Error("[BLE] Failed to start BLE speed monitoring: " + err.Error())
 		return
 	}
 
 	// Start video playback
 	if err := playVideo(ctx, &wg, videoPlayer, speedController, rootCancel); err != nil {
-		logger.Error("[VIDEO] Failed to start video playback: ", err.Error())
+		logger.Error("[VIDEO] Failed to start video playback: " + err.Error())
 		return
 	}
 
 	// Set up interrupt handling, allowing for user interrupts and graceful component shutdown
 	if err := interruptHandler(ctx, rootCancel); err != nil {
-		logger.Error("[APP] Failed to set up interrupt handling: ", err.Error())
+		logger.Error("[APP] Failed to set up interrupt handling: " + err.Error())
 		return
 	}
 
@@ -145,7 +147,7 @@ func monitorBLESpeed(ctx context.Context, wg *sync.WaitGroup, bleController *ble
 		defer wg.Done()
 
 		if err := bleController.GetBLEUpdates(ctx, speedController, bleSpeedCharacter); err != nil {
-			logger.Error("[BLE] BLE speed characteristic monitoring error: ", err.Error())
+			logger.Error("[BLE] BLE speed characteristic monitoring error: " + err.Error())
 			errChan <- err
 			cancel()
 			return
@@ -178,7 +180,7 @@ func playVideo(ctx context.Context, wg *sync.WaitGroup, videoPlayer *video.Playb
 		defer wg.Done()
 
 		if err := videoPlayer.Start(ctx, speedController); err != nil {
-			logger.Error("[VIDEO] Video playback error: ", err.Error())
+			logger.Error("[VIDEO] Video playback error: " + err.Error())
 			errChan <- err
 			cancel()
 			return

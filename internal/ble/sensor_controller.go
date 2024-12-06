@@ -78,7 +78,7 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 
 	char, err := svc[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
 	if err != nil {
-		logger.Warn("[BLE] CSC characteristics discovery failed: ", err.Error())
+		logger.Warn("[BLE] CSC characteristics discovery failed: " + err.Error())
 		return nil, err
 	}
 

@@ -79,7 +79,7 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 // configurePlayer configures the MPV video player
 func (p *PlaybackController) configurePlayer() error {
 
-	return p.player.SetOption("window-scale", mpv.FormatDouble, p.config.WindowScaleFactor)
+	return p.player.SetOptionString("autofit", strconv.Itoa(int(p.config.WindowScaleFactor*100))+"%")
 
 }
 
