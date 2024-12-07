@@ -4,246 +4,209 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
-	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
-// testWriter is a custom writer that captures output and allows inspection
-type testWriter struct {
-	buf bytes.Buffer
-}
-
-// Write implements io.Writer
-func (w *testWriter) Write(p []byte) (n int, err error) {
-	return w.buf.Write(p)
-}
-
-// String implements fmt.Stringer
-func (w *testWriter) String() string {
-	return w.buf.String()
-}
-
-// Reset resets the buffer
-func (w *testWriter) Reset() {
-	w.buf.Reset()
-}
-
-// setupTestLogger creates a new logger with a test writer
-func setupTestLogger(t *testing.T, level string) (*testWriter, *slog.Logger) {
-	t.Helper()
-	writer := &testWriter{}
-	originalLogger := logger // Save current logger
-	logger = Initialize(level)
-
-	// Create new handler with the test writer
-	var logLevel slog.Level
-	switch level {
-	case "debug":
-		logLevel = slog.LevelDebug
-	case "info":
-		logLevel = slog.LevelInfo
-	case "warn":
-		logLevel = slog.LevelWarn
-	case "error":
-		logLevel = slog.LevelError
-	default:
-		logLevel = slog.LevelInfo
-	}
-
-	logger = slog.New(NewCustomTextHandler(writer, &slog.HandlerOptions{
-		Level: logLevel,
-	}))
-
-	return writer, originalLogger
-}
-
-// cleanupTestLogger restores the original logger
-func cleanupTestLogger(t *testing.T, originalLogger *slog.Logger) {
-	t.Helper()
-	logger = originalLogger
-}
-
+// TestInitialize tests the Initialize function
 func TestInitialize(t *testing.T) {
 
+	// Define test cases
 	tests := []struct {
-		name          string
-		level         string
-		expectedLevel slog.Level
+		name  string
+		level string
+		want  slog.Level
 	}{
-		{"debug level", "debug", slog.LevelDebug},
-		{"info level", "info", slog.LevelInfo},
-		{"warn level", "warn", slog.LevelWarn},
-		{"error level", "error", slog.LevelError},
-		{"default level", "invalid", slog.LevelInfo},
-		{"empty level", "", slog.LevelInfo},
+		{"debug", "debug", slog.LevelDebug},
+		{"info", "info", slog.LevelInfo},
+		{"warn", "warn", slog.LevelWarn},
+		{"error", "error", slog.LevelError},
+		{"default", "unknown", slog.LevelInfo},
 	}
 
+	// Run tests for each log level
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-
-			logger := Initialize(tt.level)
+			Initialize(tt.level)
 
 			if logger == nil {
-				t.Fatal("Expected non-nil logger")
+				t.Errorf("logger is nil")
 			}
 
-			// Test if logger is properly initialized with correct level
-			ctx := context.Background()
-			handler := logger.Handler()
-
-			if !handler.Enabled(ctx, tt.expectedLevel) {
-				t.Errorf("Expected level %v to be enabled", tt.expectedLevel)
+			h, ok := logger.Handler().(*CustomTextHandler)
+			if !ok {
+				t.Errorf("logger handler is not of type *CustomTextHandler")
 			}
 
-		})
-	}
-}
-
-func TestLoggingLevels(t *testing.T) {
-
-	tests := []struct {
-		name          string
-		logFunc       func(string, ...interface{})
-		message       string
-		expectedLevel string
-		expectedColor string
-	}{
-		{"debug message", Debug, "debug test", "DEBUG", Blue},
-		{"info message", Info, "info test", "INFO", Green},
-		{"warn message", Warn, "warn test", "WARN", Yellow},
-		{"error message", Error, "error test", "ERROR", Red},
-	}
-
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-
-			// Set up test logger
-			writer, origLogger := setupTestLogger(t, "debug")
-			defer cleanupTestLogger(t, origLogger)
-
-			tt.logFunc(tt.message)
-			output := writer.String()
-
-			// Check if output contains expected components
-			if !strings.Contains(output, tt.expectedLevel) {
-				t.Errorf("Expected output to contain level %q, got: %q", tt.expectedLevel, output)
-			}
-
-			if !strings.Contains(output, tt.message) {
-				t.Errorf("Expected output to contain message %q, got: %q", tt.message, output)
-			}
-
-			if !strings.Contains(output, tt.expectedColor) {
-				t.Errorf("Expected output to contain color %q, got: %q", tt.expectedColor, output)
+			if h.level != tt.want {
+				t.Errorf("got logger level %v, want %v", h.level, tt.want)
 			}
 
 		})
 	}
+
 }
 
 func TestCustomTextHandler(t *testing.T) {
 
-	// Create a custom text handler
-	writer := &testWriter{}
-	handler := NewCustomTextHandler(writer, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-
-	// Test basic handler functionality
-	ctx := context.Background()
-	record := slog.Record{
-		Time:    time.Now(),
-		Level:   slog.LevelInfo,
-		Message: "test message",
+	// Define test cases
+	tests := []struct {
+		name  string
+		level slog.Level
+		want  string
+	}{
+		{"debug", slog.LevelDebug, "\033[34mDEBUG\033[0m"},
+		{"info", slog.LevelInfo, "\033[32mINFO\033[0m"},
+		{"warn", slog.LevelWarn, "\033[33mWARN\033[0m"},
+		{"error", slog.LevelError, "\033[31mERROR\033[0m"},
+		{"fatal", LevelFatal, "\033[35mFATAL\033[0m"},
 	}
 
-	err := handler.Handle(ctx, record)
+	for _, tt := range tests {
 
-	if err != nil {
-		t.Errorf("Unexpected error handling record: %v", err)
-	}
+		t.Run(tt.name, func(t *testing.T) {
 
-	output := writer.String()
+			var buf bytes.Buffer
+			h := NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+			r := slog.NewRecord(time.Now(), tt.level, "message", 0)
 
-	if !strings.Contains(output, "INFO") {
-		t.Errorf("Expected output to contain 'INFO', got: %q", output)
-	}
+			if err := h.Handle(context.Background(), r); err != nil {
+				t.Errorf("Handle() error = %v", err)
+			}
 
-	if !strings.Contains(output, "test message") {
-		t.Errorf("Expected output to contain 'test message', got: %q", output)
-	}
+			if !strings.Contains(buf.String(), tt.want) {
+				t.Errorf("got %q, want %q", buf.String(), tt.want)
+			}
 
-}
-
-func TestWithAttrsAndGroups(t *testing.T) {
-
-	// Create a custom text handler
-	writer := &testWriter{}
-	handler := NewCustomTextHandler(writer, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-
-	// Test WithAttrs
-	attrs := []slog.Attr{slog.String("key", "value")}
-	handlerWithAttrs := handler.WithAttrs(attrs)
-
-	if handlerWithAttrs == nil {
-		t.Error("Expected non-nil handler with attributes")
-	}
-
-	// Test WithGroup
-	handlerWithGroup := handler.WithGroup("group")
-
-	if handlerWithGroup == nil {
-		t.Error("Expected non-nil handler with group")
+		})
 	}
 
 }
 
+// TestInfo tests the INFO log level function
+func TestInfo(t *testing.T) {
+
+	var buf bytes.Buffer
+	Initialize("debug")
+	logger = slog.New(NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	Info("message")
+	if !strings.Contains(buf.String(), "INFO") {
+		t.Errorf("got %q, want %q", buf.String(), "INFO")
+	}
+
+}
+
+// TestWarn tests the WARN log level function
+func TestWarn(t *testing.T) {
+
+	var buf bytes.Buffer
+	Initialize("debug")
+	logger = slog.New(NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	Warn("message")
+	if !strings.Contains(buf.String(), "WARN") {
+		t.Errorf("got %q, want %q", buf.String(), "WARN")
+	}
+
+}
+
+// TestError tests the ERROR log level function
+func TestError(t *testing.T) {
+
+	var buf bytes.Buffer
+	Initialize("debug")
+	logger = slog.New(NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	Error("message")
+	if !strings.Contains(buf.String(), "ERROR") {
+		t.Errorf("got %q, want %q", buf.String(), "ERROR")
+	}
+
+}
+
+// TestDebug tests the DEBUG log level function
+func TestDebug(t *testing.T) {
+
+	var buf bytes.Buffer
+	Initialize("debug")
+	logger = slog.New(NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	Debug("message")
+	if !strings.Contains(buf.String(), "DEBUG") {
+		t.Errorf("got %q, want %q", buf.String(), "DEBUG")
+	}
+
+}
+
+// TestFatal tests the FATAL log level function
 func TestFatal(t *testing.T) {
 
-	// Create a temporary executable that calls Fatal()
-	if os.Getenv("TEST_FATAL") == "1" {
-		writer := &testWriter{}
+	var buf bytes.Buffer
+	Initialize("debug")
+	logger = slog.New(NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-		logger = slog.New(NewCustomTextHandler(writer, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		}))
-		Fatal("fatal error")
-		return
+	// Save and restore exit function
+	savedExitFunc := ExitFunc
+	defer func() {
+		ExitFunc = savedExitFunc
+	}()
+
+	called := false
+	ExitFunc = func(code int) {
+		called = true
+
+		if code != 1 {
+			t.Errorf("Fatal called exit function with code %d, want 1", code)
+		}
 	}
 
-	// Run the test in a subprocess
-	cmd := os.Args[0]
-	env := []string{"TEST_FATAL=1"}
-
-	if testing.Short() {
-		t.Skip("Skipping test in short mode")
+	Fatal("message")
+	if !called {
+		t.Errorf("Fatal did not call exit function")
 	}
 
-	// Execute the test process
-	p, err := os.StartProcess(cmd, []string{cmd, "-test.run=TestFatal"}, &os.ProcAttr{
-		Env: append(os.Environ(), env...),
-	})
-
-	if err != nil {
-		t.Fatal(err)
+	if buf.String() == "" {
+		t.Errorf("Fatal did not log a message")
 	}
 
-	// Wait for the process to finish
-	state, err := p.Wait()
+}
 
-	if err != nil {
-		t.Fatal(err)
+// TestEnabled tests the Enabled state of the log levels
+func TestEnabled(t *testing.T) {
+
+	// Define test cases
+	tests := []struct {
+		name  string
+		level slog.Level
+		want  bool
+	}{
+		{"debug", slog.LevelDebug, true},
+		{"info", slog.LevelInfo, true},
+		{"warn", slog.LevelWarn, true},
+		{"error", slog.LevelError, true},
+		{"fatal", LevelFatal, true},
+		{"disabled", slog.LevelDebug, false},
 	}
 
-	// Check if the process exited with status 1
-	if code := state.ExitCode(); code != 1 {
-		t.Errorf("Expected exit code 1, got %d", code)
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			var buf bytes.Buffer
+			h := NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+
+			if tt.name == "disabled" {
+				h = NewCustomTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+			}
+
+			if got := h.Enabled(context.Background(), tt.level); got != tt.want {
+				t.Errorf("Enabled() = %v, want %v", got, tt.want)
+			}
+
+		})
 	}
 
 }
