@@ -15,6 +15,9 @@ var logger *slog.Logger
 // Define a custom FATAL level
 const LevelFatal slog.Level = slog.Level(12)
 
+// ExitFunc is a custom exit function that allows for testing of the FATAL level
+var ExitFunc = os.Exit
+
 // ANSI color codes
 const (
 	Reset   = "\033[0m"
@@ -31,18 +34,17 @@ const (
 type CustomTextHandler struct {
 	slog.Handler
 	writer io.Writer
+	level  slog.Level
 }
 
 // NewCustomTextHandler creates a new custom text handler
 func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHandler {
-
 	textHandler := slog.NewTextHandler(w, opts)
-
 	return &CustomTextHandler{
 		Handler: textHandler,
 		writer:  w,
+		level:   opts.Level.(slog.Level),
 	}
-
 }
 
 // Handle implements slog.Handler
@@ -160,10 +162,9 @@ func Debug(msg string, keysAndValues ...interface{}) {
 
 }
 
-// Fatal logs a fatal error message and exits the program
 func Fatal(msg string, keysAndValues ...interface{}) {
 
 	logger.Log(context.Background(), LevelFatal, msg, keysAndValues...)
-	os.Exit(1)
+	ExitFunc(1)
 
 }
