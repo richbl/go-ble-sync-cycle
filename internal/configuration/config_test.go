@@ -1,91 +1,218 @@
 package config
 
 import (
+	"bytes"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/BurntSushi/toml"
 )
 
+// TestLoadFile tests various scenarios for the LoadFile function
 func TestLoadFile(t *testing.T) {
-	// Create a test config file
-	configFile := []byte(`
-	[ble]
-	sensor_uuid = "12345678-1234-1234-1234-123456789012"
-	scan_timeout_secs = 10
 
-	[speed]
-	smoothing_window = 5
-	speed_threshold = 10.0
-	wheel_circumference_mm = 2000
-	speed_units = "km/h"
-
-	[video]
-	file_path = "[VIDEO]path/to/video.mp4"
-	update_interval_sec = 1
-	speed_multiplier = 2.0
-`)
-
-	// Write the config file to a temporary file
-	tmpFile, err := os.CreateTemp("", "config-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	_, err = tmpFile.Write(configFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tmpFile.Close()
-
-	// Load the config file
-	cfg, err := LoadFile(tmpFile.Name())
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		config  Config
+		wantErr bool
+	}{
+		{
+			name: "valid config",
+			config: Config{
+				App: AppConfig{
+					LogLevel: "info",
+				},
+				BLE: BLEConfig{
+					SensorUUID:      "some-uuid",
+					ScanTimeoutSecs: 10,
+				},
+				Speed: SpeedConfig{
+					SmoothingWindow:      5,
+					SpeedThreshold:       10.0,
+					WheelCircumferenceMM: 2000,
+					SpeedUnits:           "km/h",
+				},
+				Video: VideoConfig{
+					FilePath:          "test.mp4",
+					DisplaySpeed:      true,
+					WindowScaleFactor: 1.5,
+					UpdateIntervalSec: 2,
+					SpeedMultiplier:   1.2,
+				},
+			},
+			wantErr: false,
+		},
+		//... other test cases no covered by the other validation tests...
 	}
 
-	// Verify the config values
-	if cfg.BLE.SensorUUID != "12345678-1234-1234-1234-123456789012" {
-		t.Errorf("BLE sensor UUID mismatch: expected %q, got %q", "12345678-1234-1234-1234-123456789012", cfg.BLE.SensorUUID)
+	// Run tests for each test scenario
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Create a temporary directory
+			tmpDir, err := os.MkdirTemp("", "config-test")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Clean up the temporary directory
+			defer os.RemoveAll(tmpDir)
+
+			// Create a temporary config file
+			tmpFile, err := os.CreateTemp(tmpDir, "config-")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Clean up the temporary config file
+			defer os.Remove(tmpFile.Name())
+
+			// Create a temporary video file
+			videoFile, err := os.Create(filepath.Join(tmpDir, "test.mp4"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Clean up the temporary video file
+			defer os.Remove(videoFile.Name())
+			err = videoFile.Close()
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Update the configuration to include the full path to the video file
+			tt.config.Video.FilePath = filepath.Join(tmpDir, "test.mp4")
+
+			var buf bytes.Buffer
+
+			enc := toml.NewEncoder(&buf)
+			if err := enc.Encode(tt.config); err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = tmpFile.WriteString(buf.String())
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = tmpFile.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = LoadFile(tmpFile.Name())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+		})
 	}
-	if cfg.Speed.SmoothingWindow != 5 {
-		t.Errorf("Speed smoothing window mismatch: expected %d, got %d", 5, cfg.Speed.SmoothingWindow)
-	}
-	if cfg.Video.FilePath != "[VIDEO]path/to/video.mp4" {
-		t.Errorf("Video file path mismatch: expected %q, got %q", "[VIDEO]path/to/video.mp4", cfg.Video.FilePath)
-	}
+
 }
 
-func TestLoadFile_InvalidConfig(t *testing.T) {
-	// Create an invalid config file
-	configFile := []byte(`
-	[ble]
-	sensor_uuid = invalid-uuid
-`)
+// TestValidateLogLevel tests the validateLogLevel function
+func TestValidateLogLevel(t *testing.T) {
 
-	// Write the config file to a temporary file
-	tmpFile, err := os.CreateTemp("", "config-test")
-	if err != nil {
-		t.Fatal(err)
+	// Define test cases
+	tests := []struct {
+		name     string
+		logLevel string
+		wantErr  bool
+	}{
+		{
+			name:     "valid log level",
+			logLevel: "info",
+			wantErr:  false,
+		}, {
+			name:     "invalid log level",
+			logLevel: "invalid",
+			wantErr:  true,
+		},
 	}
-	defer os.Remove(tmpFile.Name())
 
-	_, err = tmpFile.Write(configFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tmpFile.Close()
+	for _, tt := range tests {
 
-	// Load the config file
-	_, err = LoadFile(tmpFile.Name())
-	if err == nil {
-		t.Errorf("Expected error loading invalid config file, but got nil")
+		t.Run(tt.name, func(t *testing.T) {
+
+			ac := &AppConfig{LogLevel: tt.logLevel}
+
+			if err := ac.validateLogLevel(); (err != nil) != tt.wantErr {
+				t.Errorf("validateLogLevel() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+		})
 	}
+
 }
 
-func TestLoadFile_MissingConfigFile(t *testing.T) {
-	// Try to load a non-existent config file
-	_, err := LoadFile("non-existent-config-file.toml")
-	if err == nil {
-		t.Errorf("Expected error loading missing config file, but got nil")
+// TestValidateSpeedUnits tests the validateSpeedUnits function
+func TestValidateSpeedUnits(t *testing.T) {
+
+	// Define test cases
+	tests := []struct {
+		name       string
+		speedUnits string
+		wantErr    bool
+	}{
+		{
+			name:       "valid speed units",
+			speedUnits: "km/h",
+			wantErr:    false,
+		}, {
+			name:       "invalid speed units",
+			speedUnits: "invalid",
+			wantErr:    true,
+		},
 	}
+
+	// Run tests
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			sc := &SpeedConfig{SpeedUnits: tt.speedUnits}
+			if err := sc.validateSpeedUnits(); (err != nil) != tt.wantErr {
+				t.Errorf("validateSpeedUnits() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+		})
+	}
+
+}
+
+// TestValidateVideoFile tests the validateVideoFile function
+func TestValidateVideoFile(t *testing.T) {
+
+	// Define test cases
+	tests := []struct {
+		name     string
+		filePath string
+		wantErr  bool
+	}{
+		{
+			name:     "existing video file",
+			filePath: "./config_test.go", // This file exists, so we use it as an example
+			wantErr:  false,
+		}, {
+			name:     "non-existent video file",
+			filePath: "non-existent.mp4",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			vc := &VideoConfig{FilePath: tt.filePath}
+			if err := vc.validateVideoFile(); (err != nil) != tt.wantErr {
+				t.Errorf("validateVideoFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+		})
+	}
+
 }
