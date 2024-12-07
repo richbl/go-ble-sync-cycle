@@ -5,77 +5,166 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gen2brain/go-mpv"
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockMpv struct {
-	mock.Mock
+// init initializes the logger with the debug level
+func init() {
+
+	// logger needed for testing of video controller component
+	logger.Initialize("debug")
+
 }
 
-func (m *MockMpv) Initialize() error {
-	return m.Called().Error(0)
-}
+// TestNewPlaybackController tests the creation of a new PlaybackController
+func TestNewPlaybackController(t *testing.T) {
 
-func (m *MockMpv) TerminateDestroy() {
-	m.Called()
-}
-
-func (m *MockMpv) SetOption(option string, format int, value interface{}) error {
-	return m.Called(option, format, value).Error(0)
-}
-
-func (m *MockMpv) Command(cmd []string) error {
-	return m.Called(cmd).Error(0)
-}
-
-func (m *MockMpv) SetProperty(property string, format int, value interface{}) error {
-	return m.Called(property, format, value).Error(0)
-}
-
-func (m *MockMpv) GetProperty(property string, format int) (interface{}, error) {
-	args := m.Called(property, format)
-	return args.Get(0), args.Error(1)
-}
-
-func TestPlaybackController_Start(t *testing.T) {
-	mockMpv := new(MockMpv)
-
-	mockMpv.On("Initialize").Return(nil)
-	mockMpv.On("TerminateDestroy").Return()
-	mockMpv.On("SetOption", "window-scale", 0, 0.5).Return(nil)
-	mockMpv.On("Command", []string{"loadfile", "test_video.mp4"}).Return(nil)
-	mockMpv.On("SetProperty", "pause", 0, false).Return(nil)
-	mockMpv.On("GetProperty", "pause", 0).Return(false, nil)
-	mockMpv.On("SetProperty", "speed", 0, mock.Anything).Return(nil)
-
+	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:          "test_video.mp4",
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
 		UpdateIntervalSec: 1,
-		SpeedMultiplier:   2.0,
+		SpeedMultiplier:   1.0,
+		DisplaySpeed:      true,
 	}
 
+	// Create a speed configuration for testing
 	speedConfig := config.SpeedConfig{
-		SpeedThreshold: 0.5,
+		SpeedThreshold: 0.1,
 	}
 
-	controller, _ := NewPlaybackController(videoConfig, speedConfig)
-	speedController := speed.NewSpeedController(3)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	go func() {
-		speedController.UpdateSpeed(5.0)
-		time.Sleep(time.Second)
-		speedController.UpdateSpeed(6.0)
-	}()
-
-	err := controller.Start(ctx, speedController)
+	// Create a new PlaybackController with the test configurations
+	controller, err := NewPlaybackController(videoConfig, speedConfig)
+	assert.NotNil(t, controller)
 	assert.NoError(t, err)
 
-	mockMpv.AssertExpectations(t)
+}
+
+// TestPlaybackController_Start tests the Start method of the PlaybackController
+func TestPlaybackController_Start(t *testing.T) {
+
+	// Create a video configuration for testing.
+	videoConfig := config.VideoConfig{
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		DisplaySpeed:      true,
+	}
+
+	// Create a speed configuration for testing
+	speedConfig := config.SpeedConfig{
+		SpeedThreshold: 0.1,
+	}
+
+	// Create a new PlaybackController with the test configurations
+	controller, err := NewPlaybackController(videoConfig, speedConfig)
+	assert.NotNil(t, controller)
+	assert.NoError(t, err)
+
+	// Create a context with a timeout of 5 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Create a speed controller for testing
+	speedController := &speed.SpeedController{}
+
+	// Start the PlaybackController with the test context and speed controller
+	err = controller.Start(ctx, speedController)
+	assert.NoError(t, err)
+
+}
+
+// TestPlaybackController_configurePlayer tests the configurePlayer method of the PlaybackController
+func TestPlaybackController_configurePlayer(t *testing.T) {
+
+	// Create a video configuration for testing
+	videoConfig := config.VideoConfig{
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		DisplaySpeed:      true,
+	}
+
+	// Create a speed configuration for testing
+	speedConfig := config.SpeedConfig{
+		SpeedThreshold: 0.1,
+	}
+
+	// Create a new PlaybackController with the test configurations
+	controller, err := NewPlaybackController(videoConfig, speedConfig)
+	assert.NotNil(t, controller)
+	assert.NoError(t, err)
+
+	// Configure the player with the test configuration
+	err = controller.configurePlayer()
+	assert.NoError(t, err)
+
+}
+
+// TestPlaybackController_loadVideoFile tests the loadVideoFile method of the PlaybackController
+func TestPlaybackController_loadVideoFile(t *testing.T) {
+
+	// Create a video configuration for testing
+	videoConfig := config.VideoConfig{
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		DisplaySpeed:      true,
+	}
+
+	// Create a speed configuration for testing
+	speedConfig := config.SpeedConfig{
+		SpeedThreshold: 0.1,
+	}
+
+	// Create a new PlaybackController with the test configurations
+	controller, err := NewPlaybackController(videoConfig, speedConfig)
+	assert.NotNil(t, controller)
+	assert.NoError(t, err)
+
+	// Load the video file with the test configuration
+	err = controller.loadVideoFile()
+	assert.NoError(t, err)
+
+}
+
+// TestPlaybackController_setPauseStatus tests the setPauseStatus method of the PlaybackController
+func TestPlaybackController_setPauseStatus(t *testing.T) {
+
+	// Create a video configuration for testing
+	videoConfig := config.VideoConfig{
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		SpeedMultiplier:   1.0,
+		UpdateIntervalSec: 1,
+		DisplaySpeed:      true,
+	}
+
+	// Create a speed configuration for testing
+	speedConfig := config.SpeedConfig{
+		SpeedThreshold: 0.1,
+	}
+
+	// Create a new PlaybackController with the test configurations
+	controller, err := NewPlaybackController(videoConfig, speedConfig)
+	assert.NotNil(t, controller)
+	assert.NoError(t, err)
+
+	// Set the pause status
+	err = controller.player.SetProperty("pause", mpv.FormatFlag, true)
+	assert.NoError(t, err)
+
+	// check if the pause status is set
+	result, err := controller.player.GetProperty("pause", mpv.FormatFlag)
+	assert.True(t, result.(bool))
+	assert.NoError(t, err)
+
 }
