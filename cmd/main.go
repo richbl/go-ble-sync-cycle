@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"os/signal"
@@ -17,13 +18,18 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func main() {
+// appControllers holds the main application controllers
+type appControllers struct {
+	speedController *speed.SpeedController
+	videoPlayer     *video.PlaybackController
+	bleController   *ble.BLEController
+}
 
-	// TODO add/update test for logging/speed/playback/config
+func main() {
 
 	log.Println("Starting BLE Sync Cycle 0.5.0")
 
-	// Load configuration file (TOML)
+	// Load configuration
 	cfg, err := config.LoadFile("internal/configuration/config.toml")
 	if err != nil {
 		log.Fatal("FATAL - Failed to load TOML configuration: " + err.Error())
@@ -32,205 +38,150 @@ func main() {
 	// Initialize logger
 	logger.Initialize(cfg.App.LogLevel)
 
-	// Create contexts to manage goroutines and system interrupts
+	// Create contexts for managing goroutines and cancellations
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	defer rootCancel()
-	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	// Create component controllers
-	speedController, videoPlayer, bleController, err := createControllers(*cfg)
+	controllers, err := setupAppControllers(*cfg)
 	if err != nil {
 		logger.Fatal("[APP] Failed to create controllers: " + err.Error())
 	}
 
-	// Scan for BLE peripheral and return CSC speed characteristic
-	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, speedController, bleController)
-	if err != nil {
-		logger.Error("[BLE] BLE peripheral scan failed: " + err.Error())
-		return
+	// Run the application
+	if err := startAppControllers(rootCtx, controllers); err != nil {
+		logger.Error(err.Error())
 	}
 
-	// Start components (running concurrently)
-	var wg sync.WaitGroup
-
-	// Start BLE peripheral speed monitoring
-	if err := monitorBLESpeed(ctx, &wg, bleController, speedController, bleSpeedCharacter, rootCancel); err != nil {
-		logger.Error("[BLE] Failed to start BLE speed monitoring: " + err.Error())
-		return
-	}
-
-	// Start video playback
-	if err := playVideo(ctx, &wg, videoPlayer, speedController, rootCancel); err != nil {
-		logger.Error("[VIDEO] Failed to start video playback: " + err.Error())
-		return
-	}
-
-	// Set up interrupt handling, allowing for user interrupts and graceful component shutdown
-	if err := interruptHandler(ctx, rootCancel); err != nil {
-		logger.Error("[APP] Failed to set up interrupt handling: " + err.Error())
-		return
-	}
-
-	// Wait for all goroutines to complete
-	wg.Wait()
+	// Shutdown the application... buh bye!
 	logger.Info("[APP] Application shutdown complete. Goodbye!")
 
 }
 
-// createControllers creates the speed controller, video player, and BLE controller
-func createControllers(cfg config.Config) (*speed.SpeedController, *video.PlaybackController, *ble.BLEController, error) {
+// startAppControllers is responsible for starting and managing the component controllers
+func startAppControllers(ctx context.Context, controllers appControllers) error {
 
-	// Create speed controller component
+	// Create shutdown signal
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Scan for BLE peripheral of interest
+	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, controllers)
+	if err != nil {
+		return errors.New("[BLE] BLE peripheral scan failed: " + err.Error())
+	}
+
+	// Start component controllers concurrently
+	var wg sync.WaitGroup
+	errs := make(chan error, 2)
+
+	// Start BLE sensor speed monitoring
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := monitorBLESpeed(ctx, controllers, bleSpeedCharacter); err != nil {
+			errs <- errors.New("[BLE] Speed monitoring failed: " + err.Error())
+		}
+	}()
+
+	// Start video playback
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := playVideo(ctx, controllers); err != nil {
+			errs <- errors.New("[VIDEO] Playback failed: " + err.Error())
+		}
+	}()
+
+	// Wait for shutdown signals from go routines
+	go func() {
+		<-ctx.Done()
+		logger.Info("[APP] Shutdown signal received")
+	}()
+
+	// Wait for goroutines to finish or an error to occur
+	go func() {
+		wg.Wait()
+		close(errs)
+	}()
+
+	// Check for errors from components
+	if err := <-errs; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setupAppControllers creates and initializes the application controllers
+func setupAppControllers(cfg config.Config) (appControllers, error) {
+
+	// Create speed controller
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 
-	// Create video player component
+	// Create video player
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		return nil, nil, nil, err
+		return appControllers{}, errors.New("[VIDEO] Failed to create video player: " + err.Error())
 	}
 
-	// Create BLE controller component
+	// Create BLE controller
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		return nil, nil, nil, err
+		return appControllers{}, errors.New("[BLE] Failed to create BLE controller: " + err.Error())
 	}
 
-	return speedController, videoPlayer, bleController, nil
+	return appControllers{
+		speedController: speedController,
+		videoPlayer:     videoPlayer,
+		bleController:   bleController,
+	}, nil
 
 }
 
-// scanForBLESpeedCharacteristic scans for the BLE peripheral and returns the CSC speed characteristic
-func scanForBLESpeedCharacteristic(ctx context.Context, speedController *speed.SpeedController, bleController *ble.BLEController) (*bluetooth.DeviceCharacteristic, error) {
+// scanForBLESpeedCharacteristic scans for the BLE CSC speed characteristic
+func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControllers) (*bluetooth.DeviceCharacteristic, error) {
 
-	var bleSpeedCharacter *bluetooth.DeviceCharacteristic
+	// create a channel to receive the characteristic
+	results := make(chan *bluetooth.DeviceCharacteristic, 1)
 	errChan := make(chan error, 1)
 
+	// Scan for the BLE CSC speed characteristic
 	go func() {
-
-		var err error
-		bleSpeedCharacter, err = bleController.GetBLECharacteristic(ctx, speedController)
-		errChan <- err
-
-	}()
-
-	// Wait for the scanning process to complete or context cancellation
-	select {
-	case err := <-errChan:
+		characteristic, err := controllers.bleController.GetBLECharacteristic(ctx, controllers.speedController)
 
 		if err != nil {
-
-			if ctx.Err() != nil {
-				logger.Error("[BLE] BLE speed characteristic scan cancelled: ", ctx.Err())
-				return nil, ctx.Err()
-			}
-			return nil, err
-
+			errChan <- err
+			return
 		}
 
-		return bleSpeedCharacter, nil
+		// Return the characteristic
+		results <- characteristic
 
+	}()
+
+	// Wait for the characteristic or an error
+	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
-
-	}
-}
-
-// monitorBLESpeed starts BLE speed characteristic monitoring used for reporting real-time sensor data
-func monitorBLESpeed(ctx context.Context, wg *sync.WaitGroup, bleController *ble.BLEController, speedController *speed.SpeedController, bleSpeedCharacter *bluetooth.DeviceCharacteristic, cancel context.CancelFunc) error {
-
-	errChan := make(chan error, 1)
-	wg.Add(1)
-
-	go func() {
-
-		defer wg.Done()
-
-		if err := bleController.GetBLEUpdates(ctx, speedController, bleSpeedCharacter); err != nil {
-			logger.Error("[BLE] BLE speed characteristic monitoring error: " + err.Error())
-			errChan <- err
-			cancel()
-			return
-		}
-
-		errChan <- nil
-
-	}()
-
-	// Wait for BLE monitoring to complete or context cancellation
-	select {
 	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return nil
-	default:
-		return nil
+		return nil, err
+	case characteristic := <-results:
+		return characteristic, nil
 	}
 
 }
 
-// playVideo starts the video player and monitors speed changes from the BLE sensor
-func playVideo(ctx context.Context, wg *sync.WaitGroup, videoPlayer *video.PlaybackController, speedController *speed.SpeedController, cancel context.CancelFunc) error {
+// monitorBLESpeed monitors the BLE speed characteristic
+func monitorBLESpeed(ctx context.Context, controllers appControllers, bleSpeedCharacter *bluetooth.DeviceCharacteristic) error {
 
-	errChan := make(chan error, 1)
-	wg.Add(1)
-
-	go func() {
-
-		defer wg.Done()
-
-		if err := videoPlayer.Start(ctx, speedController); err != nil {
-			logger.Error("[VIDEO] Video playback error: " + err.Error())
-			errChan <- err
-			cancel()
-			return
-		}
-
-		errChan <- nil
-
-	}()
-
-	// Wait for video playback to complete or context cancellation
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return nil
-	default:
-		return nil
-	}
+	return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController, bleSpeedCharacter)
 
 }
 
-// interruptHandler waits for shutdown signals and cancels the context when received
-func interruptHandler(ctx context.Context, cancel context.CancelFunc) error {
+// playVideo starts the video player
+func playVideo(ctx context.Context, controllers appControllers) error {
 
-	errChan := make(chan error, 1)
-	sigChan := make(chan os.Signal, 1)
-
-	go func() {
-
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-		select {
-		case <-sigChan:
-			logger.Info("[APP] Shutdown signal received")
-			cancel()
-			errChan <- nil
-		case <-ctx.Done():
-			errChan <- nil
-		}
-
-	}()
-
-	// Wait for video playback to complete or context cancellation
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return nil
-	default:
-		return nil
-	}
+	return controllers.videoPlayer.Start(ctx, controllers.speedController)
 
 }

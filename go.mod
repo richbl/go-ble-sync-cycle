@@ -14,7 +14,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/soypat/cyw43439 v0.0.0-20240609122733-da9153086796 // indirect
 	github.com/soypat/seqs v0.0.0-20240527012110-1201bab640ef // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
 	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
@@ -24,8 +23,6 @@ require (
 
 require (
 	github.com/gen2brain/go-mpv v0.2.3
-	github.com/golang/glog v1.2.3
-	github.com/jba/slog v0.2.0
 	github.com/stretchr/testify v1.10.0
 	tinygo.org/x/bluetooth v0.10.0
 )
