@@ -50,7 +50,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedController *speed.SpeedController) (*bluetooth.DeviceCharacteristic, error) {
 
 	// Scan for BLE peripheral
-	result, err := m.scanForBLEPeripheral(ctx)
+	result, err := m.ScanForBLEPeripheral(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 
 	// Subscribe to live BLE sensor notifications
 	if err := char.EnableNotifications(func(buf []byte) {
-		speed := m.processBLESpeed(buf)
+		speed := m.ProcessBLESpeed(buf)
 		speedController.UpdateSpeed(speed)
 	}); err != nil {
 		return err
@@ -107,7 +107,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 }
 
 // scanForBLEPeripheral scans for the specified BLE peripheral UUID within the given timeout
-func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
+func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
 	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
@@ -152,7 +152,7 @@ func (m *BLEController) scanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 }
 
 // processBLESpeed processes raw BLE CSC speed data and returns the adjusted current speed
-func (m *BLEController) processBLESpeed(data []byte) float64 {
+func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
 	if len(data) < 1 {
 		return 0.0
 	}
