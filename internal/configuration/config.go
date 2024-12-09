@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -44,38 +43,30 @@ type VideoConfig struct {
 	SpeedMultiplier   float64 `toml:"speed_multiplier"`
 }
 
-// Set valid configuration values in TOML
-var validLogLevels = []string{"debug", "info", "warn", "error"}
-var validSpeedUnits = []string{"km/h", "mph"}
+// Constants for valid configuration values
+const (
+	logLevelDebug = "debug"
+	logLevelInfo  = "info"
+	logLevelWarn  = "warn"
+	logLevelError = "error"
+	logLevelFatal = "fatal"
+
+	speedUnitsKMH = "km/h"
+	speedUnitsMPH = "mph"
+)
 
 // LoadFile loads the application configuration from the given filepath
 func LoadFile(filepath string) (*Config, error) {
 
 	var config Config
 
-	// Load configuration file (TOML)
-	_, err := toml.DecodeFile(filepath, &config)
-	if err != nil {
+	// Read the TOML configuration file
+	if _, err := toml.DecodeFile(filepath, &config); err != nil {
 		return nil, err
 	}
 
-	// Validate user logging level provided in TOML file
-	if err := config.App.validateLogLevel(); err != nil {
-		return nil, err
-	}
-
-	// Validate user speed units provided in TOML file
-	if err := config.Speed.validateSpeedUnits(); err != nil {
-		return nil, err
-	}
-
-	// Validate sensor UUID provided in TOML file
-	if config.BLE.SensorUUID == "" {
-		return nil, errors.New("sensor UUID must be specified in configuration")
-	}
-
-	// Validate video file path provided in TOML file
-	if err := config.Video.validateVideoFile(); err != nil {
+	// Validate all configuration elements
+	if err := config.validate(); err != nil {
 		return nil, err
 	}
 
@@ -83,52 +74,73 @@ func LoadFile(filepath string) (*Config, error) {
 
 }
 
-// ValidateLogLevel validates the log level provided in the TOML file
-func (ac *AppConfig) validateLogLevel() error {
+// validate performs validation on the configuration values
+func (c *Config) validate() error {
 
-	if !contains(validLogLevels, ac.LogLevel) {
-		validLevelsStr := strings.Join(validLogLevels, ", ")
-		return errors.New("invalid log level " + ac.LogLevel + ": must be one of [" + validLevelsStr + "]")
+	// Validate application configuration elements
+	if err := c.App.validate(); err != nil {
+		return err
+	}
+
+	// Validate remaining configuration elements
+	if err := c.Speed.validate(); err != nil {
+		return err
+	}
+
+	if err := c.BLE.validate(); err != nil {
+		return err
+	}
+
+	if err := c.Video.validate(); err != nil {
+		return err
 	}
 
 	return nil
 
 }
 
-// ValidateSpeedUnits validates the speed units provided in the TOML file
-func (sc *SpeedConfig) validateSpeedUnits() error {
+// validate validates AppConfig elements
+func (ac *AppConfig) validate() error {
 
-	if !contains(validSpeedUnits, sc.SpeedUnits) {
-		validSpeedUnitsStr := strings.Join(validSpeedUnits, ", ")
-		return errors.New("invalid speed units " + sc.SpeedUnits + ": must be one of [" + validSpeedUnitsStr + "]")
+	switch ac.LogLevel {
+	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError, logLevelFatal:
+		return nil
+	default:
+		return errors.New("invalid log level: " + ac.LogLevel)
+	}
+
+}
+
+// validate validates SpeedConfig elements
+func (sc *SpeedConfig) validate() error {
+
+	switch sc.SpeedUnits {
+	case speedUnitsKMH, speedUnitsMPH:
+		return nil
+	default:
+		return errors.New("invalid speed units: " + sc.SpeedUnits)
+	}
+
+}
+
+// validate validates BLEConfig elements
+func (bc *BLEConfig) validate() error {
+
+	if bc.SensorUUID == "" {
+		return errors.New("sensor UUID must be specified in configuration")
 	}
 
 	return nil
 
 }
 
-// ValidateVideoFile validates the video file path provided in the TOML file
-func (vc *VideoConfig) validateVideoFile() error {
+// validate validates VideoConfig elements
+func (vc *VideoConfig) validate() error {
 
-	if _, err := os.Stat(vc.FilePath); os.IsNotExist(err) {
-		return errors.New("invalid video file " + vc.FilePath + ": file does not exist")
+	if _, err := os.Stat(vc.FilePath); err != nil {
+		return err
 	}
 
 	return nil
-
-}
-
-// contains returns true if the string list contains the specified string
-func contains(list []string, str string) bool {
-
-	for _, v := range list {
-
-		if v == str {
-			return true
-		}
-
-	}
-
-	return false
 
 }
