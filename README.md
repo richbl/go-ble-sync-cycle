@@ -288,7 +288,7 @@ Q: Do all Bluetooth devices work with **BLE Sync Cycle**?
 A: Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
 
 Q: Can I disable the log messages in **BLE Sync Cycle**?
-A: Yes, but it's currently not a setting that can be changed in the `config.toml` file. Instead, you'll need to modify the source code directly (check out the `//Disable logging` comment in `main.go`).
+A: While you cannot entirely disable log messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose. When set to "error", only error/fatal messages will be displayed which, under normal circumstances, should be none.
 
 Q: How do I use **BLE Sync Cycle**?
 A: See the [Basic Usage](#basic-usage) section above
