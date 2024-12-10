@@ -9,13 +9,15 @@ import (
 
 // SpeedController represents the speed controller component
 type SpeedController struct {
-	mu            sync.RWMutex
 	speeds        *ring.Ring
 	window        int
 	currentSpeed  float64
 	smoothedSpeed float64
 	lastUpdate    time.Time
 }
+
+// Mutex for managing concurrent access
+var mutex sync.RWMutex
 
 // NewSpeedController creates a new speed controller component which includes a ring buffer for
 // storing speed measurements for video playback speed smoothing
@@ -40,8 +42,8 @@ func NewSpeedController(window int) *SpeedController {
 // the specified window of time
 func (t *SpeedController) UpdateSpeed(speed float64) {
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	t.currentSpeed = speed
 	t.speeds.Value = speed
@@ -64,8 +66,9 @@ func (t *SpeedController) UpdateSpeed(speed float64) {
 // GetSmoothedSpeed returns the smoothed speed measurement
 func (t *SpeedController) GetSmoothedSpeed() float64 {
 
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	mutex.RLock()
+	defer mutex.RUnlock()
+
 	return t.smoothedSpeed
 
 }
@@ -73,8 +76,8 @@ func (t *SpeedController) GetSmoothedSpeed() float64 {
 // GetSpeedBuffer returns the speed buffer as an array of string
 func (t *SpeedController) GetSpeedBuffer() []string {
 
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	mutex.RLock()
+	defer mutex.RUnlock()
 
 	var speeds []string
 	t.speeds.Do(func(x interface{}) {
