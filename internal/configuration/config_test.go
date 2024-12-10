@@ -78,7 +78,7 @@ func TestLoadFile(t *testing.T) {
 
 				[video]
 				file_path = "test.mp4"
-				display_speed = true
+				display_playback_speed = true
 				window_scale_factor = 1.0
 				update_interval_sec = 1
 				speed_multiplier = 1.0
@@ -103,7 +103,7 @@ func TestLoadFile(t *testing.T) {
 
 				[video]
 				file_path = "non-existent-file.mp4"
-				display_speed = true
+				display_playback_speed = true
 				window_scale_factor = -1.0
 				update_interval_sec = -1
 				speed_multiplier = -1.0
@@ -158,7 +158,7 @@ func TestValidate(t *testing.T) {
 
 				[video]
 				file_path = "test.mp4"
-				display_speed = true
+				display_playback_speed = true
 				window_scale_factor = 1.0
 				update_interval_sec = 1
 				speed_multiplier = 1.0
@@ -183,7 +183,7 @@ func TestValidate(t *testing.T) {
 
 				[video]
 				file_path = "non-existent-file.mp4"
-				display_speed = true
+				display_playback_speed = true
 				window_scale_factor = -1.0
 				update_interval_sec = -1
 				speed_multiplier = -1.0
@@ -236,22 +236,22 @@ func TestValidateVideoConfig(t *testing.T) {
 		{
 			name: "valid config",
 			config: VideoConfig{
-				FilePath:          "test.mp4",
-				DisplaySpeed:      true,
-				WindowScaleFactor: 1.0,
-				UpdateIntervalSec: 1,
-				SpeedMultiplier:   1.0,
+				FilePath:             "test.mp4",
+				DisplayPlaybackSpeed: true,
+				WindowScaleFactor:    1.0,
+				UpdateIntervalSec:    1,
+				SpeedMultiplier:      1.0,
 			},
 			wantErr: false,
 		},
 		{
 			name: "invalid config",
 			config: VideoConfig{
-				FilePath:          "non-existent-file.mp4",
-				DisplaySpeed:      true,
-				WindowScaleFactor: -1.0,
-				UpdateIntervalSec: -1,
-				SpeedMultiplier:   -1.0,
+				FilePath:             "non-existent-file.mp4",
+				DisplayPlaybackSpeed: true,
+				WindowScaleFactor:    -1.0,
+				UpdateIntervalSec:    -1,
+				SpeedMultiplier:      -1.0,
 			},
 			wantErr: true,
 		},

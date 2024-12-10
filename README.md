@@ -107,11 +107,13 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
-  display_speed = true           # Display video playback speed on the screen (true/false)
+  display_cycle_speed = true     # Display cycle speed on the screen (true/false)
+  display_playback_speed = true  # Display video playback speed on the screen (true/false)
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
   update_interval_sec = 1        # Seconds to wait between video player updates
   speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to video
                                  # playback speed (0.0 = stopped, 1.0 = normal speed)
+
 ```
 
 An explanation of the various sections of the `config.toml` file is provided below:
@@ -147,9 +149,8 @@ The `[speed]` section defines the configuration for the speed controller compone
 The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
 - `file_path`: The path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
-
-- `display_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
-
+- `display_cycle_speed`: A boolean value that indicates whether to display the cycle sensor speed on the on-screen display (OSD)
+- `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful (e.g., 0.5 = half screen)
 - `update_interval_sec`: The number of seconds to wait between video player updates
 - `speed_multiplier`: The multiplier that translates sensor speed (km/h or mph) to video playback speed (0.0 = stopped, 1.0 = normal speed)
@@ -297,10 +298,13 @@ A: See the [Editing the TOML File](#editing-the-toml-file) section above
 
 ## Roadmap
 
+Future enhancements include (in no particular order):
+
 - Add support for other video players (e.g., VLC)
 - Add optional check for battery status of BLE peripheral device
-- Add support for non-BLE peripheral devices
 - Create a desktop application (GUI) for **BLE Sync Cycle**
+- Add support for non-BLE peripheral devices
+- Automatically quit the application after a period of inactivity
 - As an exercise, refactor using [the Rust language](https://www.rust-lang.org/)
 
 ## Acknowledgments

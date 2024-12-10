@@ -36,11 +36,13 @@ type SpeedConfig struct {
 
 // VideoConfig represents the MPV video player configuration
 type VideoConfig struct {
-	FilePath          string  `toml:"file_path"`
-	DisplaySpeed      bool    `toml:"display_speed"`
-	WindowScaleFactor float64 `toml:"window_scale_factor"`
-	UpdateIntervalSec int     `toml:"update_interval_sec"`
-	SpeedMultiplier   float64 `toml:"speed_multiplier"`
+	FilePath             string  `toml:"file_path"`
+	DisplayCycleSpeed    bool    `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool    `toml:"display_playback_speed"`
+	WindowScaleFactor    float64 `toml:"window_scale_factor"`
+	UpdateIntervalSec    int     `toml:"update_interval_sec"`
+	SpeedMultiplier      float64 `toml:"speed_multiplier"`
+	ShowOSD              bool
 }
 
 // Constants for valid configuration values
@@ -137,9 +139,13 @@ func (bc *BLEConfig) validate() error {
 // validate validates VideoConfig elements
 func (vc *VideoConfig) validate() error {
 
+	// Check if the video file exists
 	if _, err := os.Stat(vc.FilePath); err != nil {
 		return err
 	}
+
+	// Check if at least one OSD display flag is set
+	vc.ShowOSD = (vc.DisplayCycleSpeed || vc.DisplayPlaybackSpeed)
 
 	return nil
 
