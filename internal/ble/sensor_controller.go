@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -69,7 +70,7 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 	// Find CSC service and characteristic
 	svc, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x1816)})
 	if err != nil {
-		logger.Warn("[BLE] CSC services discovery failed: " + err.Error())
+		logger.Error("[BLE] CSC services discovery failed: " + err.Error())
 		return nil, err
 	}
 
@@ -106,48 +107,70 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 
 }
 
-// scanForBLEPeripheral scans for the specified BLE peripheral UUID within the given timeout
+// TODO
+
+// ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
 func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
 	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 
 	found := make(chan bluetooth.ScanResult, 1)
+	errChan := make(chan error, 1)
 
 	go func() {
 
 		logger.Info("[BLE] Now scanning the ether for BLE peripheral UUID of " + m.bleConfig.SensorUUID + "...")
 
-		err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
-
-			if result.Address.String() == m.bleConfig.SensorUUID {
-
-				if err := m.bleAdapter.StopScan(); err != nil {
-					logger.Error("[BLE] Failed to stop scan: " + err.Error())
-				}
-
-				found <- result
-			}
-
-		})
-
-		if err != nil {
-			logger.Error("[BLE] Scan error: " + err.Error())
+		if err := m.startScanning(found); err != nil {
+			errChan <- err
 		}
 
 	}()
 
-	// Wait for the scan to complete or context cancellation
+	// Wait for device discovery or timeout
 	select {
+
 	case result := <-found:
 		logger.Info("[BLE] Found BLE peripheral " + result.Address.String())
 		return result, nil
+
+	case err := <-errChan:
+		return bluetooth.ScanResult{}, err
+
 	case <-scanCtx.Done():
 		if err := m.bleAdapter.StopScan(); err != nil {
-			logger.Info("[BLE] Failed to stop scan: " + err.Error())
+			logger.Error("[BLE] Failed to stop scan: " + err.Error())
 		}
+
 		return bluetooth.ScanResult{}, errors.New("scanning time limit reached")
 	}
+}
+
+// startScanning starts the BLE scan and sends the result to the found channel when the target device is discovered
+func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
+
+	err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+
+		if result.Address.String() == m.bleConfig.SensorUUID {
+
+			// Stop scanning
+			if err := m.bleAdapter.StopScan(); err != nil {
+				logger.Error(fmt.Sprintf("[BLE] Failed to stop scan: %v", err))
+			}
+
+			// Found the target peripheral
+			found <- result
+
+		}
+
+	})
+
+	if err != nil {
+		logger.Error("[BLE] Scan error: " + err.Error())
+	}
+
+	return nil
 
 }
 
