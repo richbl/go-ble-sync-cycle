@@ -2,7 +2,7 @@ package video
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -36,23 +36,21 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 	}, nil
 }
 
-// Start configures and starts the MPV video player
+// Start configures and starts the MPV media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.SpeedController) error {
 
 	defer p.player.TerminateDestroy()
 	logger.Info("[VIDEO] Starting MPV video player...")
 
-	if err := p.configurePlayer(); err != nil {
+	// Configure the MPV media player
+	if err := p.configureMPVplayer(); err != nil {
 		return err
 	}
 
+	// Load the video file into MPV
 	logger.Info("[VIDEO] Loading video file: " + p.config.FilePath)
-	if err := p.loadVideoFile(); err != nil {
+	if err := p.loadMPVvideo(); err != nil {
 		return err
-	}
-
-	if err := p.setPauseStatus(false); err != nil {
-		logger.Error("[VIDEO] Failed to start video playback: " + err.Error())
 	}
 
 	ticker := time.NewTicker(time.Second * time.Duration(p.config.UpdateIntervalSec))
@@ -68,7 +66,7 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 			return nil
 		case <-ticker.C:
 			if err := p.updatePlaybackSpeed(speedController, &lastSpeed); err != nil {
-				logger.Error("[VIDEO] Error updating playback speed: " + err.Error())
+				logger.Warn("[VIDEO] Error updating playback speed: " + err.Error())
 			}
 		}
 
@@ -76,15 +74,15 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 
 }
 
-// configurePlayer configures the MPV video player
-func (p *PlaybackController) configurePlayer() error {
+// configureMPVplayer configures the MPV video player
+func (p *PlaybackController) configureMPVplayer() error {
 
 	return p.player.SetOptionString("autofit", strconv.Itoa(int(p.config.WindowScaleFactor*100))+"%")
 
 }
 
-// loadVideoFile loads the video file into the MPV video player
-func (p *PlaybackController) loadVideoFile() error {
+// loadMPVvideo loads the video file into the MPV video player
+func (p *PlaybackController) loadMPVvideo() error {
 
 	return p.player.Command([]string{"loadfile", p.config.FilePath})
 
@@ -93,87 +91,138 @@ func (p *PlaybackController) loadVideoFile() error {
 // updatePlaybackSpeed updates the video playback speed based on the sensor speed
 func (p *PlaybackController) updatePlaybackSpeed(speedController *speed.SpeedController, lastSpeed *float64) error {
 
+	// Get and display (log) the smoothed sensor speed
 	currentSpeed := speedController.GetSmoothedSpeed()
+	p.logSpeedInfo(speedController, currentSpeed)
 
-	logger.Info("[VIDEO] Sensor speed buffer: [" + strings.Join(speedController.GetSpeedBuffer(), " ") + "]")
-	logger.Info("[VIDEO] Smoothed sensor speed: " + strconv.FormatFloat(currentSpeed, 'f', 2, 64))
-
-	if currentSpeed == 0 {
-		logger.Info("[VIDEO] No speed detected, so pausing video...")
-		return p.setPauseStatus(true)
-	}
-
-	// Adjust video playback speed if the current speed is different from the last speed
-	if math.Abs(currentSpeed-*lastSpeed) > p.speedConfig.SpeedThreshold {
-		newSpeed := (currentSpeed * p.config.SpeedMultiplier) / 10.0
-		logger.Info("[VIDEO] Adjusting video speed to " + strconv.FormatFloat(newSpeed, 'f', 2, 64))
-
-		if err := p.setPlaybackSpeed(newSpeed); err != nil {
-			return err
-		}
-
+	// Check current sensor speed and adjust video playback speed if required
+	if err := p.checkSpeedState(currentSpeed, lastSpeed); err != nil {
+		return err
 	}
 
 	*lastSpeed = currentSpeed
 	return nil
+}
+
+// logSpeedInfo logs the sensor speed details
+func (p *PlaybackController) logSpeedInfo(sc *speed.SpeedController, currentSpeed float64) {
+
+	logger.Info("[VIDEO] Sensor speed buffer: [" + strings.Join(sc.GetSpeedBuffer(), " ") + "]")
+	logger.Info("[VIDEO] Smoothed sensor speed: " + strconv.FormatFloat(currentSpeed, 'f', 2, 64) + " " + p.speedConfig.SpeedUnits)
 
 }
 
-// setPlaybackSpeed sets the video playback speed
-func (p *PlaybackController) setPlaybackSpeed(newSpeed float64) error {
+// checkSpeedState checks the current sensor speed and adjusts video playback
+func (p *PlaybackController) checkSpeedState(currentSpeed float64, lastSpeed *float64) error {
 
-	if err := p.player.SetProperty("speed", mpv.FormatDouble, newSpeed); err != nil {
-		logger.Error("[VIDEO] Failed to update video speed: " + err.Error())
-		return err
+	// Pause the video playback if no speed is detected
+	if currentSpeed == 0 {
+		return p.pausePlayback()
 	}
 
-	if p.config.DisplaySpeed {
-
-		if err := p.player.SetOptionString("osd-msg1", fmt.Sprintf("Speed: %.2f", newSpeed)); err != nil {
-			return err
-		}
-
+	// Adjust the video playback speed if the sensor speed has changed beyond threshold value
+	if math.Abs(currentSpeed-*lastSpeed) > p.speedConfig.SpeedThreshold {
+		return p.adjustPlayback(currentSpeed)
 	}
 
-	return p.setPauseStatus(false)
+	return nil
 
 }
 
-// setPauseStatus sets the video playback status
-func (p *PlaybackController) setPauseStatus(pause bool) error {
+// pausePlayback pauses the video playback in the MPV media player
+func (p *PlaybackController) pausePlayback() error {
 
-	currentPause, err := p.player.GetProperty("pause", mpv.FormatFlag)
+	logger.Info("[VIDEO] No speed detected, so pausing video...")
 
-	if err != nil {
-		logger.Error("[VIDEO] Failed to get pause status: " + err.Error())
-		return err
+	// Update the on-screen display
+	if err := p.updateMPVdisplay(0.0, 0.0); err != nil {
+		return errors.New("failed to update OSD: " + err.Error())
 	}
 
-	// Return if the current pause status matches the requested pause status
-	if currentPause.(bool) == pause {
+	// Pause the video
+	return p.setMPVpauseState(true)
+
+}
+
+// adjustPlayback adjusts the video playback speed
+func (p *PlaybackController) adjustPlayback(currentSpeed float64) error {
+
+	playbackSpeed := (currentSpeed * p.config.SpeedMultiplier) / 10.0
+	logger.Info("[VIDEO] Updating video playback speed to " + strconv.FormatFloat(playbackSpeed, 'f', 2, 64))
+
+	// Update the video playback speed
+	if err := p.updateMPVplaybackSpeed(playbackSpeed); err != nil {
+		return errors.New("failed to set playback speed: " + err.Error())
+	}
+
+	// Update the on-screen display
+	if err := p.updateMPVdisplay(currentSpeed, playbackSpeed); err != nil {
+		return errors.New("failed to update OSD: " + err.Error())
+	}
+
+	// Unpause the video
+	return p.setMPVpauseState(false)
+}
+
+// updateMPVdisplay updates the MPV media player on-screen display
+func (p *PlaybackController) updateMPVdisplay(cycleSpeed, playbackSpeed float64) error {
+
+	// Return if no OSD options are enabled in TOML
+	if !p.config.ShowOSD {
 		return nil
 	}
 
-	// Set the pause status
-	if err := p.player.SetProperty("pause", mpv.FormatFlag, pause); err != nil {
-		result := "resumed"
+	// Build the OSD message based on TOML configuration
+	var osdMsg string
+	if p.config.DisplayCycleSpeed {
+		osdMsg += "Sensor Speed: " + strconv.FormatFloat(cycleSpeed, 'f', 2, 64) + " " + p.speedConfig.SpeedUnits + "\n"
+	}
 
-		if pause {
-			result = "paused"
-		}
+	if p.config.DisplayPlaybackSpeed {
+		osdMsg += "Playback Speed: " + strconv.FormatFloat(playbackSpeed, 'f', 2, 64) + "\n"
+	}
 
-		logger.Error("[VIDEO] Failed to " + result + " video: " + err.Error())
+	// Update the MPV media player on-screen display (OSD)
+	return p.player.SetOptionString("osd-msg1", osdMsg)
+
+}
+
+// updateMPVplaybackSpeed sets the video playback speed
+func (p *PlaybackController) updateMPVplaybackSpeed(playbackSpeed float64) error {
+
+	if err := p.player.SetProperty("speed", mpv.FormatDouble, playbackSpeed); err != nil {
+		return errors.New("failed to update video speed: " + err.Error())
+	}
+
+	return nil
+
+}
+
+// setMPVpauseState sets the video playback pause state
+func (p *PlaybackController) setMPVpauseState(pause bool) error {
+
+	// Get the current pause state from MPV
+	currentPause, err := p.player.GetProperty("pause", mpv.FormatFlag)
+	if err != nil {
 		return err
-
 	}
 
-	result := "resumed"
+	// Return if the current pause state matches the requested pause state
+	if pauseState, ok := currentPause.(bool); ok && pauseState == pause {
+		return nil
+	}
 
+	// Set the new pause state in MPV
+	if err := p.player.SetProperty("pause", mpv.FormatFlag, pause); err != nil {
+		return err
+	}
+
+	pauseState := "resumed"
 	if pause {
-		result = "paused"
+		pauseState = "paused"
 	}
 
-	logger.Info("[VIDEO] Video " + result + " successfully")
+	logger.Info("[VIDEO] Video " + pauseState + " successfully")
 	return nil
 
 }

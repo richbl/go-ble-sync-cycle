@@ -17,7 +17,8 @@
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
-  display_speed = true           # Display video playback speed on the screen (true/false)
+  display_cycle_speed = true     # Display cycle speed on the screen (true/false)
+  display_playback_speed = true  # Display video playback speed on the screen (true/false)
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
   update_interval_sec = 1        # Seconds to wait between video player updates
   speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to video
