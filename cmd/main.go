@@ -27,7 +27,7 @@ type appControllers struct {
 
 func main() {
 
-	log.Println("Starting BLE Sync Cycle 0.5.0")
+	log.Println("Starting BLE Sync Cycle 0.6.0")
 
 	// Load configuration
 	cfg, err := config.LoadFile("internal/configuration/config.toml")

@@ -36,12 +36,16 @@ type SpeedConfig struct {
 
 // VideoConfig represents the MPV video player configuration
 type VideoConfig struct {
-	FilePath             string  `toml:"file_path"`
-	DisplayCycleSpeed    bool    `toml:"display_cycle_speed"`
-	DisplayPlaybackSpeed bool    `toml:"display_playback_speed"`
-	WindowScaleFactor    float64 `toml:"window_scale_factor"`
-	UpdateIntervalSec    int     `toml:"update_interval_sec"`
-	SpeedMultiplier      float64 `toml:"speed_multiplier"`
+	FilePath          string         `toml:"file_path"`
+	WindowScaleFactor float64        `toml:"window_scale_factor"`
+	UpdateIntervalSec float64        `toml:"update_interval_sec"`
+	SpeedMultiplier   float64        `toml:"speed_multiplier"`
+	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
+}
+
+type VideoOSDConfig struct {
+	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
 	ShowOSD              bool
 }
 
@@ -53,8 +57,8 @@ const (
 	logLevelError = "error"
 	logLevelFatal = "fatal"
 
-	speedUnitsKMH = "km/h"
-	speedUnitsMPH = "mph"
+	SpeedUnitsKMH = "km/h"
+	SpeedUnitsMPH = "mph"
 )
 
 // LoadFile loads the application configuration from the given filepath
@@ -117,7 +121,7 @@ func (ac *AppConfig) validate() error {
 func (sc *SpeedConfig) validate() error {
 
 	switch sc.SpeedUnits {
-	case speedUnitsKMH, speedUnitsMPH:
+	case SpeedUnitsKMH, SpeedUnitsMPH:
 		return nil
 	default:
 		return errors.New("invalid speed units: " + sc.SpeedUnits)
@@ -144,8 +148,13 @@ func (vc *VideoConfig) validate() error {
 		return err
 	}
 
+	// Confirm that update_interval_sec is >0.0
+	if vc.UpdateIntervalSec <= 0.0 {
+		return errors.New("update_interval_sec must be greater than 0.0")
+	}
+
 	// Check if at least one OSD display flag is set
-	vc.ShowOSD = (vc.DisplayCycleSpeed || vc.DisplayPlaybackSpeed)
+	vc.OnScreenDisplay.ShowOSD = (vc.OnScreenDisplay.DisplayCycleSpeed || vc.OnScreenDisplay.DisplayPlaybackSpeed)
 
 	return nil
 

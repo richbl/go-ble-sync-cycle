@@ -53,7 +53,8 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 		return err
 	}
 
-	ticker := time.NewTicker(time.Second * time.Duration(p.config.UpdateIntervalSec))
+	// Set the MPV playback loop interval
+	ticker := time.NewTicker(time.Millisecond * time.Duration(p.config.UpdateIntervalSec*1000))
 	defer ticker.Stop()
 
 	lastSpeed := 0.0
@@ -132,7 +133,7 @@ func (p *PlaybackController) checkSpeedState(currentSpeed float64, lastSpeed *fl
 // pausePlayback pauses the video playback in the MPV media player
 func (p *PlaybackController) pausePlayback() error {
 
-	logger.Info("[VIDEO] No speed detected, so pausing video...")
+	logger.Info("[VIDEO] No speed detected, so pausing video")
 
 	// Update the on-screen display
 	if err := p.updateMPVdisplay(0.0, 0.0); err != nil {
@@ -168,17 +169,17 @@ func (p *PlaybackController) adjustPlayback(currentSpeed float64) error {
 func (p *PlaybackController) updateMPVdisplay(cycleSpeed, playbackSpeed float64) error {
 
 	// Return if no OSD options are enabled in TOML
-	if !p.config.ShowOSD {
+	if !p.config.OnScreenDisplay.ShowOSD {
 		return nil
 	}
 
 	// Build the OSD message based on TOML configuration
 	var osdMsg string
-	if p.config.DisplayCycleSpeed {
+	if p.config.OnScreenDisplay.DisplayCycleSpeed {
 		osdMsg += "Sensor Speed: " + strconv.FormatFloat(cycleSpeed, 'f', 2, 64) + " " + p.speedConfig.SpeedUnits + "\n"
 	}
 
-	if p.config.DisplayPlaybackSpeed {
+	if p.config.OnScreenDisplay.DisplayPlaybackSpeed {
 		osdMsg += "Playback Speed: " + strconv.FormatFloat(playbackSpeed, 'f', 2, 64) + "\n"
 	}
 

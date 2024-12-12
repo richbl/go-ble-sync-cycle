@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"time"
 
@@ -23,10 +22,22 @@ type BLEController struct {
 	bleAdapter  bluetooth.Adapter
 }
 
+type SpeedMeasurement struct {
+	wheelRevs uint32
+	wheelTime uint16
+}
+
 var (
 	// CSC speed tracking variables
 	lastWheelRevs uint32
 	lastWheelTime uint16
+)
+
+const (
+	minDataLength = 7
+	wheelRevFlag  = uint8(0x01)
+	kphConversion = 3.6
+	mphConversion = 2.23694
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -107,8 +118,6 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 
 }
 
-// TODO
-
 // ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
 func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
@@ -174,47 +183,75 @@ func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
 
 }
 
-// processBLESpeed processes raw BLE CSC speed data and returns the adjusted current speed
+// ProcessBLESpeed processes the raw speed data from the BLE peripheral
 func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
-	if len(data) < 1 {
+
+	// Parse speed data
+	newSpeedData, err := m.parseSpeedData(data)
+	if err != nil {
+		logger.Error("[SPEED] Invalid BLE data: %v", err)
 		return 0.0
 	}
 
-	logger.Info("[SPEED] Processing speed data from BLE peripheral...")
+	// Calculate speed from parsed data
+	speed := m.calculateSpeed(newSpeedData)
+	logger.Info("[SPEED] BLE sensor speed: " + strconv.FormatFloat(speed, 'f', 2, 64) + " " + m.speedConfig.SpeedUnits)
 
-	flags := data[0]
-	hasWheelRev := flags&0x01 != 0
+	return speed
 
-	if !hasWheelRev || len(data) < 7 {
-		return 0.0
-	}
+}
 
-	wheelRevs := binary.LittleEndian.Uint32(data[1:])
-	wheelEventTime := binary.LittleEndian.Uint16(data[5:])
+// calculateSpeed calculates the current speed based on the sensor data
+func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
 
+	// First time through the loop set the last wheel revs and time
 	if lastWheelTime == 0 {
-		lastWheelRevs = wheelRevs
-		lastWheelTime = wheelEventTime
+		lastWheelRevs = sm.wheelRevs
+		lastWheelTime = sm.wheelTime
 		return 0.0
 	}
 
-	timeDiff := uint16(wheelEventTime - lastWheelTime)
+	// Calculate delta between time intervals
+	timeDiff := sm.wheelTime - lastWheelTime
 	if timeDiff == 0 {
 		return 0.0
 	}
 
-	revDiff := int32(wheelRevs - lastWheelRevs)
-	speedConversion := 3.6
-	if m.speedConfig.SpeedUnits == "mph" {
-		speedConversion = 2.23694
+	// Calculate delta between wheel revs
+	revDiff := int32(sm.wheelRevs - lastWheelRevs)
+
+	// Determine speed unit conversion muliplier
+	speedConversion := kphConversion
+	if m.speedConfig.SpeedUnits == config.SpeedUnitsMPH {
+		speedConversion = mphConversion
 	}
 
+	// Calculate new speed
 	speed := float64(revDiff) * float64(m.speedConfig.WheelCircumferenceMM) * speedConversion / float64(timeDiff)
-
-	logger.Info("[SPEED] BLE sensor speed: " + strconv.FormatFloat(math.Round(speed*100)/100, 'f', 2, 64) + " " + m.speedConfig.SpeedUnits)
-
-	lastWheelRevs = wheelRevs
-	lastWheelTime = wheelEventTime
+	lastWheelRevs = sm.wheelRevs
+	lastWheelTime = sm.wheelTime
 
 	return speed
+
+}
+
+// parseSpeedData parses the raw speed data from the BLE peripheral
+func (m *BLEController) parseSpeedData(data []byte) (SpeedMeasurement, error) {
+
+	// Check for data
+	if len(data) < 1 {
+		return SpeedMeasurement{}, errors.New("empty data")
+	}
+
+	// Validate data
+	if data[0]&wheelRevFlag == 0 || len(data) < minDataLength {
+		return SpeedMeasurement{}, errors.New("invalid data format or length")
+	}
+
+	// Return new speed data
+	return SpeedMeasurement{
+		wheelRevs: binary.LittleEndian.Uint32(data[1:]),
+		wheelTime: binary.LittleEndian.Uint16(data[5:]),
+	}, nil
+
 }

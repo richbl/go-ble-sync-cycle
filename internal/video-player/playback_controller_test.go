@@ -26,11 +26,13 @@ func TestNewPlaybackController(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:             "test.mp4",
-		WindowScaleFactor:    1.0,
-		UpdateIntervalSec:    1,
-		SpeedMultiplier:      1.0,
-		DisplayPlaybackSpeed: true,
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		OnScreenDisplay: config.VideoOSDConfig{
+			DisplayPlaybackSpeed: true,
+		},
 	}
 
 	// Create a speed configuration for testing
@@ -50,11 +52,13 @@ func TestPlaybackController_Start(t *testing.T) {
 
 	// Create a video configuration for testing.
 	videoConfig := config.VideoConfig{
-		FilePath:             "test.mp4",
-		WindowScaleFactor:    1.0,
-		UpdateIntervalSec:    1,
-		SpeedMultiplier:      1.0,
-		DisplayPlaybackSpeed: true,
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		OnScreenDisplay: config.VideoOSDConfig{
+			DisplayPlaybackSpeed: true,
+		},
 	}
 
 	// Create a speed configuration for testing
@@ -85,11 +89,13 @@ func TestPlaybackController_configurePlayer(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:             "test.mp4",
-		WindowScaleFactor:    1.0,
-		UpdateIntervalSec:    1,
-		SpeedMultiplier:      1.0,
-		DisplayPlaybackSpeed: true,
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		OnScreenDisplay: config.VideoOSDConfig{
+			DisplayPlaybackSpeed: true,
+		},
 	}
 
 	// Create a speed configuration for testing
@@ -113,11 +119,13 @@ func TestPlaybackController_loadVideoFile(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:             "test.mp4",
-		WindowScaleFactor:    1.0,
-		UpdateIntervalSec:    1,
-		SpeedMultiplier:      1.0,
-		DisplayPlaybackSpeed: true,
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		UpdateIntervalSec: 1,
+		SpeedMultiplier:   1.0,
+		OnScreenDisplay: config.VideoOSDConfig{
+			DisplayPlaybackSpeed: true,
+		},
 	}
 
 	// Create a speed configuration for testing
@@ -141,11 +149,13 @@ func TestPlaybackController_setPauseStatus(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:             "test.mp4",
-		WindowScaleFactor:    1.0,
-		SpeedMultiplier:      1.0,
-		UpdateIntervalSec:    1,
-		DisplayPlaybackSpeed: true,
+		FilePath:          "test.mp4",
+		WindowScaleFactor: 1.0,
+		SpeedMultiplier:   1.0,
+		UpdateIntervalSec: 1,
+		OnScreenDisplay: config.VideoOSDConfig{
+			DisplayPlaybackSpeed: true,
+		},
 	}
 
 	// Create a speed configuration for testing
