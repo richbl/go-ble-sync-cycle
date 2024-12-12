@@ -6,7 +6,7 @@
 
 ## Overview
 
-**BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with an immersive indoor cycling experience by matching video playback with their actual cycling pace, making it a valuable option when outdoor cycling isn't feasible.
+**BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with a more immersive indoor cycling experience by matching video playback with their actual cycling pace, making it a valuable option when outdoor cycling isn't feasible.
 
 <p align="center">
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9"><img src="[https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9)" width=700></picture>
@@ -23,7 +23,11 @@
     - Support for different speed units: miles per hour (mph), kilometers per hour (kph)
     - Speed smoothing option for natural and seamless video playback
     - Choice of video file for playback
+    - Various display options for video playback, including:
+        - The display of sensor speed and/or video playback speed via on-screen display (OSD)
+        - Video window scaling (full screen, half screen, etc.)
 - Simple command-line interface provides real-time component feedback
+- Configurable logging levels (debug, info, warn, error) to manage the information displayed during application execution
 - Graceful handling of connection interrupts and system signals ensures all components shut down cleanly
 
 ## Rationale
@@ -49,14 +53,16 @@ Since I already use a mechanical (no electronics) portable bicycle trainer while
 - A Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensor, configured for speed
 - A computer that supports Bluetooth (4.0+), preferably with a big screen display to watch video playback
 
-For my own indoor cycling configuration, I use a Performance Travel Trac 3 trainer. The BLE sensor used is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work. For an overview of Bluetooth BLE, refer to the article ["Introduction to Bluetooth Low Energy" by Kevin Townsend](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction). Finally, I'm running **BLE Sync Cycle** on a Lenovo ThinkPad laptop running Ubuntu 24.04 (LTS) connected to a big screen monitor via HDMI.
+For my own indoor cycling configuration, I use a Performance Travel Trac 3 trainer. The BLE sensor used is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work. 
+
+> For an overview of Bluetooth BLE, refer to the excellent article ["Introduction to Bluetooth Low Energy"](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction) by Kevin Townsend.
 
 ### Software Components
 
 - The open source, cross-platform [mpv media player](https://mpv.io/), installed and operational
 - A local video file for playback using mpv, preferably a first-person view cycling video. Check out [YouTube with this query: "first person cycling"](https://www.youtube.com/results?search_query=first+person+cycling) for some ideas
 - This application. While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on an Intel processor (amd64), it should work across any recent Unix-like platform and architecture
-    - In order to compile this project, an operational [Go language](https://go.dev/) environment is required (this release was developed using Go 1.23.2)
+    - In order to compile the executable for this project, an operational [Go language](https://go.dev/) environment is required (this release was developed using Go 1.23.2)
 
 ## Installation
 
@@ -89,7 +95,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.5.0
+# 0.6.0
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -107,13 +113,13 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
-  display_cycle_speed = true     # Display cycle speed on the screen (true/false)
-  display_playback_speed = true  # Display video playback speed on the screen (true/false)
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
-  update_interval_sec = 1        # Seconds to wait between video player updates
-  speed_multiplier = 0.6         # Multiplier that translates sensor speed (km/h or mph) to video
-                                 # playback speed (0.0 = stopped, 1.0 = normal speed)
-
+  update_interval_sec = 0.5     # Seconds (>0.0) to wait between video player updates
+  speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
+                                 # (0.0 = stopped, 1.0 = normal speed)
+  [video.OSD]
+    display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
+    display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
 ```
 
 An explanation of the various sections of the `config.toml` file is provided below:
@@ -149,13 +155,15 @@ The `[speed]` section defines the configuration for the speed controller compone
 The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
 - `file_path`: The path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
-- `display_cycle_speed`: A boolean value that indicates whether to display the cycle sensor speed on the on-screen display (OSD)
-- `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful (e.g., 0.5 = half screen)
-- `update_interval_sec`: The number of seconds to wait between video player updates
-- `speed_multiplier`: The multiplier that translates sensor speed (km/h or mph) to video playback speed (0.0 = stopped, 1.0 = normal speed)
+- `update_interval_sec`: The number of seconds (>0.0) to wait between video player updates.
 
 > The `speed_multiplier` parameter is used to control the relative playback speed of the video. Usually, a value of 1.0 is used, as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the bicycle rider in the video is during "normal speed" playback, it's recommended to experiment with different values to find a good balance between  video playback speed and real-world cycling experience.
+
+#### The `[video.OSD]` Section
+
+- `display_cycle_speed`: A boolean value that indicates whether to display the cycle sensor speed on the on-screen display (OSD)
+- `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
 
 ## Basic Usage
 
@@ -184,66 +192,72 @@ go run cmd/main.go
 At this point, you should see the following output:
 
   ```bash
-2024/12/04 16:38:20 Starting BLE Sync Cycle 0.5.0
-2024/12/04 16:38:20 INFO [BLE] Created new BLE central controller
-2024/12/04 16:38:20 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
-2024/12/04 16:38:20 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
-2024/12/04 16:38:20 INFO [BLE] Connecting to BLE peripheral device F1:42:D8:DE:35:16
-2024/12/04 16:38:24 INFO [BLE] BLE peripheral device connected
-2024/12/04 16:38:24 INFO [BLE] Discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
-2024/12/04 16:38:34 WARN [BLE] CSC services discovery failed: timeout on DiscoverServices
-2024/12/04 16:38:34 ERROR [BLE] BLE peripheral scan failed: timeout on DiscoverServices
-
+2024/12/11 22:02:28 Starting BLE Sync Cycle 0.6.0
+2024/12/11 22:02:28 INFO [BLE] Created new BLE central controller
+2024/12/11 22:02:28 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
+2024/12/11 22:02:42 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
+2024/12/11 22:02:42 INFO [BLE] Connecting to BLE peripheral device F1:42:D8:DE:35:16
+2024/12/11 22:02:44 INFO [BLE] BLE peripheral device connected
+2024/12/11 22:02:44 INFO [BLE] Discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
+2024/12/11 22:02:54 ERROR [BLE] CSC services discovery failed: timeout on DiscoverServices
+2024/12/11 22:02:54 ERROR [BLE] BLE peripheral scan failed: timeout on DiscoverServices
+2024/12/11 22:02:54 INFO [APP] Application shutdown complete. Goodbye!
   ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
   ```bash
-2024/12/04 16:39:07 Starting BLE Sync Cycle 0.5.0
-2024/12/04 16:39:07 INFO [BLE] Created new BLE central controller
-2024/12/04 16:39:07 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
-2024/12/04 16:39:07 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
-2024/12/04 16:39:07 INFO [BLE] Connecting to BLE peripheral device F1:42:D8:DE:35:16
-2024/12/04 16:39:07 INFO [BLE] BLE peripheral device connected
-2024/12/04 16:39:07 INFO [BLE] Discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
-2024/12/04 16:39:07 INFO [BLE] Found CSC service 00001816-0000-1000-8000-00805f9b34fb
-2024/12/04 16:39:07 INFO [BLE] Discovering CSC characteristics 00002a5b-0000-1000-8000-00805f9b34fb
-2024/12/04 16:39:07 INFO [BLE] Found CSC characteristic 00002a5b-0000-1000-8000-00805f9b34fb
-2024/12/04 16:39:07 INFO [BLE] Starting real-time monitoring of BLE sensor notifications...
-2024/12/04 16:39:07 INFO [VIDEO] Starting MPV video player...
-2024/12/04 16:39:07 INFO [VIDEO] Loading video file: cycling_test.mp4
-2024/12/04 16:39:07 INFO [VIDEO] Entering MPV playback loop...
-2024/12/04 16:39:08 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
-2024/12/04 16:39:08 INFO [VIDEO] Smoothed sensor speed: 0.00
-2024/12/04 16:39:08 INFO [VIDEO] No speed detected, so pausing video...
-2024/12/04 16:39:08 INFO [VIDEO] Video paused successfully
+2024/12/11 22:03:59 Starting BLE Sync Cycle 0.6.0
+2024/12/11 22:03:59 INFO [BLE] Created new BLE central controller
+2024/12/11 22:03:59 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
+2024/12/11 22:03:59 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
+2024/12/11 22:03:59 INFO [BLE] Connecting to BLE peripheral device F1:42:D8:DE:35:16
+2024/12/11 22:03:59 INFO [BLE] BLE peripheral device connected
+2024/12/11 22:03:59 INFO [BLE] Discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
+2024/12/11 22:03:59 INFO [BLE] Found CSC service 00001816-0000-1000-8000-00805f9b34fb
+2024/12/11 22:03:59 INFO [BLE] Discovering CSC characteristics 00002a5b-0000-1000-8000-00805f9b34fb
+2024/12/11 22:03:59 INFO [BLE] Found CSC characteristic 00002a5b-0000-1000-8000-00805f9b34fb
+2024/12/11 22:03:59 INFO [BLE] Starting real-time monitoring of BLE sensor notifications...
+2024/12/11 22:03:59 INFO [VIDEO] Starting MPV video player...
+2024/12/11 22:03:59 INFO [VIDEO] Loading video file: cycling_test.mp4
+2024/12/11 22:03:59 INFO [VIDEO] Entering MPV playback loop...
+2024/12/11 22:04:00 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
+2024/12/11 22:04:00 INFO [VIDEO] Smoothed sensor speed: 0.00 mph
+2024/12/11 22:04:00 INFO [VIDEO] No speed detected, so pausing video
+2024/12/11 22:04:00 INFO [VIDEO] Video paused successfully
   ```
 
 In the example above, the application is now running in a loop, periodically querying the BLE peripheral for speed data. The application will also update the video player to match the speed of the sensor. Here, since the video has just begun, its speed is set to 0.0 (paused).
 
 ```bash
 ...
-2024/12/04 19:31:52 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:52 INFO [SPEED] BLE sensor speed: 10.49 mph
-2024/12/04 19:31:53 INFO [VIDEO] Sensor speed buffer: [3.17 10.78 10.57 10.34 10.49]
-2024/12/04 19:31:53 INFO [VIDEO] Smoothed sensor speed: 9.07
-2024/12/04 19:31:53 INFO [VIDEO] Adjusting video speed to 0.54
-2024/12/04 19:31:53 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:53 INFO [SPEED] BLE sensor speed: 11.10 mph
-2024/12/04 19:31:54 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:54 INFO [SPEED] BLE sensor speed: 11.91 mph
-2024/12/04 19:31:54 INFO [VIDEO] Sensor speed buffer: [10.57 10.34 10.49 11.10 11.91]
-2024/12/04 19:31:54 INFO [VIDEO] Smoothed sensor speed: 10.88
-2024/12/04 19:31:54 INFO [VIDEO] Adjusting video speed to 0.65
-2024/12/04 19:31:54 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:54 INFO [SPEED] BLE sensor speed: 12.53 mph
-2024/12/04 19:31:55 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:55 INFO [SPEED] BLE sensor speed: 12.11 mph
-2024/12/04 19:31:55 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:31:55 INFO [SPEED] BLE sensor speed: 12.49 mph
-2024/12/04 19:31:55 INFO [VIDEO] Sensor speed buffer: [11.10 11.91 12.53 12.11 12.49]
-2024/12/04 19:31:55 INFO [VIDEO] Smoothed sensor speed: 12.02
-2024/12/04 19:31:55 INFO [VIDEO] Adjusting video speed to 0.72
+024/12/11 22:05:08 INFO [SPEED] BLE sensor speed: 8.54 mph
+2024/12/11 22:05:09 INFO [VIDEO] Sensor speed buffer: [9.06 8.28 8.11 8.20 8.54]
+2024/12/11 22:05:09 INFO [VIDEO] Smoothed sensor speed: 8.44 mph
+2024/12/11 22:05:09 INFO [VIDEO] Updating video playback speed to 0.51
+2024/12/11 22:05:09 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:09 INFO [VIDEO] Sensor speed buffer: [8.28 8.11 8.20 8.54 0.00]
+2024/12/11 22:05:09 INFO [VIDEO] Smoothed sensor speed: 6.63 mph
+2024/12/11 22:05:09 INFO [VIDEO] Updating video playback speed to 0.40
+2024/12/11 22:05:09 INFO [SPEED] BLE sensor speed: 8.44 mph
+2024/12/11 22:05:10 INFO [VIDEO] Sensor speed buffer: [8.11 8.20 8.54 0.00 8.44]
+2024/12/11 22:05:10 INFO [VIDEO] Smoothed sensor speed: 6.66 mph
+2024/12/11 22:05:10 INFO [SPEED] BLE sensor speed: 7.84 mph
+2024/12/11 22:05:10 INFO [VIDEO] Sensor speed buffer: [8.20 8.54 0.00 8.44 7.84]
+2024/12/11 22:05:10 INFO [VIDEO] Smoothed sensor speed: 6.61 mph
+2024/12/11 22:05:11 INFO [VIDEO] Sensor speed buffer: [8.20 8.54 0.00 8.44 7.84]
+2024/12/11 22:05:11 INFO [VIDEO] Smoothed sensor speed: 6.61 mph
+2024/12/11 22:05:11 INFO [SPEED] BLE sensor speed: 6.56 mph
+2024/12/11 22:05:11 INFO [SPEED] BLE sensor speed: 6.65 mph
+2024/12/11 22:05:11 INFO [VIDEO] Sensor speed buffer: [0.00 8.44 7.84 6.56 6.65]
+2024/12/11 22:05:11 INFO [VIDEO] Smoothed sensor speed: 5.90 mph
+2024/12/11 22:05:11 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:12 INFO [VIDEO] Sensor speed buffer: [8.44 7.84 6.56 6.65 0.00]
+2024/12/11 22:05:12 INFO [VIDEO] Smoothed sensor speed: 5.90 mph
+2024/12/11 22:05:12 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:12 INFO [VIDEO] Sensor speed buffer: [7.84 6.56 6.65 0.00 0.00]
+2024/12/11 22:05:12 INFO [VIDEO] Smoothed sensor speed: 4.21 mph
+2024/12/11 22:05:12 INFO [VIDEO] Updating video playback speed to 0.25
 ...
 ```
 
@@ -253,30 +267,27 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 ```bash
 ...
-2024/12/04 19:32:07 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:07 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 8.34 0.00 0.00]
-2024/12/04 19:32:07 INFO [VIDEO] Smoothed sensor speed: 1.67
-2024/12/04 19:32:07 INFO [VIDEO] Adjusting video speed to 0.10
-2024/12/04 19:32:07 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:08 INFO [VIDEO] Sensor speed buffer: [0.00 8.34 0.00 0.00 0.00]
-2024/12/04 19:32:08 INFO [VIDEO] Smoothed sensor speed: 1.67
-2024/12/04 19:32:08 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:10 INFO [VIDEO] Smoothed sensor speed: 0.00
-2024/12/04 19:32:10 INFO [VIDEO] No speed detected, so pausing video...
-2024/12/04 19:32:10 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:10 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:11 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
-2024/12/04 19:32:11 INFO [VIDEO] Smoothed sensor speed: 0.00
-2024/12/04 19:32:11 INFO [VIDEO] No speed detected, so pausing video...
-2024/12/04 19:32:11 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:12 INFO [SPEED] Processing speed data from BLE peripheral...
-2024/12/04 19:32:12 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
-2024/12/04 19:32:12 INFO [VIDEO] Smoothed sensor speed: 0.00
-2024/12/04 19:32:12 INFO [VIDEO] No speed detected, so pausing video...
-2024/12/04 19:32:12 INFO [SPEED] Processing speed data from BLE peripheral...
-^C2024/12/04 19:32:12 INFO [APP] Shutdown signal received
-2024/12/04 19:32:12 INFO [VIDEO] Context cancelled. Shutting down video player component
-2024/12/04 19:32:12 INFO [APP] Application shutdown complete. Goodbye!
+2024/12/11 22:05:11 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:12 INFO [VIDEO] Sensor speed buffer: [8.44 7.84 6.56 6.65 0.00]
+2024/12/11 22:05:12 INFO [VIDEO] Smoothed sensor speed: 5.90 mph
+2024/12/11 22:05:12 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:12 INFO [VIDEO] Sensor speed buffer: [7.84 6.56 6.65 0.00 0.00]
+2024/12/11 22:05:12 INFO [VIDEO] Smoothed sensor speed: 4.21 mph
+2024/12/11 22:05:12 INFO [VIDEO] Updating video playback speed to 0.25
+2024/12/11 22:05:13 INFO [SPEED] BLE sensor speed: 7.29 mph
+2024/12/11 22:05:13 INFO [VIDEO] Sensor speed buffer: [6.56 6.65 0.00 0.00 7.29]
+2024/12/11 22:05:13 INFO [VIDEO] Smoothed sensor speed: 4.10 mph
+2024/12/11 22:05:13 INFO [VIDEO] Sensor speed buffer: [6.56 6.65 0.00 0.00 7.29]
+2024/12/11 22:05:13 INFO [VIDEO] Smoothed sensor speed: 4.10 mph
+2024/12/11 22:05:13 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:13 INFO [SPEED] BLE sensor speed: 0.00 mph
+2024/12/11 22:05:14 INFO [VIDEO] Sensor speed buffer: [0.00 0.00 7.29 0.00 0.00]
+2024/12/11 22:05:14 INFO [VIDEO] Smoothed sensor speed: 1.46 mph
+2024/12/11 22:05:14 INFO [VIDEO] Updating video playback speed to 0.09
+2024/12/11 22:05:14 INFO [APP] Shutdown signal received
+2024/12/11 22:05:14 INFO [VIDEO] Context cancelled. Shutting down video player component
+2024/12/11 22:05:14 INFO [APP] Application shutdown complete. Goodbye!
+
 ```
 
 ## FAQ
@@ -288,7 +299,7 @@ Q: Do all Bluetooth devices work with **BLE Sync Cycle**?
 A: Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
 
 Q: Can I disable the log messages in **BLE Sync Cycle**?
-A: While you cannot entirely disable log messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose. When set to "error", only error/fatal messages will be displayed which, under normal circumstances, should be none.
+A: While you cannot disable all log messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose. When set to "error", only error/fatal messages will be displayed which, under normal circumstances, should be none.
 
 Q: How do I use **BLE Sync Cycle**?
 A: See the [Basic Usage](#basic-usage) section above
