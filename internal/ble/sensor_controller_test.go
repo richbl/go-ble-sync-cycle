@@ -155,10 +155,7 @@ func TestProcessBLESpeed(t *testing.T) {
 // TestNewBLEControllerIntegration tests the creation of a new BLEController
 func TestNewBLEControllerIntegration(t *testing.T) {
 
-	waitForScanReset()
-
-	// Create test BLE and speed controllers
-	controller, err := createTestController(speedUnitsKMH)
+	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
 		return
@@ -171,11 +168,7 @@ func TestNewBLEControllerIntegration(t *testing.T) {
 // TestScanForBLEPeripheralIntegration tests the ScanForBLEPeripheral() function
 func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
-	// Pause for scan reset
-	waitForScanReset()
-
-	// Create test BLE and speed controllers
-	controller, err := createTestController(speedUnitsKMH)
+	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
 		return
@@ -193,11 +186,7 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 // TestGetBLECharacteristicIntegration tests the GetBLECharacteristic() function
 func TestGetBLECharacteristicIntegration(t *testing.T) {
 
-	// Pause for scan reset
-	waitForScanReset()
-
-	// Create test BLE and speed controllers
-	controller, err := createTestController(speedUnitsKMH)
+	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
 		return
@@ -209,5 +198,21 @@ func TestGetBLECharacteristicIntegration(t *testing.T) {
 	// Expect error since test UUID won't be found
 	_, err = controller.GetBLECharacteristic(ctx, nil)
 	assert.Error(t, err)
+
+}
+
+// controllersIntegrationTest pauses BLE scan and then creates controllers
+func controllersIntegrationTest() (*ble.BLEController, error) {
+
+	// Pause to permit BLE adapter to reset
+	waitForScanReset()
+
+	// Create test BLE and speed controllers
+	controller, err := createTestController(speedUnitsKMH)
+	if err != nil {
+		return nil, err
+	}
+
+	return controller, nil
 
 }

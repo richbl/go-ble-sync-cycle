@@ -11,6 +11,9 @@ const (
 	invalidTestFilename = "non-existent-file.mp4"
 	sensorTestUUID      = "test-uuid"
 	logLevelInvalid     = "invalid"
+	validConfig         = "Valid config"
+	invalidConfig       = "Invalid config"
+	validateErrMessage  = "validate() error = %v, wantErr %v"
 )
 
 // configTestCase is a helper struct for running validation tests
@@ -129,7 +132,7 @@ func runValidationTest[T any](t *testing.T, tests []configTestCase[T]) {
 			}
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
 
 		})
@@ -142,8 +145,8 @@ func TestLoadFile(t *testing.T) {
 
 	// Define test cases
 	tests := []configTestCase[string]{
-		{name: "valid config", config: validConfigTOML, wantErr: false},
-		{name: "invalid config", config: invalidConfigTOML, wantErr: true},
+		{name: validConfig, config: validConfigTOML, wantErr: false},
+		{name: invalidConfig, config: invalidConfigTOML, wantErr: true},
 	}
 
 	// Run tests
@@ -168,8 +171,8 @@ func TestValidate(t *testing.T) {
 
 	// Define test cases
 	tests := []configTestCase[string]{
-		{name: "valid config", config: validConfigTOML, wantErr: false},
-		{name: "invalid config", config: invalidConfigTOML, wantErr: true},
+		{name: validConfig, config: validConfigTOML, wantErr: false},
+		{name: invalidConfig, config: invalidConfigTOML, wantErr: true},
 	}
 
 	// Run tests
@@ -192,7 +195,7 @@ func TestValidate(t *testing.T) {
 			}
 
 			if err := config.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
 		})
 	}
@@ -205,7 +208,7 @@ func TestValidateVideoConfig(t *testing.T) {
 	// Define test cases
 	tests := []configTestCase[VideoConfig]{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: VideoConfig{
 				FilePath: testFilename,
 				OnScreenDisplay: VideoOSDConfig{
@@ -218,7 +221,7 @@ func TestValidateVideoConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: VideoConfig{
 				FilePath: invalidTestFilename,
 				OnScreenDisplay: VideoOSDConfig{
@@ -250,7 +253,7 @@ func TestValidateVideoConfig(t *testing.T) {
 			}
 
 			if err := tt.config.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
 
 		})
@@ -263,12 +266,12 @@ func TestValidateAppConfig(t *testing.T) {
 
 	tests := []configTestCase[AppConfig]{
 		{
-			name:    "valid config",
+			name:    validConfig,
 			config:  AppConfig{LogLevel: logLevelDebug},
 			wantErr: false,
 		},
 		{
-			name:    "invalid config",
+			name:    invalidConfig,
 			config:  AppConfig{LogLevel: logLevelInvalid},
 			wantErr: true,
 		},
@@ -283,7 +286,7 @@ func TestValidateBLEConfig(t *testing.T) {
 
 	tests := []configTestCase[BLEConfig]{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: BLEConfig{
 				SensorUUID:      sensorTestUUID,
 				ScanTimeoutSecs: 10,
@@ -291,7 +294,7 @@ func TestValidateBLEConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: BLEConfig{
 				SensorUUID:      "",
 				ScanTimeoutSecs: -1,
@@ -309,7 +312,7 @@ func TestValidateSpeedConfig(t *testing.T) {
 
 	tests := []configTestCase[SpeedConfig]{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: SpeedConfig{
 				SmoothingWindow:      5,
 				SpeedThreshold:       10.0,
@@ -319,7 +322,7 @@ func TestValidateSpeedConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: SpeedConfig{
 				SmoothingWindow:      -1,
 				SpeedThreshold:       -10.0,
