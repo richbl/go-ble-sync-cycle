@@ -43,7 +43,7 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 	logger.Info("[VIDEO] Starting MPV video player...")
 
 	// Configure the MPV media player
-	if err := p.configureMPVplayer(); err != nil {
+	if err := p.configureMPVPlayer(); err != nil {
 		return err
 	}
 
@@ -75,8 +75,8 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 
 }
 
-// configureMPVplayer configures the MPV video player
-func (p *PlaybackController) configureMPVplayer() error {
+// configureMPVPlayer configures the MPV video player
+func (p *PlaybackController) configureMPVPlayer() error {
 
 	return p.player.SetOptionString("autofit", strconv.Itoa(int(p.config.WindowScaleFactor*100))+"%")
 
