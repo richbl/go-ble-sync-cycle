@@ -11,6 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	speedUnitsKMH  = "kph"
+	speedUnitsMPH  = "mph"
+	sensorTestUUID = "test-uuid"
+	noBLEnoTest    = "Skipping test as BLE adapter is not available"
+)
+
 // init initializes the logger with the debug level
 func init() {
 
@@ -50,14 +57,14 @@ func TestProcessBLESpeed(t *testing.T) {
 		{
 			name:        "empty data",
 			data:        []byte{},
-			speedUnits:  "kph",
+			speedUnits:  speedUnitsKMH,
 			wheelCircMM: 2000,
 			want:        0.0,
 		},
 		{
 			name:        "invalid flags",
 			data:        []byte{0x00},
-			speedUnits:  "kph",
+			speedUnits:  speedUnitsKMH,
 			wheelCircMM: 2000,
 			want:        0.0,
 		},
@@ -68,7 +75,7 @@ func TestProcessBLESpeed(t *testing.T) {
 				0x02, 0x00, 0x00, 0x00, // wheel revs
 				0x20, 0x00, // wheel event time
 			},
-			speedUnits:  "kph",
+			speedUnits:  speedUnitsKMH,
 			wheelCircMM: 2000,
 			want:        0.0, // First reading returns 0
 		},
@@ -79,7 +86,7 @@ func TestProcessBLESpeed(t *testing.T) {
 				0x03, 0x00, 0x00, 0x00, // wheel revs (1 more revolution)
 				0x40, 0x00, // wheel event time (32 time units later)
 			},
-			speedUnits:  "kph",
+			speedUnits:  speedUnitsKMH,
 			wheelCircMM: 2000,
 			want:        225.0, // (1 rev * 2000mm * 3.6) / 32 time units
 		},
@@ -90,7 +97,7 @@ func TestProcessBLESpeed(t *testing.T) {
 				0x02, 0x00, 0x00, 0x00, // wheel revs
 				0x20, 0x00, // wheel event time
 			},
-			speedUnits:  "mph",
+			speedUnits:  speedUnitsMPH,
 			wheelCircMM: 2000,
 			want:        0.0,
 		},
@@ -106,7 +113,7 @@ func TestProcessBLESpeed(t *testing.T) {
 
 			// Create a new BLE controller
 			bleConfig := config.BLEConfig{
-				SensorUUID:      "test-uuid",
+				SensorUUID:      sensorTestUUID,
 				ScanTimeoutSecs: 10,
 			}
 
@@ -119,7 +126,7 @@ func TestProcessBLESpeed(t *testing.T) {
 			// Create a new BLE controller
 			controller, err := ble.NewBLEController(bleConfig, speedConfig)
 			if err != nil {
-				t.Skip("Skipping test as BLE adapter is not available")
+				t.Skip(noBLEnoTest)
 				return
 			}
 
@@ -143,27 +150,27 @@ func TestProcessBLESpeed(t *testing.T) {
 
 }
 
-// TestNewBLEController_Integration tests the creation of a new BLE controller
-func TestNewBLEController_Integration(t *testing.T) {
+// TestNewBLEControllerIntegration tests the creation of a new BLE controller
+func TestNewBLEControllerIntegration(t *testing.T) {
 
 	waitForScanReset() // Wait before starting test
 
 	// Create a new BLE controller
 	bleConfig := config.BLEConfig{
-		SensorUUID:      "test-uuid",
+		SensorUUID:      sensorTestUUID,
 		ScanTimeoutSecs: 10,
 	}
 
 	// Create a new speed controller
 	speedConfig := config.SpeedConfig{
-		SpeedUnits:           "kph",
+		SpeedUnits:           speedUnitsKMH,
 		WheelCircumferenceMM: 2000,
 	}
 
 	// Create a new BLE controller
 	controller, err := ble.NewBLEController(bleConfig, speedConfig)
 	if err != nil {
-		t.Skip("Skipping test as BLE adapter is not available")
+		t.Skip(noBLEnoTest)
 		return
 	}
 
@@ -172,27 +179,27 @@ func TestNewBLEController_Integration(t *testing.T) {
 
 }
 
-// TestScanForBLEPeripheral_Integration tests the BLE scanning functionality
-func TestScanForBLEPeripheral_Integration(t *testing.T) {
+// TestScanForBLEPeripheralIntegration tests the BLE scanning functionality
+func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
 	waitForScanReset() // Wait before starting test
 
 	// Create a new BLE controller
 	bleConfig := config.BLEConfig{
-		SensorUUID:      "test-uuid",
+		SensorUUID:      sensorTestUUID,
 		ScanTimeoutSecs: 1,
 	}
 
 	// Create a new speed controller
 	speedConfig := config.SpeedConfig{
-		SpeedUnits:           "kph",
+		SpeedUnits:           speedUnitsKMH,
 		WheelCircumferenceMM: 2000,
 	}
 
 	// Create a new BLE controller
 	controller, err := ble.NewBLEController(bleConfig, speedConfig)
 	if err != nil {
-		t.Skip("Skipping test as BLE adapter is not available")
+		t.Skip(noBLEnoTest)
 		return
 	}
 
@@ -206,27 +213,27 @@ func TestScanForBLEPeripheral_Integration(t *testing.T) {
 
 }
 
-// TestGetBLECharacteristic_Integration tests the BLE characteristic discovery
-func TestGetBLECharacteristic_Integration(t *testing.T) {
+// TestGetBLECharacteristicIntegration tests the BLE characteristic discovery
+func TestGetBLECharacteristicIntegration(t *testing.T) {
 
 	waitForScanReset() // Wait before starting test
 
 	// Create a new BLE controller
 	bleConfig := config.BLEConfig{
-		SensorUUID:      "test-uuid",
+		SensorUUID:      sensorTestUUID,
 		ScanTimeoutSecs: 1,
 	}
 
 	// Create a new speed controller
 	speedConfig := config.SpeedConfig{
-		SpeedUnits:           "kph",
+		SpeedUnits:           speedUnitsKMH,
 		WheelCircumferenceMM: 2000,
 	}
 
 	// Create a new BLE controller
 	controller, err := ble.NewBLEController(bleConfig, speedConfig)
 	if err != nil {
-		t.Skip("Skipping test as BLE adapter is not available")
+		t.Skip(noBLEnoTest)
 		return
 	}
 

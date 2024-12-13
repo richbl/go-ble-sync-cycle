@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testFilename = "test.mp4"
+)
+
 // init initializes the logger with the debug level
 func init() {
 
@@ -26,7 +30,7 @@ func TestNewPlaybackController(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:          "test.mp4",
+		FilePath:          testFilename,
 		WindowScaleFactor: 1.0,
 		UpdateIntervalSec: 1,
 		SpeedMultiplier:   1.0,
@@ -47,12 +51,12 @@ func TestNewPlaybackController(t *testing.T) {
 
 }
 
-// TestPlaybackController_Start tests the Start method of the PlaybackController
-func TestPlaybackController_Start(t *testing.T) {
+// TestPlaybackControllerStart tests the Start method of the PlaybackController
+func TestPlaybackControllerStart(t *testing.T) {
 
 	// Create a video configuration for testing.
 	videoConfig := config.VideoConfig{
-		FilePath:          "test.mp4",
+		FilePath:          testFilename,
 		WindowScaleFactor: 1.0,
 		UpdateIntervalSec: 1,
 		SpeedMultiplier:   1.0,
@@ -84,12 +88,12 @@ func TestPlaybackController_Start(t *testing.T) {
 
 }
 
-// TestPlaybackController_configurePlayer tests the configurePlayer method of the PlaybackController
-func TestPlaybackController_configurePlayer(t *testing.T) {
+// TestPlaybackControllerConfigurePlayer tests the configurePlayer method of the PlaybackController
+func TestPlaybackControllerConfigurePlayer(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:          "test.mp4",
+		FilePath:          testFilename,
 		WindowScaleFactor: 1.0,
 		UpdateIntervalSec: 1,
 		SpeedMultiplier:   1.0,
@@ -109,17 +113,17 @@ func TestPlaybackController_configurePlayer(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Configure the player with the test configuration
-	err = controller.configureMPVplayer()
+	err = controller.configureMPVPlayer()
 	assert.NoError(t, err)
 
 }
 
-// TestPlaybackController_loadVideoFile tests the loadVideoFile method of the PlaybackController
-func TestPlaybackController_loadVideoFile(t *testing.T) {
+// TestPlaybackControllerLoadVideoFile tests the loadVideoFile method of the PlaybackController
+func TestPlaybackControllerLoadVideoFile(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:          "test.mp4",
+		FilePath:          testFilename,
 		WindowScaleFactor: 1.0,
 		UpdateIntervalSec: 1,
 		SpeedMultiplier:   1.0,
@@ -144,12 +148,12 @@ func TestPlaybackController_loadVideoFile(t *testing.T) {
 
 }
 
-// TestPlaybackController_setPauseStatus tests the setPauseStatus method of the PlaybackController
-func TestPlaybackController_setPauseStatus(t *testing.T) {
+// TestPlaybackControllerSetPauseStatus tests the setPauseStatus method of the PlaybackController
+func TestPlaybackControllerSetPauseStatus(t *testing.T) {
 
 	// Create a video configuration for testing
 	videoConfig := config.VideoConfig{
-		FilePath:          "test.mp4",
+		FilePath:          testFilename,
 		WindowScaleFactor: 1.0,
 		SpeedMultiplier:   1.0,
 		UpdateIntervalSec: 1,

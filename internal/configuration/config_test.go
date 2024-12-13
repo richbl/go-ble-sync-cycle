@@ -6,6 +6,15 @@ import (
 	"testing"
 )
 
+const (
+	testFilename        = "test.mp4"
+	invalidTestFilename = "non-existent-file.mp4"
+	sensorTestUUID      = "test-uuid"
+	validConfig         = "valid config"
+	invalidConfig       = "invalid config"
+	logLevelInvalid     = "invalid"
+)
+
 // createTempConfigFile creates temporary TOML config file for testing
 func createTempConfigFile(t *testing.T, config string) (string, func()) {
 
@@ -15,8 +24,8 @@ func createTempConfigFile(t *testing.T, config string) (string, func()) {
 		t.Fatal(err)
 	}
 
-	// If "test.mp4" identified in the config, replace it with a temporary video file
-	if strings.Contains(config, "test.mp4") {
+	// If `+testFilename+` identified in the config, replace it with a temporary video file
+	if strings.Contains(config, testFilename) {
 
 		tmpVideoFile, err := os.CreateTemp("", "video")
 		if err != nil {
@@ -27,7 +36,7 @@ func createTempConfigFile(t *testing.T, config string) (string, func()) {
 			t.Fatal(err)
 		}
 
-		config = strings.ReplaceAll(config, "test.mp4", tmpVideoFile.Name())
+		config = strings.ReplaceAll(config, testFilename, tmpVideoFile.Name())
 		t.Cleanup(func() {
 
 			os.Remove(tmpVideoFile.Name())
@@ -61,23 +70,23 @@ func TestLoadFile(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: `
 				[app]
-				logging_level = "debug"
+				logging_level = "` + logLevelDebug + `"
 
 				[ble]
-				sensor_uuid = "some-uuid"
+				sensor_uuid = "` + sensorTestUUID + `" 
 				scan_timeout_secs = 10
 
 				[speed]
 				smoothing_window = 5
 				speed_threshold = 10.0
 				wheel_circumference_mm = 2000
-				speed_units = "km/h"
+				speed_units = "` + SpeedUnitsKMH + `"
 
 				[video]
-				file_path = "test.mp4"
+				file_path = "` + testFilename + `"
 				display_playback_speed = true
 				window_scale_factor = 1.0
 				update_interval_sec = 1
@@ -86,10 +95,10 @@ func TestLoadFile(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: `
 				[app]
-				logging_level = "invalid"
+				logging_level = "` + logLevelInvalid + `"
 
 				[ble]
 				sensor_uuid = ""
@@ -99,10 +108,10 @@ func TestLoadFile(t *testing.T) {
 				smoothing_window = -1
 				speed_threshold = -10.0
 				wheel_circumference_mm = -2000
-				speed_units = "invalid"
+				speed_units = "` + SpeedUnitsKMH + `"
 
 				[video]
-				file_path = "non-existent-file.mp4"
+				file_path = "` + invalidTestFilename + `"
 				display_playback_speed = true
 				window_scale_factor = -1.0
 				update_interval_sec = -1
@@ -141,23 +150,23 @@ func TestValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: `
 				[app]
-				logging_level = "debug"
+				logging_level = "` + logLevelDebug + `"
 
 				[ble]
-				sensor_uuid = "some-uuid"
+				sensor_uuid = "` + sensorTestUUID + `"
 				scan_timeout_secs = 10
 
 				[speed]
 				smoothing_window = 5
 				speed_threshold = 10.0
 				wheel_circumference_mm = 2000
-				speed_units = "km/h"
+				speed_units = "` + SpeedUnitsKMH + `"
 
 				[video]
-				file_path = "test.mp4"
+				file_path = "` + testFilename + `"
 				display_playback_speed = true
 				window_scale_factor = 1.0
 				update_interval_sec = 1
@@ -166,10 +175,10 @@ func TestValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: `
 				[app]
-				logging_level = "invalid"
+				logging_level = "` + logLevelInvalid + `"
 
 				[ble]
 				sensor_uuid = ""
@@ -179,10 +188,10 @@ func TestValidate(t *testing.T) {
 				smoothing_window = -1
 				speed_threshold = -10.0
 				wheel_circumference_mm = -2000
-				speed_units = "invalid"
+				speed_units = "` + logLevelInvalid + `"
 
 				[video]
-				file_path = "non-existent-file.mp4"
+				file_path = "` + invalidTestFilename + `"
 				display_playback_speed = true
 				window_scale_factor = -1.0
 				update_interval_sec = -1
@@ -234,9 +243,9 @@ func TestValidateVideoConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: VideoConfig{
-				FilePath: "test.mp4",
+				FilePath: testFilename,
 				OnScreenDisplay: VideoOSDConfig{
 					DisplayPlaybackSpeed: true,
 				},
@@ -247,9 +256,9 @@ func TestValidateVideoConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: VideoConfig{
-				FilePath: "non-existent-file.mp4",
+				FilePath: invalidTestFilename,
 				OnScreenDisplay: VideoOSDConfig{
 					DisplayPlaybackSpeed: true,
 				},
@@ -266,7 +275,7 @@ func TestValidateVideoConfig(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			if tt.config.FilePath != "non-existent-file.mp4" {
+			if tt.config.FilePath != invalidTestFilename {
 
 				tmpFile, err := os.CreateTemp("", "test")
 				if err != nil {
@@ -298,16 +307,16 @@ func TestValidateAppConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: AppConfig{
 				LogLevel: logLevelDebug,
 			},
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: AppConfig{
-				LogLevel: "invalid",
+				LogLevel: logLevelInvalid,
 			},
 			wantErr: true,
 		},
@@ -337,15 +346,15 @@ func TestValidateBLEConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: BLEConfig{
-				SensorUUID:      "some-uuid",
+				SensorUUID:      sensorTestUUID,
 				ScanTimeoutSecs: 10,
 			},
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: BLEConfig{
 				SensorUUID:      "",
 				ScanTimeoutSecs: -1,
@@ -378,7 +387,7 @@ func TestValidateSpeedConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: validConfig,
 			config: SpeedConfig{
 				SmoothingWindow:      5,
 				SpeedThreshold:       10.0,
@@ -388,12 +397,12 @@ func TestValidateSpeedConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid config",
+			name: invalidConfig,
 			config: SpeedConfig{
 				SmoothingWindow:      -1,
 				SpeedThreshold:       -10.0,
 				WheelCircumferenceMM: -2000,
-				SpeedUnits:           "invalid",
+				SpeedUnits:           logLevelInvalid,
 			},
 			wantErr: true,
 		},
