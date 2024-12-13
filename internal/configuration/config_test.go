@@ -10,126 +10,149 @@ const (
 	testFilename        = "test.mp4"
 	invalidTestFilename = "non-existent-file.mp4"
 	sensorTestUUID      = "test-uuid"
-	validConfig         = "valid config"
-	invalidConfig       = "invalid config"
 	logLevelInvalid     = "invalid"
 )
 
-// createTempConfigFile creates temporary TOML config file for testing
+// configTestCase is a helper struct for running validation tests
+type configTestCase[T any] struct {
+	name    string
+	config  T
+	wantErr bool
+}
+
+// Define TOML configurations for testing
+var (
+	validConfigTOML = `
+		[app]
+		logging_level = "` + logLevelDebug + `"
+
+		[ble]
+		sensor_uuid = "` + sensorTestUUID + `" 
+		scan_timeout_secs = 10
+
+		[speed]
+		smoothing_window = 5
+		speed_threshold = 10.0
+		wheel_circumference_mm = 2000
+		speed_units = "` + SpeedUnitsKMH + `"
+
+		[video]
+		file_path = "` + testFilename + `"
+		display_playback_speed = true
+		window_scale_factor = 1.0
+		update_interval_sec = 1
+		speed_multiplier = 1.0
+	`
+
+	invalidConfigTOML = `
+		[app]
+		logging_level = "` + logLevelInvalid + `"
+
+		[ble]
+		sensor_uuid = ""
+		scan_timeout_secs = -1
+
+		[speed]
+		smoothing_window = -1
+		speed_threshold = -10.0
+		wheel_circumference_mm = -2000
+		speed_units = "` + logLevelInvalid + `"
+
+		[video]
+		file_path = "` + invalidTestFilename + `"
+		display_playback_speed = true
+		window_scale_factor = -1.0
+		update_interval_sec = -1
+		speed_multiplier = -1.0
+	`
+)
+
+// createTempConfigFile creates a temporary TOML configuration file
 func createTempConfigFile(t *testing.T, config string) (string, func()) {
 
-	// Create a temporary config file
+	// Create a configuration temporary file
 	tmpFile, err := os.CreateTemp("", "config")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// If `+testFilename+` identified in the config, replace it with a temporary video file
+	// Replace the video file path with a temporary file
 	if strings.Contains(config, testFilename) {
 
+		// Create a temporary video file
 		tmpVideoFile, err := os.CreateTemp("", "video")
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		// Close the temporary video file
 		if err := tmpVideoFile.Close(); err != nil {
 			t.Fatal(err)
 		}
 
+		// Replace the video file path
 		config = strings.ReplaceAll(config, testFilename, tmpVideoFile.Name())
-		t.Cleanup(func() {
-
-			os.Remove(tmpVideoFile.Name())
-		})
-
+		t.Cleanup(func() { os.Remove(tmpVideoFile.Name()) })
 	}
 
-	// Write the TOML configuration to the temporary file
+	// Write the configuration to the temporary file
 	if _, err := tmpFile.Write([]byte(config)); err != nil {
 		t.Fatal(err)
 	}
 
+	// Close the temporary file
 	if err := tmpFile.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	// Return the file path and a deferred function for cleaning up
-	return tmpFile.Name(), func() {
-		os.Remove(tmpFile.Name())
-	}
+	return tmpFile.Name(), func() { os.Remove(tmpFile.Name()) }
 
 }
 
-// TestLoadFile tests the LoadFile() function
-func TestLoadFile(t *testing.T) {
+// runValidationTest is a generic helper function for running validation tests
+func runValidationTest[T any](t *testing.T, tests []configTestCase[T]) {
 
-	// Define test cases
-	tests := []struct {
-		name    string
-		config  string
-		wantErr bool
-	}{
-		{
-			name: validConfig,
-			config: `
-				[app]
-				logging_level = "` + logLevelDebug + `"
-
-				[ble]
-				sensor_uuid = "` + sensorTestUUID + `" 
-				scan_timeout_secs = 10
-
-				[speed]
-				smoothing_window = 5
-				speed_threshold = 10.0
-				wheel_circumference_mm = 2000
-				speed_units = "` + SpeedUnitsKMH + `"
-
-				[video]
-				file_path = "` + testFilename + `"
-				display_playback_speed = true
-				window_scale_factor = 1.0
-				update_interval_sec = 1
-				speed_multiplier = 1.0
-					`,
-			wantErr: false,
-		},
-		{
-			name: invalidConfig,
-			config: `
-				[app]
-				logging_level = "` + logLevelInvalid + `"
-
-				[ble]
-				sensor_uuid = ""
-				scan_timeout_secs = -1
-
-				[speed]
-				smoothing_window = -1
-				speed_threshold = -10.0
-				wheel_circumference_mm = -2000
-				speed_units = "` + SpeedUnitsKMH + `"
-
-				[video]
-				file_path = "` + invalidTestFilename + `"
-				display_playback_speed = true
-				window_scale_factor = -1.0
-				update_interval_sec = -1
-				speed_multiplier = -1.0
-					`,
-			wantErr: true,
-		},
-	}
-
-	// Loop through the test cases
+	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
 
+			// Handle both value and pointer receivers
+			var err error
+
+			if v, ok := any(tt.config).(interface{ validate() error }); ok {
+				err = v.validate()
+			} else if v, ok := any(&tt.config).(interface{ validate() error }); ok {
+				err = v.validate()
+			} else {
+				t.Fatal("config does not implement validate() error")
+			}
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+		})
+	}
+
+}
+
+// TestLoadFile tests the LoadFile function
+func TestLoadFile(t *testing.T) {
+
+	// Define test cases
+	tests := []configTestCase[string]{
+		{name: "valid config", config: validConfigTOML, wantErr: false},
+		{name: "invalid config", config: invalidConfigTOML, wantErr: true},
+	}
+
+	// Run tests
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
 			tmpFile, cleanup := createTempConfigFile(t, tt.config)
 			defer cleanup()
 
-			// Call the LoadFile() function
 			_, err := LoadFile(tmpFile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -140,68 +163,16 @@ func TestLoadFile(t *testing.T) {
 
 }
 
-// TestValidate tests the validate() function
+// TestValidate tests the validate function
 func TestValidate(t *testing.T) {
 
 	// Define test cases
-	tests := []struct {
-		name    string
-		config  string
-		wantErr bool
-	}{
-		{
-			name: validConfig,
-			config: `
-				[app]
-				logging_level = "` + logLevelDebug + `"
-
-				[ble]
-				sensor_uuid = "` + sensorTestUUID + `"
-				scan_timeout_secs = 10
-
-				[speed]
-				smoothing_window = 5
-				speed_threshold = 10.0
-				wheel_circumference_mm = 2000
-				speed_units = "` + SpeedUnitsKMH + `"
-
-				[video]
-				file_path = "` + testFilename + `"
-				display_playback_speed = true
-				window_scale_factor = 1.0
-				update_interval_sec = 1
-				speed_multiplier = 1.0
-					`,
-			wantErr: false,
-		},
-		{
-			name: invalidConfig,
-			config: `
-				[app]
-				logging_level = "` + logLevelInvalid + `"
-
-				[ble]
-				sensor_uuid = ""
-				scan_timeout_secs = -1
-
-				[speed]
-				smoothing_window = -1
-				speed_threshold = -10.0
-				wheel_circumference_mm = -2000
-				speed_units = "` + logLevelInvalid + `"
-
-				[video]
-				file_path = "` + invalidTestFilename + `"
-				display_playback_speed = true
-				window_scale_factor = -1.0
-				update_interval_sec = -1
-				speed_multiplier = -1.0
-					`,
-			wantErr: true,
-		},
+	tests := []configTestCase[string]{
+		{name: "valid config", config: validConfigTOML, wantErr: false},
+		{name: "invalid config", config: invalidConfigTOML, wantErr: true},
 	}
 
-	// Loop through the test cases
+	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -209,41 +180,32 @@ func TestValidate(t *testing.T) {
 			tmpFile, cleanup := createTempConfigFile(t, tt.config)
 			defer cleanup()
 
-			// Call the LoadFile() function
-			_, err := LoadFile(tmpFile)
-			if err != nil && !tt.wantErr {
-				t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if tt.wantErr {
-				return
-			}
-
 			config, err := LoadFile(tmpFile)
 			if err != nil {
-				t.Fatal(err)
+
+				if !tt.wantErr {
+					t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
+				}
+
+				return
+
 			}
 
 			if err := config.validate(); (err != nil) != tt.wantErr {
 				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 		})
 	}
 
 }
 
-// TestValidateVideoConfig tests the validate() function
+// TestValidateVideoConfig tests the validate function
 func TestValidateVideoConfig(t *testing.T) {
 
 	// Define test cases
-	tests := []struct {
-		name    string
-		config  VideoConfig
-		wantErr bool
-	}{
+	tests := []configTestCase[VideoConfig]{
 		{
-			name: validConfig,
+			name: "valid config",
 			config: VideoConfig{
 				FilePath: testFilename,
 				OnScreenDisplay: VideoOSDConfig{
@@ -256,7 +218,7 @@ func TestValidateVideoConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: invalidConfig,
+			name: "invalid config",
 			config: VideoConfig{
 				FilePath: invalidTestFilename,
 				OnScreenDisplay: VideoOSDConfig{
@@ -270,22 +232,21 @@ func TestValidateVideoConfig(t *testing.T) {
 		},
 	}
 
-	// Loop through the test cases
+	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
 
 			if tt.config.FilePath != invalidTestFilename {
-
 				tmpFile, err := os.CreateTemp("", "test")
+
 				if err != nil {
 					t.Fatal(err)
 				}
 
 				defer os.Remove(tmpFile.Name())
-
-				// Write the TOML configuration to the temporary file and validate it
 				tt.config.FilePath = tmpFile.Name()
+
 			}
 
 			if err := tt.config.validate(); (err != nil) != tt.wantErr {
@@ -297,56 +258,32 @@ func TestValidateVideoConfig(t *testing.T) {
 
 }
 
-// TestValidateAppConfig tests the validate() function
+// TestValidateAppConfig tests the validate function
 func TestValidateAppConfig(t *testing.T) {
 
-	// Define test cases
-	tests := []struct {
-		name    string
-		config  AppConfig
-		wantErr bool
-	}{
+	tests := []configTestCase[AppConfig]{
 		{
-			name: validConfig,
-			config: AppConfig{
-				LogLevel: logLevelDebug,
-			},
+			name:    "valid config",
+			config:  AppConfig{LogLevel: logLevelDebug},
 			wantErr: false,
 		},
 		{
-			name: invalidConfig,
-			config: AppConfig{
-				LogLevel: logLevelInvalid,
-			},
+			name:    "invalid config",
+			config:  AppConfig{LogLevel: logLevelInvalid},
 			wantErr: true,
 		},
 	}
 
-	// Loop through the test cases
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-
-			if err := tt.config.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-		})
-	}
+	runValidationTest(t, tests)
 
 }
 
-// TestValidateBLEConfig tests the validate() function
+// TestValidateBLEConfig tests the validate function
 func TestValidateBLEConfig(t *testing.T) {
 
-	// Define test cases
-	tests := []struct {
-		name    string
-		config  BLEConfig
-		wantErr bool
-	}{
+	tests := []configTestCase[BLEConfig]{
 		{
-			name: validConfig,
+			name: "valid config",
 			config: BLEConfig{
 				SensorUUID:      sensorTestUUID,
 				ScanTimeoutSecs: 10,
@@ -354,7 +291,7 @@ func TestValidateBLEConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: invalidConfig,
+			name: "invalid config",
 			config: BLEConfig{
 				SensorUUID:      "",
 				ScanTimeoutSecs: -1,
@@ -363,31 +300,16 @@ func TestValidateBLEConfig(t *testing.T) {
 		},
 	}
 
-	// Loop through the test cases
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-
-			if err := tt.config.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-		})
-	}
+	runValidationTest(t, tests)
 
 }
 
-// TestValidateSpeedConfig tests the validate() function
+// TestValidateSpeedConfig tests the validate function
 func TestValidateSpeedConfig(t *testing.T) {
 
-	// Define test cases
-	tests := []struct {
-		name    string
-		config  SpeedConfig
-		wantErr bool
-	}{
+	tests := []configTestCase[SpeedConfig]{
 		{
-			name: validConfig,
+			name: "valid config",
 			config: SpeedConfig{
 				SmoothingWindow:      5,
 				SpeedThreshold:       10.0,
@@ -397,7 +319,7 @@ func TestValidateSpeedConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: invalidConfig,
+			name: "invalid config",
 			config: SpeedConfig{
 				SmoothingWindow:      -1,
 				SpeedThreshold:       -10.0,
@@ -408,16 +330,6 @@ func TestValidateSpeedConfig(t *testing.T) {
 		},
 	}
 
-	// Loop through the test cases
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-
-			if err := tt.config.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-		})
-	}
+	runValidationTest(t, tests)
 
 }
