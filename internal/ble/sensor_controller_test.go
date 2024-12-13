@@ -12,126 +12,130 @@ import (
 )
 
 const (
-	speedUnitsKMH  = "kph"
-	speedUnitsMPH  = "mph"
-	sensorTestUUID = "test-uuid"
-	noBLEnoTest    = "Skipping test as BLE adapter is not available"
+	speedUnitsKMH          = "kph"
+	speedUnitsMPH          = "mph"
+	sensorTestUUID         = "test-uuid"
+	testTimeout            = 2 * time.Second
+	initialScanDelay       = 2 * time.Second
+	noBLEAdapterError      = "Skipping test as BLE adapter is not available"
+	wheelCircumferenceMM   = 2000
+	emptyData              = "empty data"
+	invalidFlags           = "invalid flags"
+	validDataKPHFirst      = "valid data kph - first reading"
+	validDataKPHSubsequent = "valid data kph - subsequent reading"
+	validDataMPHFirst      = "valid data mph - first reading"
 )
 
-// init initializes the logger with the debug level
+// init initializes the logger for testing
 func init() {
 
-	// logger needed for testing of ble controller component
 	logger.Initialize("debug")
 
 }
 
-// resetWheelVars is a helper function to reset the package-level wheel variables
-func resetWheelVars() {
+// resetBLEData resets the BLE data for testing
+func resetBLEData(controller *ble.BLEController) {
 
-	// Send empty data to reset speed state
-	if controller, _ := ble.NewBLEController(config.BLEConfig{}, config.SpeedConfig{}); controller != nil {
-		controller.ProcessBLESpeed([]byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
-	}
+	controller.ProcessBLESpeed([]byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 
 }
 
-// waitForScanReset waits for a brief period to allow any ongoing BLE scans to complete
+// waitForScanReset implements a delay before scanning for a BLE peripheral
 func waitForScanReset() {
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(initialScanDelay)
 
 }
 
-// TestProcessBLESpeed tests the BLE speed processing functionality
+// createTestController creates test BLE and speed controllers
+func createTestController(speedUnits string) (*ble.BLEController, error) {
+
+	// Create test BLE controller
+	bleConfig := config.BLEConfig{
+		SensorUUID:      sensorTestUUID,
+		ScanTimeoutSecs: 10,
+	}
+
+	// Create test speed controller
+	speedConfig := config.SpeedConfig{
+		SpeedUnits:           speedUnits,
+		WheelCircumferenceMM: wheelCircumferenceMM,
+	}
+
+	return ble.NewBLEController(bleConfig, speedConfig)
+
+}
+
+// TestProcessBLESpeed tests the ProcessBLESpeed() function
 func TestProcessBLESpeed(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
-		name        string
-		data        []byte
-		speedUnits  string
-		wheelCircMM int
-		want        float64
+		name       string
+		data       []byte
+		speedUnits string
+		want       float64
 	}{
 		{
-			name:        "empty data",
-			data:        []byte{},
-			speedUnits:  speedUnitsKMH,
-			wheelCircMM: 2000,
-			want:        0.0,
+			name:       emptyData,
+			data:       []byte{},
+			speedUnits: speedUnitsKMH,
+			want:       0.0,
 		},
 		{
-			name:        "invalid flags",
-			data:        []byte{0x00},
-			speedUnits:  speedUnitsKMH,
-			wheelCircMM: 2000,
-			want:        0.0,
+			name:       invalidFlags,
+			data:       []byte{0x00},
+			speedUnits: speedUnitsKMH,
+			want:       0.0,
 		},
 		{
-			name: "valid data kph - first reading",
+			name: validDataKPHFirst,
 			data: []byte{
 				0x01,                   // flags
 				0x02, 0x00, 0x00, 0x00, // wheel revs
 				0x20, 0x00, // wheel event time
 			},
-			speedUnits:  speedUnitsKMH,
-			wheelCircMM: 2000,
-			want:        0.0, // First reading returns 0
+			speedUnits: speedUnitsKMH,
+			want:       0.0,
 		},
 		{
-			name: "valid data kph - subsequent reading",
+			name: validDataKPHSubsequent,
 			data: []byte{
 				0x01,                   // flags
 				0x03, 0x00, 0x00, 0x00, // wheel revs (1 more revolution)
 				0x40, 0x00, // wheel event time (32 time units later)
 			},
-			speedUnits:  speedUnitsKMH,
-			wheelCircMM: 2000,
-			want:        225.0, // (1 rev * 2000mm * 3.6) / 32 time units
+			speedUnits: speedUnitsKMH,
+			want:       225.0, // (1 rev * 2000mm * 3.6) / 32 time units
 		},
 		{
-			name: "valid data mph - first reading",
+			name: validDataMPHFirst,
 			data: []byte{
 				0x01,                   // flags
 				0x02, 0x00, 0x00, 0x00, // wheel revs
 				0x20, 0x00, // wheel event time
 			},
-			speedUnits:  speedUnitsMPH,
-			wheelCircMM: 2000,
-			want:        0.0,
+			speedUnits: speedUnitsMPH,
+			want:       0.0,
 		},
 	}
 
-	// Run tests
+	// Loop through the test cases
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			// Reset wheel variables before each test
-			resetWheelVars()
-
-			// Create a new BLE controller
-			bleConfig := config.BLEConfig{
-				SensorUUID:      sensorTestUUID,
-				ScanTimeoutSecs: 10,
-			}
-
-			// Create a new speed controller
-			speedConfig := config.SpeedConfig{
-				SpeedUnits:           tt.speedUnits,
-				WheelCircumferenceMM: tt.wheelCircMM,
-			}
-
-			// Create a new BLE controller
-			controller, err := ble.NewBLEController(bleConfig, speedConfig)
+			// Create test BLE and speed controllers
+			controller, err := createTestController(tt.speedUnits)
 			if err != nil {
-				t.Skip(noBLEnoTest)
+				t.Skip(noBLEAdapterError)
 				return
 			}
 
-			// For subsequent reading tests, first send the initial reading
-			if tt.name == "valid data kph - subsequent reading" {
+			// Reset BLE data
+			resetBLEData(controller)
+
+			if tt.name == validDataKPHSubsequent {
 				controller.ProcessBLESpeed([]byte{
 					0x01,                   // flags
 					0x02, 0x00, 0x00, 0x00, // initial wheel revs
@@ -139,10 +143,8 @@ func TestProcessBLESpeed(t *testing.T) {
 				})
 			}
 
-			// Process the BLE speed data
+			// Process BLE data
 			got := controller.ProcessBLESpeed(tt.data)
-
-			// Verify the calculated speed
 			assert.InDelta(t, tt.want, got, 0.1, "Speed calculation mismatch")
 
 		})
@@ -150,98 +152,62 @@ func TestProcessBLESpeed(t *testing.T) {
 
 }
 
-// TestNewBLEControllerIntegration tests the creation of a new BLE controller
+// TestNewBLEControllerIntegration tests the creation of a new BLEController
 func TestNewBLEControllerIntegration(t *testing.T) {
 
-	waitForScanReset() // Wait before starting test
+	waitForScanReset()
 
-	// Create a new BLE controller
-	bleConfig := config.BLEConfig{
-		SensorUUID:      sensorTestUUID,
-		ScanTimeoutSecs: 10,
-	}
-
-	// Create a new speed controller
-	speedConfig := config.SpeedConfig{
-		SpeedUnits:           speedUnitsKMH,
-		WheelCircumferenceMM: 2000,
-	}
-
-	// Create a new BLE controller
-	controller, err := ble.NewBLEController(bleConfig, speedConfig)
+	// Create test BLE and speed controllers
+	controller, err := createTestController(speedUnitsKMH)
 	if err != nil {
-		t.Skip(noBLEnoTest)
+		t.Skip(noBLEAdapterError)
 		return
 	}
 
-	// Verify that the controller is not nil
 	assert.NotNil(t, controller)
 
 }
 
-// TestScanForBLEPeripheralIntegration tests the BLE scanning functionality
+// TestScanForBLEPeripheralIntegration tests the ScanForBLEPeripheral() function
 func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
-	waitForScanReset() // Wait before starting test
+	// Pause for scan reset
+	waitForScanReset()
 
-	// Create a new BLE controller
-	bleConfig := config.BLEConfig{
-		SensorUUID:      sensorTestUUID,
-		ScanTimeoutSecs: 1,
-	}
-
-	// Create a new speed controller
-	speedConfig := config.SpeedConfig{
-		SpeedUnits:           speedUnitsKMH,
-		WheelCircumferenceMM: 2000,
-	}
-
-	// Create a new BLE controller
-	controller, err := ble.NewBLEController(bleConfig, speedConfig)
+	// Create test BLE and speed controllers
+	controller, err := createTestController(speedUnitsKMH)
 	if err != nil {
-		t.Skip(noBLEnoTest)
+		t.Skip(noBLEAdapterError)
 		return
 	}
 
-	// Create a context with a timeout of 2 seconds
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	// Scan for the test UUID
+	// Expect error since test UUID won't be found
 	_, err = controller.ScanForBLEPeripheral(ctx)
-	assert.Error(t, err) // Expect error since test UUID won't be found
+	assert.Error(t, err)
 
 }
 
-// TestGetBLECharacteristicIntegration tests the BLE characteristic discovery
+// TestGetBLECharacteristicIntegration tests the GetBLECharacteristic() function
 func TestGetBLECharacteristicIntegration(t *testing.T) {
 
-	waitForScanReset() // Wait before starting test
+	// Pause for scan reset
+	waitForScanReset()
 
-	// Create a new BLE controller
-	bleConfig := config.BLEConfig{
-		SensorUUID:      sensorTestUUID,
-		ScanTimeoutSecs: 1,
-	}
-
-	// Create a new speed controller
-	speedConfig := config.SpeedConfig{
-		SpeedUnits:           speedUnitsKMH,
-		WheelCircumferenceMM: 2000,
-	}
-
-	// Create a new BLE controller
-	controller, err := ble.NewBLEController(bleConfig, speedConfig)
+	// Create test BLE and speed controllers
+	controller, err := createTestController(speedUnitsKMH)
 	if err != nil {
-		t.Skip(noBLEnoTest)
+		t.Skip(noBLEAdapterError)
 		return
 	}
 
-	// Create a context with a timeout of 2 seconds
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
+	// Expect error since test UUID won't be found
 	_, err = controller.GetBLECharacteristic(ctx, nil)
-	assert.Error(t, err) // Expect error since test UUID won't be found
+	assert.Error(t, err)
 
 }
