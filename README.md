@@ -95,7 +95,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.6.0
+# 0.6.1
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -192,7 +192,7 @@ go run cmd/main.go
 At this point, you should see the following output:
 
   ```bash
-2024/12/11 22:02:28 Starting BLE Sync Cycle 0.6.0
+2024/12/11 22:02:28 Starting BLE Sync Cycle 0.6.1
 2024/12/11 22:02:28 INFO [BLE] Created new BLE central controller
 2024/12/11 22:02:28 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
 2024/12/11 22:02:42 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
@@ -207,7 +207,7 @@ At this point, you should see the following output:
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
   ```bash
-2024/12/11 22:03:59 Starting BLE Sync Cycle 0.6.0
+2024/12/11 22:03:59 Starting BLE Sync Cycle 0.6.1
 2024/12/11 22:03:59 INFO [BLE] Created new BLE central controller
 2024/12/11 22:03:59 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
 2024/12/11 22:03:59 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
