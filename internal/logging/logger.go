@@ -40,6 +40,7 @@ type CustomTextHandler struct {
 // NewCustomTextHandler creates a new custom text handler
 func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHandler {
 	textHandler := slog.NewTextHandler(w, opts)
+
 	return &CustomTextHandler{
 		Handler: textHandler,
 		writer:  w,
@@ -79,39 +80,33 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	// Write formatted output for all other logging levels
 	fmt.Fprintf(h.writer, "%s %s%s%s %s%s\n", timestamp, color, level, Reset, msg, Reset)
 	return nil
-
 }
 
 // Enabled implements slog.Handler
 func (h *CustomTextHandler) Enabled(ctx context.Context, level slog.Level) bool {
-
 	return h.Handler.Enabled(ctx, level)
-
 }
 
 // WithAttrs implements slog.Handler which is used to add attributes
 func (h *CustomTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-
 	return &CustomTextHandler{
 		Handler: h.Handler.WithAttrs(attrs),
 		writer:  h.writer,
 	}
-
 }
 
 // WithGroup implements slog.Handler which is used to group logs
 func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
-
 	return &CustomTextHandler{
 		Handler: h.Handler.WithGroup(name),
 		writer:  h.writer,
 	}
-
 }
 
 // Initialize initializes the logger with a specified log level
 func Initialize(logLevel string) *slog.Logger {
 
+	// Set log level
 	var level slog.Level
 
 	switch logLevel {
@@ -131,40 +126,29 @@ func Initialize(logLevel string) *slog.Logger {
 	logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 
 	return logger
-
 }
 
 // Info logs an informational message
 func Info(msg string, keysAndValues ...interface{}) {
-
 	logger.Info(msg, keysAndValues...)
-
 }
 
 // Warn logs a warning message
 func Warn(msg string, keysAndValues ...interface{}) {
-
 	logger.Warn(msg, keysAndValues...)
-
 }
 
 // Error logs an error message
 func Error(msg string, keysAndValues ...interface{}) {
-
 	logger.Error(msg, keysAndValues...)
-
 }
 
 // Debug logs a debug message
 func Debug(msg string, keysAndValues ...interface{}) {
-
 	logger.Debug(msg, keysAndValues...)
-
 }
 
 func Fatal(msg string, keysAndValues ...interface{}) {
-
 	logger.Log(context.Background(), LevelFatal, msg, keysAndValues...)
 	ExitFunc(1)
-
 }

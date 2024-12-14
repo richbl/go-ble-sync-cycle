@@ -28,23 +28,17 @@ const (
 
 // init initializes the logger for testing
 func init() {
-
 	logger.Initialize("debug")
-
 }
 
 // resetBLEData resets the BLE data for testing
 func resetBLEData(controller *ble.BLEController) {
-
 	controller.ProcessBLESpeed([]byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
-
 }
 
 // waitForScanReset implements a delay before scanning for a BLE peripheral
 func waitForScanReset() {
-
 	time.Sleep(initialScanDelay)
-
 }
 
 // createTestController creates test BLE and speed controllers
@@ -63,7 +57,6 @@ func createTestController(speedUnits string) (*ble.BLEController, error) {
 	}
 
 	return ble.NewBLEController(bleConfig, speedConfig)
-
 }
 
 // TestProcessBLESpeed tests the ProcessBLESpeed() function
@@ -122,7 +115,6 @@ func TestProcessBLESpeed(t *testing.T) {
 
 	// Loop through the test cases
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Create test BLE and speed controllers
@@ -146,15 +138,14 @@ func TestProcessBLESpeed(t *testing.T) {
 			// Process BLE data
 			got := controller.ProcessBLESpeed(tt.data)
 			assert.InDelta(t, tt.want, got, 0.1, "Speed calculation mismatch")
-
 		})
 	}
-
 }
 
 // TestNewBLEControllerIntegration tests the creation of a new BLEController
 func TestNewBLEControllerIntegration(t *testing.T) {
 
+	// Create test BLE controller
 	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
@@ -162,43 +153,40 @@ func TestNewBLEControllerIntegration(t *testing.T) {
 	}
 
 	assert.NotNil(t, controller)
-
 }
 
 // TestScanForBLEPeripheralIntegration tests the ScanForBLEPeripheral() function
 func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
+	// Create test BLE controller
 	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
 		return
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
 	// Expect error since test UUID won't be found
 	_, err = controller.ScanForBLEPeripheral(ctx)
 	assert.Error(t, err)
-
 }
 
 // TestGetBLECharacteristicIntegration tests the GetBLECharacteristic() function
 func TestGetBLECharacteristicIntegration(t *testing.T) {
 
+	// Create test BLE controller
 	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
 		return
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
 	// Expect error since test UUID won't be found
 	_, err = controller.GetBLECharacteristic(ctx, nil)
 	assert.Error(t, err)
-
 }
 
 // controllersIntegrationTest pauses BLE scan and then creates controllers
@@ -214,5 +202,4 @@ func controllersIntegrationTest() (*ble.BLEController, error) {
 	}
 
 	return controller, nil
-
 }

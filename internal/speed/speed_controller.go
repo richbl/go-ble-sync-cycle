@@ -23,6 +23,7 @@ var mutex sync.RWMutex
 // storing speed measurements for video playback speed smoothing
 func NewSpeedController(window int) *SpeedController {
 
+	// Create ring buffer
 	r := ring.New(window)
 
 	// Initialize ring with zero values
@@ -35,16 +36,17 @@ func NewSpeedController(window int) *SpeedController {
 		speeds: r,
 		window: window,
 	}
-
 }
 
 // UpdateSpeed updates the current speed measurement and calculates a smoothed average speed over
 // the specified window of time
 func (t *SpeedController) UpdateSpeed(speed float64) {
 
+	// Lock mutex to prevent concurrent access
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	// Get speeds
 	t.currentSpeed = speed
 	t.speeds.Value = speed
 	t.speeds = t.speeds.Next()
@@ -60,25 +62,26 @@ func (t *SpeedController) UpdateSpeed(speed float64) {
 
 	t.smoothedSpeed = sum / float64(t.window)
 	t.lastUpdate = time.Now()
-
 }
 
 // GetSmoothedSpeed returns the smoothed speed measurement
 func (t *SpeedController) GetSmoothedSpeed() float64 {
 
+	// Lock mutex to prevent concurrent access
 	mutex.RLock()
 	defer mutex.RUnlock()
 
 	return t.smoothedSpeed
-
 }
 
 // GetSpeedBuffer returns the speed buffer as an array of string
 func (t *SpeedController) GetSpeedBuffer() []string {
 
+	// Lock mutex to prevent concurrent access
 	mutex.RLock()
 	defer mutex.RUnlock()
 
+	// Create speed buffer
 	var speeds []string
 	t.speeds.Do(func(x interface{}) {
 		if x != nil {
@@ -87,5 +90,4 @@ func (t *SpeedController) GetSpeedBuffer() []string {
 	})
 
 	return speeds
-
 }
