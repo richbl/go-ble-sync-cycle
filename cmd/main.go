@@ -26,11 +26,10 @@ type appControllers struct {
 }
 
 func main() {
-
-	log.Println("Starting BLE Sync Cycle 0.6.1")
+	log.Println("Starting BLE Sync Cycle 0.6.2")
 
 	// Load configuration
-	cfg, err := config.LoadFile("internal/configuration/config.toml")
+	cfg, err := config.LoadFile("config.toml")
 	if err != nil {
 		log.Fatal("FATAL - Failed to load TOML configuration: " + err.Error())
 	}
@@ -55,7 +54,6 @@ func main() {
 
 	// Shutdown the application... buh bye!
 	logger.Info("[APP] Application shutdown complete. Goodbye!")
-
 }
 
 // startAppControllers is responsible for starting and managing the component controllers
@@ -136,7 +134,6 @@ func setupAppControllers(cfg config.Config) (appControllers, error) {
 		videoPlayer:     videoPlayer,
 		bleController:   bleController,
 	}, nil
-
 }
 
 // scanForBLESpeedCharacteristic scans for the BLE CSC speed characteristic
@@ -149,7 +146,6 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 	// Scan for the BLE CSC speed characteristic
 	go func() {
 		characteristic, err := controllers.bleController.GetBLECharacteristic(ctx, controllers.speedController)
-
 		if err != nil {
 			errChan <- err
 			return
@@ -157,7 +153,6 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 
 		// Return the characteristic
 		results <- characteristic
-
 	}()
 
 	// Wait for the characteristic or an error
@@ -169,19 +164,14 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 	case characteristic := <-results:
 		return characteristic, nil
 	}
-
 }
 
 // monitorBLESpeed monitors the BLE speed characteristic
 func monitorBLESpeed(ctx context.Context, controllers appControllers, bleSpeedCharacter *bluetooth.DeviceCharacteristic) error {
-
 	return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController, bleSpeedCharacter)
-
 }
 
 // playVideo starts the video player
 func playVideo(ctx context.Context, controllers appControllers) error {
-
 	return controllers.videoPlayer.Start(ctx, controllers.speedController)
-
 }

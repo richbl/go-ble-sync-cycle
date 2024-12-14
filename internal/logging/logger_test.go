@@ -44,9 +44,7 @@ func TestInitialize(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			Initialize(tt.level.(string))
 
 			if logger == nil {
@@ -61,10 +59,8 @@ func TestInitialize(t *testing.T) {
 			if h.level != tt.want.(slog.Level) {
 				t.Errorf("got logger level %v, want %v", h.level, tt.want)
 			}
-
 		})
 	}
-
 }
 
 // TestCustomTextHandler tests the custom text handler
@@ -81,9 +77,7 @@ func TestCustomTextHandler(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			buf := &bytes.Buffer{}
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: defaultOptions})
 			r := slog.NewRecord(time.Now(), tt.level.(slog.Level), testMessage, 0)
@@ -91,14 +85,11 @@ func TestCustomTextHandler(t *testing.T) {
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
-
 			if !strings.Contains(buf.String(), tt.want.(string)) {
 				t.Errorf("got %q, want %q", buf.String(), tt.want)
 			}
-
 		})
 	}
-
 }
 
 // TestLogLevels tests all logging level functions
@@ -118,9 +109,7 @@ func TestLogLevels(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			buf, testLogger := setupTestLogger()
 			logger = testLogger
 
@@ -128,10 +117,8 @@ func TestLogLevels(t *testing.T) {
 			if !strings.Contains(buf.String(), tt.wantLevel) {
 				t.Errorf("got %q, want to contain %q", buf.String(), tt.wantLevel)
 			}
-
 		})
 	}
-
 }
 
 // TestFatal tests the Fatal function
@@ -147,25 +134,20 @@ func TestFatal(t *testing.T) {
 
 	// Mock exit function
 	ExitFunc = func(code int) {
-
 		exitCalled = true
 		if code != 1 {
 			t.Errorf("Fatal called exit function with code %d, want 1", code)
 		}
-
 	}
 
 	// Call Fatal function for testing
 	Fatal(testMessage)
-
 	if !exitCalled {
 		t.Error("Fatal did not call exit function")
 	}
-
 	if buf.String() == "" {
 		t.Error("Fatal did not log a message")
 	}
-
 }
 
 // TestEnabled tests the Enabled function
@@ -183,16 +165,12 @@ func TestEnabled(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
 
 			if got := h.Enabled(context.Background(), tt.level.(slog.Level)); got != tt.want.(bool) {
 				t.Errorf("Enabled() = %v, want %v", got, tt.want)
 			}
-
 		})
 	}
-
 }

@@ -35,6 +35,7 @@ func TestNewPlaybackController(t *testing.T) {
 // createTestController creates a PlaybackController with default test configurations
 func createTestController(t *testing.T) *PlaybackController {
 
+	// Create test Video and Speed configurations
 	vc := config.VideoConfig{
 		FilePath:          testFilename,
 		WindowScaleFactor: defaultWindowScale,
@@ -44,60 +45,61 @@ func createTestController(t *testing.T) *PlaybackController {
 			DisplayPlaybackSpeed: true,
 		},
 	}
-
 	sc := config.SpeedConfig{
 		SpeedThreshold: speedThreshold,
 	}
 
+	// Create new PlaybackController
 	controller, err := NewPlaybackController(vc, sc)
 	assert.NotNil(t, controller, "PlaybackController should not be nil")
 	assert.NoError(t, err, "Error while creating PlaybackController")
 
 	return controller
-
 }
 
 // TestPlaybackControllerStart tests the Start method of the PlaybackController
 func TestPlaybackControllerStart(t *testing.T) {
 
+	// Create test controller
 	controller := createTestController(t)
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
+	// Create new SpeedController
 	speedController := &speed.SpeedController{}
 	err := controller.Start(ctx, speedController)
 	assert.NoError(t, err, "Error while starting PlaybackController")
-
 }
 
 // TestPlaybackControllerConfigurePlayer tests the configurePlayer method of the PlaybackController
 func TestPlaybackControllerConfigurePlayer(t *testing.T) {
 
+	// Create test controller
 	controller := createTestController(t)
 	err := controller.configureMPVPlayer()
 	assert.NoError(t, err, "Error while configuring MPV player")
-
 }
 
 // TestPlaybackControllerLoadVideoFile tests the loadVideoFile method of the PlaybackController
 func TestPlaybackControllerLoadVideoFile(t *testing.T) {
 
+	// Create test controller
 	controller := createTestController(t)
 	err := controller.loadMPVvideo()
 	assert.NoError(t, err, "Error while loading video file")
-
 }
 
 // TestPlaybackControllerSetPauseStatus tests the setPauseStatus method of the PlaybackController
 func TestPlaybackControllerSetPauseStatus(t *testing.T) {
 
+	// Create test controller
 	controller := createTestController(t)
 
+	// Set and check pause status
 	err := controller.player.SetProperty("pause", mpv.FormatFlag, true)
 	assert.NoError(t, err, "Error while setting pause property")
 
 	result, err := controller.player.GetProperty("pause", mpv.FormatFlag)
 	assert.NoError(t, err, "Error while getting pause property")
 	assert.True(t, result.(bool), "Pause property should be true")
-
 }

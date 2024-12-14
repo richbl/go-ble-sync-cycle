@@ -109,7 +109,6 @@ func createTempConfigFile(t *testing.T, config string) (string, func()) {
 	}
 
 	return tmpFile.Name(), func() { os.Remove(tmpFile.Name()) }
-
 }
 
 // runValidationTest is a generic helper function for running validation tests
@@ -117,7 +116,6 @@ func runValidationTest[T any](t *testing.T, tests []configTestCase[T]) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Handle both value and pointer receivers
@@ -134,10 +132,8 @@ func runValidationTest[T any](t *testing.T, tests []configTestCase[T]) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
-
 		})
 	}
-
 }
 
 // TestLoadFile tests the LoadFile function
@@ -151,7 +147,6 @@ func TestLoadFile(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			tmpFile, cleanup := createTempConfigFile(t, tt.config)
 			defer cleanup()
@@ -160,10 +155,8 @@ func TestLoadFile(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 		})
 	}
-
 }
 
 // TestValidate tests the validate function
@@ -177,29 +170,22 @@ func TestValidate(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			tmpFile, cleanup := createTempConfigFile(t, tt.config)
 			defer cleanup()
 
 			config, err := LoadFile(tmpFile)
 			if err != nil {
-
 				if !tt.wantErr {
 					t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
 				}
-
 				return
-
 			}
-
 			if err := config.validate(); (err != nil) != tt.wantErr {
 				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
 		})
 	}
-
 }
 
 // TestValidateVideoConfig tests the validate function
@@ -237,33 +223,26 @@ func TestValidateVideoConfig(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
-
 			if tt.config.FilePath != invalidTestFilename {
 				tmpFile, err := os.CreateTemp("", "test")
-
 				if err != nil {
 					t.Fatal(err)
 				}
-
 				defer os.Remove(tmpFile.Name())
 				tt.config.FilePath = tmpFile.Name()
-
 			}
-
 			if err := tt.config.validate(); (err != nil) != tt.wantErr {
 				t.Errorf(validateErrMessage, err, tt.wantErr)
 			}
-
 		})
 	}
-
 }
 
 // TestValidateAppConfig tests the validate function
 func TestValidateAppConfig(t *testing.T) {
 
+	// Define test cases
 	tests := []configTestCase[AppConfig]{
 		{
 			name:    validConfig,
@@ -277,13 +256,14 @@ func TestValidateAppConfig(t *testing.T) {
 		},
 	}
 
+	// Run tests
 	runValidationTest(t, tests)
-
 }
 
 // TestValidateBLEConfig tests the validate function
 func TestValidateBLEConfig(t *testing.T) {
 
+	// Define test cases
 	tests := []configTestCase[BLEConfig]{
 		{
 			name: validConfig,
@@ -303,13 +283,14 @@ func TestValidateBLEConfig(t *testing.T) {
 		},
 	}
 
+	// Run tests
 	runValidationTest(t, tests)
-
 }
 
 // TestValidateSpeedConfig tests the validate function
 func TestValidateSpeedConfig(t *testing.T) {
 
+	// Define test cases
 	tests := []configTestCase[SpeedConfig]{
 		{
 			name: validConfig,
@@ -333,6 +314,6 @@ func TestValidateSpeedConfig(t *testing.T) {
 		},
 	}
 
+	// Run tests
 	runValidationTest(t, tests)
-
 }

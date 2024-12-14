@@ -2,7 +2,9 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
@@ -61,23 +63,42 @@ const (
 	SpeedUnitsMPH = "mph"
 )
 
-// LoadFile loads the application configuration from the given filepath
-func LoadFile(filepath string) (*Config, error) {
+// LoadFile attempts to load the TOML configuration file from the specified path,
+// falling back to the default configuration directory if not found
+func LoadFile(filename string) (*Config, error) {
 
-	var config Config
-
-	// Read the TOML configuration file
-	if _, err := toml.DecodeFile(filepath, &config); err != nil {
-		return nil, err
+	// Define configuration file paths
+	paths := []string{
+		filename,
+		filepath.Join("internal", "configuration", filepath.Base(filename)),
 	}
 
-	// Validate all configuration elements
-	if err := config.validate(); err != nil {
-		return nil, err
+	var lastErr error
+
+	// Attempt to load the configuration file from each path
+	for _, path := range paths {
+		cfg := &Config{}
+
+		// Load TOML file
+		if _, err := toml.DecodeFile(path, cfg); err != nil {
+			if !os.IsNotExist(err) || path == paths[len(paths)-1] {
+				lastErr = fmt.Errorf("failed to load config from %s: %w", path, err)
+			}
+			continue
+		}
+
+		// Validate TOML file
+		if err := cfg.validate(); err != nil {
+			return nil, err
+		}
+
+		// Successfully loaded TOML file
+		return cfg, nil
+
 	}
 
-	return &config, nil
-
+	// Failed to load TOML file
+	return nil, lastErr
 }
 
 // validate performs validation on the configuration values
@@ -92,52 +113,47 @@ func (c *Config) validate() error {
 	if err := c.Speed.validate(); err != nil {
 		return err
 	}
-
 	if err := c.BLE.validate(); err != nil {
 		return err
 	}
-
 	if err := c.Video.validate(); err != nil {
 		return err
 	}
-
 	return nil
-
 }
 
 // validate validates AppConfig elements
 func (ac *AppConfig) validate() error {
 
+	// Validate log level
 	switch ac.LogLevel {
 	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError, logLevelFatal:
 		return nil
 	default:
 		return errors.New("invalid log level: " + ac.LogLevel)
 	}
-
 }
 
 // validate validates SpeedConfig elements
 func (sc *SpeedConfig) validate() error {
 
+	// Validate speed units
 	switch sc.SpeedUnits {
 	case SpeedUnitsKMH, SpeedUnitsMPH:
 		return nil
 	default:
 		return errors.New("invalid speed units: " + sc.SpeedUnits)
 	}
-
 }
 
 // validate validates BLEConfig elements
 func (bc *BLEConfig) validate() error {
 
+	// Check if the sensor UUID is specified
 	if bc.SensorUUID == "" {
 		return errors.New("sensor UUID must be specified in configuration")
 	}
-
 	return nil
-
 }
 
 // validate validates VideoConfig elements
@@ -157,5 +173,4 @@ func (vc *VideoConfig) validate() error {
 	vc.OnScreenDisplay.ShowOSD = (vc.OnScreenDisplay.DisplayCycleSpeed || vc.OnScreenDisplay.DisplayPlaybackSpeed)
 
 	return nil
-
 }

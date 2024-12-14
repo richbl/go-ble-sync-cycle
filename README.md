@@ -59,10 +59,12 @@ For my own indoor cycling configuration, I use a Performance Travel Trac 3 train
 
 ### Software Components
 
-- The open source, cross-platform [mpv media player](https://mpv.io/), installed and operational
+- The open source, cross-platform [mpv media player](https://mpv.io/), installed (e.g., `sudo apt-get install mpv`) and operational
+- The `libmpv2` library, installed (e.g., `sudo apt-get install libmpv2`)
+- In order to compile the executable for this project, an operational [Go language](https://go.dev/) environment is required (this release was developed using Go 1.23.2). Once the **BLE Sync Cycle** application is compiled into an executable, it can be run without the dependencies on the Go language environment
 - A local video file for playback using mpv, preferably a first-person view cycling video. Check out [YouTube with this query: "first person cycling"](https://www.youtube.com/results?search_query=first+person+cycling) for some ideas
-- This application. While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on an Intel processor (amd64), it should work across any recent Unix-like platform and architecture
-    - In order to compile the executable for this project, an operational [Go language](https://go.dev/) environment is required (this release was developed using Go 1.23.2)
+
+While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on an Intel processor (amd64), it should work across any recent comparable Unix-like platform and architecture.
 
 ## Installation
 
@@ -70,20 +72,20 @@ For my own indoor cycling configuration, I use a Performance Travel Trac 3 train
 
 1. Clone the repository:
 
-    ```bash
+    ```console
     git clone https://github.com/richbl/go-ble-sync-cycle
     cd go-ble-sync-cycle
     ```
 
 2. Install dependencies:
 
-    ```bash
+    ```console
     go mod download
     ```
 
 3. Build the application:
 
-    ```bash
+    ```console
     go build -o ble-sync-cycle cmd/main.go
     ```
 
@@ -95,7 +97,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.6.1
+# 0.6.2
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -177,13 +179,13 @@ At a high level, **BLE Sync Cycle** will perform the following:
 
 To run the application, execute the following command:
 
-```bash
+```console
 ./ble-sync-cycle
 ```
 
 Or, if the application hasn't yet been built using the `go build` command, you can execute the following command:
 
-```bash
+```console
 go run cmd/main.go
 ```
 
@@ -191,8 +193,8 @@ go run cmd/main.go
 
 At this point, you should see the following output:
 
-  ```bash
-2024/12/11 22:02:28 Starting BLE Sync Cycle 0.6.1
+  ```console
+2024/12/11 22:02:28 Starting BLE Sync Cycle 0.6.2
 2024/12/11 22:02:28 INFO [BLE] Created new BLE central controller
 2024/12/11 22:02:28 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
 2024/12/11 22:02:42 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
@@ -206,8 +208,8 @@ At this point, you should see the following output:
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
-  ```bash
-2024/12/11 22:03:59 Starting BLE Sync Cycle 0.6.1
+  ```console
+2024/12/11 22:03:59 Starting BLE Sync Cycle 0.6.2
 2024/12/11 22:03:59 INFO [BLE] Created new BLE central controller
 2024/12/11 22:03:59 INFO [BLE] Now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
 2024/12/11 22:03:59 INFO [BLE] Found BLE peripheral F1:42:D8:DE:35:16
@@ -229,7 +231,7 @@ In this first example, while the application was able to find the BLE peripheral
 
 In the example above, the application is now running in a loop, periodically querying the BLE peripheral for speed data. The application will also update the video player to match the speed of the sensor. Here, since the video has just begun, its speed is set to 0.0 (paused).
 
-```bash
+```console
 ...
 024/12/11 22:05:08 INFO [SPEED] BLE sensor speed: 8.54 mph
 2024/12/11 22:05:09 INFO [VIDEO] Sensor speed buffer: [9.06 8.28 8.11 8.20 8.54]
@@ -265,7 +267,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 **To quit the application, press `Ctrl+C`.**
 
-```bash
+```console
 ...
 2024/12/11 22:05:11 INFO [SPEED] BLE sensor speed: 0.00 mph
 2024/12/11 22:05:12 INFO [VIDEO] Sensor speed buffer: [8.44 7.84 6.56 6.65 0.00]
@@ -287,7 +289,6 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2024/12/11 22:05:14 INFO [APP] Shutdown signal received
 2024/12/11 22:05:14 INFO [VIDEO] Context cancelled. Shutting down video player component
 2024/12/11 22:05:14 INFO [APP] Application shutdown complete. Goodbye!
-
 ```
 
 ## FAQ

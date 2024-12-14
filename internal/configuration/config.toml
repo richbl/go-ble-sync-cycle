@@ -1,5 +1,5 @@
 # BLE Sync Cycle TOML configuration
-# 0.6.1
+# 0.6.2
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -11,14 +11,14 @@
 
 [speed]
   smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
-  speed_threshold = 1.0         # Minimum speed change to trigger video speed update
+  speed_threshold = 0.25         # Minimum speed change to trigger video speed update
   wheel_circumference_mm = 1932 # Wheel circumference in millimeters
   speed_units = "mph"           # "km/h" or "mph"
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
-  update_interval_sec = 0.3      # Seconds (>0.0) to wait between video player updates
+  update_interval_sec = 0.25      # Seconds (>0.0) to wait between video player updates
   speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
                                  # (0.0 = stopped, 1.0 = normal speed)
   [video.OSD]
