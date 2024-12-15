@@ -9,16 +9,25 @@ import (
 	"strings"
 )
 
-// Logger is a wrapper around slog.Logger
 var logger *slog.Logger
 
-// Define a custom FATAL level
+// ComponentType represents the type of component
+type ComponentType string
+
+const (
+	APP   ComponentType = "[APP]"
+	BLE   ComponentType = "[BLE]"
+	SPEED ComponentType = "[SPEED]"
+	VIDEO ComponentType = "[VIDEO]"
+)
+
+// Create a new slog level for the Fatal logging level
 const LevelFatal slog.Level = slog.Level(12)
 
-// ExitFunc is a custom exit function that allows for testing of the FATAL level
+// ExitFunc represents the exit function (needed for testing)
 var ExitFunc = os.Exit
 
-// ANSI color codes
+// Color constants
 const (
 	Reset   = "\033[0m"
 	Red     = "\033[31m"
@@ -30,7 +39,7 @@ const (
 	White   = "\033[37m"
 )
 
-// CustomTextHandler is a custom handler for slog that formats logs as specified
+// CustomTextHandler represents a custom text handler
 type CustomTextHandler struct {
 	slog.Handler
 	writer io.Writer
@@ -40,7 +49,6 @@ type CustomTextHandler struct {
 // NewCustomTextHandler creates a new custom text handler
 func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHandler {
 	textHandler := slog.NewTextHandler(w, opts)
-
 	return &CustomTextHandler{
 		Handler: textHandler,
 		writer:  w,
@@ -48,10 +56,9 @@ func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHan
 	}
 }
 
-// Handle implements slog.Handler
 func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
-	// Set formats for output
+	// Create custom logger output
 	timestamp := r.Time.Format("2006/01/02 15:04:05")
 	level := strings.ToUpper(r.Level.String())
 	msg := r.Message
@@ -72,22 +79,37 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 		color = White
 	}
 
-	// Custom level mapping for FATAL
 	if r.Level == LevelFatal {
 		level = "FATAL"
 	}
 
-	// Write formatted output for all other logging levels
-	fmt.Fprintf(h.writer, "%s %s%s%s %s%s\n", timestamp, color, level, Reset, msg, Reset)
+	var component string
+
+	// Get component from attributes
+	r.Attrs(func(a slog.Attr) bool {
+		if a.Key == "component" {
+			component = a.Value.String()
+		}
+		return true
+	})
+
+	// Write output format to writer
+	msgPattern := "%s %s%s%s%s %s%s\n"
+
+	if len(component) > 0 {
+		msgPattern = "%s %s%s%s %s %s%s\n"
+	}
+
+	fmt.Fprintf(h.writer, msgPattern, timestamp, color, level, Reset, component, msg, Reset)
 	return nil
 }
 
-// Enabled implements slog.Handler
+// Enabled checks if the handler is enabled
 func (h *CustomTextHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.Handler.Enabled(ctx, level)
 }
 
-// WithAttrs implements slog.Handler which is used to add attributes
+// WithAttrs adds attributes to the handler
 func (h *CustomTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &CustomTextHandler{
 		Handler: h.Handler.WithAttrs(attrs),
@@ -95,7 +117,7 @@ func (h *CustomTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	}
 }
 
-// WithGroup implements slog.Handler which is used to group logs
+// WithGroup adds a group to the handler
 func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
 	return &CustomTextHandler{
 		Handler: h.Handler.WithGroup(name),
@@ -103,12 +125,11 @@ func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
 	}
 }
 
-// Initialize initializes the logger with a specified log level
+// Initialize sets up the logger
 func Initialize(logLevel string) *slog.Logger {
 
 	// Set log level
 	var level slog.Level
-
 	switch logLevel {
 	case "debug":
 		level = slog.LevelDebug
@@ -122,33 +143,52 @@ func Initialize(logLevel string) *slog.Logger {
 		level = slog.LevelInfo
 	}
 
-	// Create a new logger with a custom text handler
+	// Initialize logger
 	logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-
 	return logger
 }
 
-// Info logs an informational message
-func Info(msg string, keysAndValues ...interface{}) {
-	logger.Info(msg, keysAndValues...)
+// logWithOptionalComponent logs a message with an optional component
+func logWithOptionalComponent(level slog.Level, first interface{}, args ...interface{}) {
+	var msg string
+	var component string
+
+	// Check if first argument is a ComponentType
+	if comp, ok := first.(ComponentType); ok {
+		if len(args) > 0 {
+			msg = fmt.Sprint(args[0])
+		}
+		component = string(comp)
+	} else {
+		msg = fmt.Sprint(first)
+	}
+
+	// Log message
+	logger.LogAttrs(context.Background(), level, msg, slog.String("component", component))
+}
+
+// Info logs an info message
+func Info(first interface{}, args ...interface{}) {
+	logWithOptionalComponent(slog.LevelInfo, first, args...)
 }
 
 // Warn logs a warning message
-func Warn(msg string, keysAndValues ...interface{}) {
-	logger.Warn(msg, keysAndValues...)
+func Warn(first interface{}, args ...interface{}) {
+	logWithOptionalComponent(slog.LevelWarn, first, args...)
 }
 
 // Error logs an error message
-func Error(msg string, keysAndValues ...interface{}) {
-	logger.Error(msg, keysAndValues...)
+func Error(first interface{}, args ...interface{}) {
+	logWithOptionalComponent(slog.LevelError, first, args...)
 }
 
 // Debug logs a debug message
-func Debug(msg string, keysAndValues ...interface{}) {
-	logger.Debug(msg, keysAndValues...)
+func Debug(first interface{}, args ...interface{}) {
+	logWithOptionalComponent(slog.LevelDebug, first, args...)
 }
 
-func Fatal(msg string, keysAndValues ...interface{}) {
-	logger.Log(context.Background(), LevelFatal, msg, keysAndValues...)
+// Fatal logs a fatal message
+func Fatal(first interface{}, args ...interface{}) {
+	logWithOptionalComponent(LevelFatal, first, args...)
 	ExitFunc(1)
 }

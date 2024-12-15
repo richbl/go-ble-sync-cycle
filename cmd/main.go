@@ -44,7 +44,7 @@ func main() {
 	// Create component controllers
 	controllers, err := setupAppControllers(*cfg)
 	if err != nil {
-		logger.Fatal("[APP] Failed to create controllers: " + err.Error())
+		logger.Fatal(logger.APP, "Failed to create controllers: "+err.Error())
 	}
 
 	// Run the application
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	// Shutdown the application... buh bye!
-	logger.Info("[APP] Application shutdown complete. Goodbye!")
+	logger.Info(logger.APP, "Application shutdown complete. Goodbye!")
 }
 
 // startAppControllers is responsible for starting and managing the component controllers
@@ -66,7 +66,7 @@ func startAppControllers(ctx context.Context, controllers appControllers) error 
 	// Scan for BLE peripheral of interest
 	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, controllers)
 	if err != nil {
-		return errors.New("[BLE] BLE peripheral scan failed: " + err.Error())
+		return errors.New(string(logger.BLE) + " BLE peripheral scan failed: " + err.Error())
 	}
 
 	// Start component controllers concurrently
@@ -78,7 +78,7 @@ func startAppControllers(ctx context.Context, controllers appControllers) error 
 	go func() {
 		defer wg.Done()
 		if err := monitorBLESpeed(ctx, controllers, bleSpeedCharacter); err != nil {
-			errs <- errors.New("[BLE] Speed monitoring failed: " + err.Error())
+			errs <- errors.New(string(logger.BLE) + "Speed monitoring failed: " + err.Error())
 		}
 	}()
 
@@ -87,14 +87,14 @@ func startAppControllers(ctx context.Context, controllers appControllers) error 
 	go func() {
 		defer wg.Done()
 		if err := playVideo(ctx, controllers); err != nil {
-			errs <- errors.New("[VIDEO] Playback failed: " + err.Error())
+			errs <- errors.New(string(logger.VIDEO) + "Playback failed: " + err.Error())
 		}
 	}()
 
 	// Wait for shutdown signals from go routines
 	go func() {
 		<-ctx.Done()
-		logger.Info("[APP] Shutdown signal received")
+		logger.Info(logger.APP, "Shutdown signal received")
 	}()
 
 	// Wait for goroutines to finish or an error to occur
@@ -120,13 +120,13 @@ func setupAppControllers(cfg config.Config) (appControllers, error) {
 	// Create video player
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		return appControllers{}, errors.New("[VIDEO] Failed to create video player: " + err.Error())
+		return appControllers{}, errors.New(string(logger.VIDEO) + "Failed to create video player: " + err.Error())
 	}
 
 	// Create BLE controller
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		return appControllers{}, errors.New("[BLE] Failed to create BLE controller: " + err.Error())
+		return appControllers{}, errors.New(string(logger.BLE) + "Failed to create BLE controller: " + err.Error())
 	}
 
 	return appControllers{
