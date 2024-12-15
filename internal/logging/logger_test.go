@@ -98,7 +98,7 @@ func TestLogLevels(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name      string
-		logFunc   func(msg string, keysAndValues ...interface{})
+		logFunc   func(first interface{}, args ...interface{})
 		wantLevel string
 	}{
 		{"Info", Info, "INFO"},
