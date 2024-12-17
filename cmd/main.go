@@ -30,13 +30,11 @@ func main() {
 	// Load configuration
 	cfg, err := config.LoadFile("config.toml")
 	if err != nil {
-		log.Fatal("[FATAL]: failed to load TOML configuration: " + err.Error())
+		log.Fatal(logger.Magenta+"[FATAL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
 	}
 
 	// Initialize logger
-	if _, err := logger.Initialize(cfg.App.LogLevel); err != nil {
-		log.Printf("[WARN]: logger initialization warning: %v", err)
-	}
+	logger.Initialize(cfg.App.LogLevel)
 
 	// Create contexts for managing goroutines and cancellations
 	rootCtx, rootCancel := context.WithCancel(context.Background())
@@ -54,7 +52,7 @@ func main() {
 	}
 
 	// Shutdown the application... buh bye!
-	logger.Info(logger.APP, "application shutdown complete... goodbye!")
+	log.Println("BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
 }
 
 // setupAppControllers creates and initializes the application controllers
@@ -102,7 +100,7 @@ func startAppControllers(ctx context.Context, controllers appControllers) (logge
 	// Start component controllers concurrently
 	errs := make(chan componentErr, 1)
 
-	// Monitor BLE speed
+	// Monitor BLE speed (goroutine)
 	go func() {
 		if err := monitorBLESpeed(ctx, controllers, bleSpeedCharacter); err != nil {
 			errs <- componentErr{logger.BLE, err}
@@ -111,7 +109,7 @@ func startAppControllers(ctx context.Context, controllers appControllers) (logge
 		errs <- componentErr{logger.BLE, nil}
 	}()
 
-	// Play video
+	// Play video (goroutine)
 	go func() {
 		if err := playVideo(ctx, controllers); err != nil {
 			errs <- componentErr{logger.VIDEO, err}

@@ -48,17 +48,10 @@ const (
 const LevelFatal slog.Level = slog.Level(12)
 
 // Initialize sets up the logger
-func Initialize(logLevel string) (*slog.Logger, error) {
-
-	level, err := parseLogLevel(logLevel)
-	if err != nil {
-		// Still create the logger but with the default level
-		logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-		return logger, err
-	}
-
+func Initialize(logLevel string) (*slog.Logger) {
+	level := parseLogLevel(logLevel)
 	logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-	return logger, nil
+	return logger
 }
 
 // Info logs an info message
@@ -119,7 +112,7 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	timestamp := r.Time.Format("2006/01/02 15:04:05")
 	level := strings.TrimSpace("["+(r.Level.String())+"]")
 	if r.Level == LevelFatal {
-		level = "FATAL"
+		level = "[FATAL]"
 	}
 	msg := r.Message
 
@@ -197,20 +190,20 @@ func (h *CustomTextHandler) getComponentFromAttrs(r slog.Record) string {
 }
 
 // parseLogLevel converts a string log level to slog.Level
-func parseLogLevel(level string) (slog.Level, error) {
+func parseLogLevel(level string) (slog.Level) {
 
 	// Convert log level to slog.Level
 	switch strings.ToLower(level) {
 	case "debug":
-		return slog.LevelDebug, nil
+		return slog.LevelDebug
 	case "info":
-		return slog.LevelInfo, nil
+		return slog.LevelInfo
 	case "warn":
-		return slog.LevelWarn, nil
+		return slog.LevelWarn
 	case "error":
-		return slog.LevelError, nil
+		return slog.LevelError
 	default:
-		return slog.LevelInfo, fmt.Errorf("invalid log level: %s, defaulting to info", level)
+		return slog.LevelInfo // default to Info level
 	}
 }
 

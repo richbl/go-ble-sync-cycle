@@ -81,6 +81,23 @@ func controllersIntegrationTest() (*ble.BLEController, error) {
 	return controller, nil
 }
 
+// createTestContextWithTimeout creates a context with a predefined timeout
+func createTestContextWithTimeout(t *testing.T) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	t.Cleanup(cancel)
+	return ctx, cancel
+}
+
+// setupTestBLEController creates a test BLE controller and handles BLE adapter errors
+func setupTestBLEController(t *testing.T) *ble.BLEController {
+	controller, err := controllersIntegrationTest()
+	if err != nil {
+		t.Skip(noBLEAdapterError)
+		return nil
+	}
+	return controller
+}
+
 // TestProcessBLESpeed tests the ProcessBLESpeed() function
 func TestProcessBLESpeed(t *testing.T) {
 
@@ -167,11 +184,7 @@ func TestProcessBLESpeed(t *testing.T) {
 func TestNewBLEControllerIntegration(t *testing.T) {
 
 	// Create test BLE controller
-	controller, err := controllersIntegrationTest()
-	if err != nil {
-		t.Skip(noBLEAdapterError)
-		return
-	}
+	controller := setupTestBLEController(t)
 
 	assert.NotNil(t, controller)
 }
@@ -180,16 +193,11 @@ func TestNewBLEControllerIntegration(t *testing.T) {
 func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
 	// Create test BLE controller
-	controller, err := controllersIntegrationTest()
-	if err != nil {
-		t.Skip(noBLEAdapterError)
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	defer cancel()
+	controller := setupTestBLEController(t)
+	ctx, _ := createTestContextWithTimeout(t)
 
 	// Expect error since test UUID won't be found
-	_, err = controller.ScanForBLEPeripheral(ctx)
+	_, err := controller.ScanForBLEPeripheral(ctx)
 	assert.Error(t, err)
 }
 
@@ -197,15 +205,10 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 func TestGetBLECharacteristicIntegration(t *testing.T) {
 
 	// Create test BLE controller
-	controller, err := controllersIntegrationTest()
-	if err != nil {
-		t.Skip(noBLEAdapterError)
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	defer cancel()
+	controller := setupTestBLEController(t)
+	ctx, _ := createTestContextWithTimeout(t)
 
 	// Expect error since test UUID won't be found
-	_, err = controller.GetBLECharacteristic(ctx, nil)
+	_, err := controller.GetBLECharacteristic(ctx, nil)
 	assert.Error(t, err)
 }
