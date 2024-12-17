@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
@@ -31,33 +30,64 @@ func main() {
 	// Load configuration
 	cfg, err := config.LoadFile("config.toml")
 	if err != nil {
-		log.Fatal("FATAL - Failed to load TOML configuration: " + err.Error())
+		log.Fatal("[FATAL]: failed to load TOML configuration: " + err.Error())
 	}
 
 	// Initialize logger
-	logger.Initialize(cfg.App.LogLevel)
+	if _, err := logger.Initialize(cfg.App.LogLevel); err != nil {
+		log.Printf("[WARN]: logger initialization warning: %v", err)
+	}
 
 	// Create contexts for managing goroutines and cancellations
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	defer rootCancel()
 
 	// Create component controllers
-	controllers, err := setupAppControllers(*cfg)
+	controllers, componentType, err := setupAppControllers(*cfg)
 	if err != nil {
-		logger.Fatal(logger.APP, "Failed to create controllers: "+err.Error())
+		logger.Fatal(componentType, "failed to create controllers: "+err.Error())
 	}
 
 	// Run the application
-	if err := startAppControllers(rootCtx, controllers); err != nil {
-		logger.Error(err.Error())
+	if componentType, err := startAppControllers(rootCtx, controllers); err != nil {
+		logger.Error(componentType, err.Error())
 	}
 
 	// Shutdown the application... buh bye!
-	logger.Info(logger.APP, "Application shutdown complete. Goodbye!")
+	logger.Info(logger.APP, "application shutdown complete... goodbye!")
+}
+
+// setupAppControllers creates and initializes the application controllers
+func setupAppControllers(cfg config.Config) (appControllers, logger.ComponentType, error) {
+
+	// Create speed  and video controllers
+	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
+	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
+	if err != nil {
+		return appControllers{}, logger.VIDEO, errors.New("failed to create video player: " + err.Error())
+	}
+
+	// Create BLE controller
+	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
+	if err != nil {
+		return appControllers{}, logger.BLE, errors.New("failed to create BLE controller: " + err.Error())
+	}
+
+	return appControllers{
+		speedController: speedController,
+		videoPlayer:     videoPlayer,
+		bleController:   bleController,
+	}, logger.APP, nil
 }
 
 // startAppControllers is responsible for starting and managing the component controllers
-func startAppControllers(ctx context.Context, controllers appControllers) error {
+func startAppControllers(ctx context.Context, controllers appControllers) (logger.ComponentType, error) {
+	
+	// componentErr holds the error type and component type used for logging
+	type componentErr struct {
+		componentType logger.ComponentType
+		err          error
+	}
 
 	// Create shutdown signal
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
@@ -66,74 +96,41 @@ func startAppControllers(ctx context.Context, controllers appControllers) error 
 	// Scan for BLE peripheral of interest
 	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, controllers)
 	if err != nil {
-		return errors.New(string(logger.BLE) + " BLE peripheral scan failed: " + err.Error())
+		return logger.BLE, errors.New("BLE peripheral scan failed: " + err.Error())
 	}
 
 	// Start component controllers concurrently
-	var wg sync.WaitGroup
-	errs := make(chan error, 2)
+	errs := make(chan componentErr, 1)
 
-	// Start BLE sensor speed monitoring
-	wg.Add(1)
+	// Monitor BLE speed
 	go func() {
-		defer wg.Done()
 		if err := monitorBLESpeed(ctx, controllers, bleSpeedCharacter); err != nil {
-			errs <- errors.New(string(logger.BLE) + "Speed monitoring failed: " + err.Error())
+			errs <- componentErr{logger.BLE, err}
+			return
 		}
+		errs <- componentErr{logger.BLE, nil}
 	}()
 
-	// Start video playback
-	wg.Add(1)
+	// Play video
 	go func() {
-		defer wg.Done()
 		if err := playVideo(ctx, controllers); err != nil {
-			errs <- errors.New(string(logger.VIDEO) + "Playback failed: " + err.Error())
+			errs <- componentErr{logger.VIDEO, err}
+			return
 		}
+		errs <- componentErr{logger.VIDEO, nil}
 	}()
 
-	// Wait for shutdown signals from go routines
-	go func() {
-		<-ctx.Done()
-		logger.Info(logger.APP, "Shutdown signal received")
-	}()
-
-	// Wait for goroutines to finish or an error to occur
-	go func() {
-		wg.Wait()
-		close(errs)
-	}()
-
-	// Check for errors from components
-	if err := <-errs; err != nil {
-		return err
+	// Wait for context cancellation or error
+	select {
+	case <-ctx.Done():
+		return logger.APP, ctx.Err()
+	case compErr := <-errs:
+		if compErr.err != nil {
+			return compErr.componentType, compErr.err
+		}
 	}
 
-	return nil
-}
-
-// setupAppControllers creates and initializes the application controllers
-func setupAppControllers(cfg config.Config) (appControllers, error) {
-
-	// Create speed controller
-	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
-
-	// Create video player
-	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
-	if err != nil {
-		return appControllers{}, errors.New(string(logger.VIDEO) + "Failed to create video player: " + err.Error())
-	}
-
-	// Create BLE controller
-	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
-	if err != nil {
-		return appControllers{}, errors.New(string(logger.BLE) + "Failed to create BLE controller: " + err.Error())
-	}
-
-	return appControllers{
-		speedController: speedController,
-		videoPlayer:     videoPlayer,
-		bleController:   bleController,
-	}, nil
+	return logger.APP, nil
 }
 
 // scanForBLESpeedCharacteristic scans for the BLE CSC speed characteristic

@@ -6,14 +6,22 @@ import (
 	"testing"
 )
 
+// Constants for test configuration and messages
 const (
+	// Test filenames
 	testFilename        = "test.mp4"
 	invalidTestFilename = "non-existent-file.mp4"
-	sensorTestUUID      = "test-uuid"
-	logLevelInvalid     = "invalid"
-	validConfig         = "Valid config"
-	invalidConfig       = "Invalid config"
-	validateErrMessage  = "validate() error = %v, wantErr %v"
+
+	// Test identifiers
+	sensorTestUUID = "test-uuid"
+
+	// Log levels and validation
+	logLevelInvalid = "invalid"
+
+	// Test case names
+	validConfig        = "Valid config"
+	invalidConfig      = "Invalid config"
+	validateErrMessage = "validate() error = %v, wantErr %v"
 )
 
 // configTestCase is a helper struct for running validation tests
@@ -81,7 +89,6 @@ func createTempConfigFile(t *testing.T, config string) (string, func()) {
 
 	// Replace the video file path with a temporary file
 	if strings.Contains(config, testFilename) {
-
 		// Create a temporary video file
 		tmpVideoFile, err := os.CreateTemp("", "video")
 		if err != nil {
@@ -117,7 +124,6 @@ func runValidationTest[T any](t *testing.T, tests []configTestCase[T]) {
 	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Handle both value and pointer receivers
 			var err error
 
@@ -188,7 +194,86 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-// TestValidateVideoConfig tests the validate function
+// TestValidateAppConfig tests the validate function for AppConfig
+func TestValidateAppConfig(t *testing.T) {
+
+	// Define test cases
+	tests := []configTestCase[AppConfig]{
+		{
+			name:    validConfig,
+			config:  AppConfig{LogLevel: logLevelDebug},
+			wantErr: false,
+		},
+		{
+			name:    invalidConfig,
+			config:  AppConfig{LogLevel: logLevelInvalid},
+			wantErr: true,
+		},
+	}
+
+	// Run tests
+	runValidationTest(t, tests)
+}
+
+// TestValidateBLEConfig tests the validate function for BLEConfig
+func TestValidateBLEConfig(t *testing.T) {
+
+	// Define test cases
+	tests := []configTestCase[BLEConfig]{
+		{
+			name: validConfig,
+			config: BLEConfig{
+				SensorUUID:      sensorTestUUID,
+				ScanTimeoutSecs: 10,
+			},
+			wantErr: false,
+		},
+		{
+			name: invalidConfig,
+			config: BLEConfig{
+				SensorUUID:      "",
+				ScanTimeoutSecs: -1,
+			},
+			wantErr: true,
+		},
+	}
+
+	// Run tests
+	runValidationTest(t, tests)
+}
+
+// TestValidateSpeedConfig tests the validate function for SpeedConfig
+func TestValidateSpeedConfig(t *testing.T) {
+
+	// Define test cases
+	tests := []configTestCase[SpeedConfig]{
+		{
+			name: validConfig,
+			config: SpeedConfig{
+				SmoothingWindow:      5,
+				SpeedThreshold:       10.0,
+				WheelCircumferenceMM: 2000,
+				SpeedUnits:           SpeedUnitsKMH,
+			},
+			wantErr: false,
+		},
+		{
+			name: invalidConfig,
+			config: SpeedConfig{
+				SmoothingWindow:      -1,
+				SpeedThreshold:       -10.0,
+				WheelCircumferenceMM: -2000,
+				SpeedUnits:           logLevelInvalid,
+			},
+			wantErr: true,
+		},
+	}
+
+	// Run tests
+	runValidationTest(t, tests)
+}
+
+// TestValidateVideoConfig tests the validate function for VideoConfig
 func TestValidateVideoConfig(t *testing.T) {
 
 	// Define test cases
@@ -237,83 +322,4 @@ func TestValidateVideoConfig(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestValidateAppConfig tests the validate function
-func TestValidateAppConfig(t *testing.T) {
-
-	// Define test cases
-	tests := []configTestCase[AppConfig]{
-		{
-			name:    validConfig,
-			config:  AppConfig{LogLevel: logLevelDebug},
-			wantErr: false,
-		},
-		{
-			name:    invalidConfig,
-			config:  AppConfig{LogLevel: logLevelInvalid},
-			wantErr: true,
-		},
-	}
-
-	// Run tests
-	runValidationTest(t, tests)
-}
-
-// TestValidateBLEConfig tests the validate function
-func TestValidateBLEConfig(t *testing.T) {
-
-	// Define test cases
-	tests := []configTestCase[BLEConfig]{
-		{
-			name: validConfig,
-			config: BLEConfig{
-				SensorUUID:      sensorTestUUID,
-				ScanTimeoutSecs: 10,
-			},
-			wantErr: false,
-		},
-		{
-			name: invalidConfig,
-			config: BLEConfig{
-				SensorUUID:      "",
-				ScanTimeoutSecs: -1,
-			},
-			wantErr: true,
-		},
-	}
-
-	// Run tests
-	runValidationTest(t, tests)
-}
-
-// TestValidateSpeedConfig tests the validate function
-func TestValidateSpeedConfig(t *testing.T) {
-
-	// Define test cases
-	tests := []configTestCase[SpeedConfig]{
-		{
-			name: validConfig,
-			config: SpeedConfig{
-				SmoothingWindow:      5,
-				SpeedThreshold:       10.0,
-				WheelCircumferenceMM: 2000,
-				SpeedUnits:           SpeedUnitsKMH,
-			},
-			wantErr: false,
-		},
-		{
-			name: invalidConfig,
-			config: SpeedConfig{
-				SmoothingWindow:      -1,
-				SpeedThreshold:       -10.0,
-				WheelCircumferenceMM: -2000,
-				SpeedUnits:           logLevelInvalid,
-			},
-			wantErr: true,
-		},
-	}
-
-	// Run tests
-	runValidationTest(t, tests)
 }

@@ -9,6 +9,20 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Constants for valid configuration values
+const (
+	// Log levels
+	logLevelDebug = "debug"
+	logLevelInfo  = "info"
+	logLevelWarn  = "warn"
+	logLevelError = "error"
+	logLevelFatal = "fatal"
+
+	// Speed units
+	SpeedUnitsKMH = "km/h"
+	SpeedUnitsMPH = "mph"
+)
+
 // Config represents the application configuration
 type Config struct {
 	App   AppConfig   `toml:"app"`
@@ -36,6 +50,13 @@ type SpeedConfig struct {
 	SpeedUnits           string  `toml:"speed_units"`
 }
 
+// VideoOSDConfig represents the on-screen display configuration
+type VideoOSDConfig struct {
+	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
+	ShowOSD              bool
+}
+
 // VideoConfig represents the MPV video player configuration
 type VideoConfig struct {
 	FilePath          string         `toml:"file_path"`
@@ -44,24 +65,6 @@ type VideoConfig struct {
 	SpeedMultiplier   float64        `toml:"speed_multiplier"`
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
 }
-
-type VideoOSDConfig struct {
-	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
-	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
-	ShowOSD              bool
-}
-
-// Constants for valid configuration values
-const (
-	logLevelDebug = "debug"
-	logLevelInfo  = "info"
-	logLevelWarn  = "warn"
-	logLevelError = "error"
-	logLevelFatal = "fatal"
-
-	SpeedUnitsKMH = "km/h"
-	SpeedUnitsMPH = "mph"
-)
 
 // LoadFile attempts to load the TOML configuration file from the specified path,
 // falling back to the default configuration directory if not found
@@ -94,7 +97,6 @@ func LoadFile(filename string) (*Config, error) {
 
 		// Successfully loaded TOML file
 		return cfg, nil
-
 	}
 
 	// Failed to load TOML file
@@ -119,6 +121,7 @@ func (c *Config) validate() error {
 	if err := c.Video.validate(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -134,6 +137,17 @@ func (ac *AppConfig) validate() error {
 	}
 }
 
+// validate validates BLEConfig elements
+func (bc *BLEConfig) validate() error {
+
+	// Check if the sensor UUID is specified
+	if bc.SensorUUID == "" {
+		return errors.New("sensor UUID must be specified in configuration")
+	}
+
+	return nil
+}
+
 // validate validates SpeedConfig elements
 func (sc *SpeedConfig) validate() error {
 
@@ -144,16 +158,6 @@ func (sc *SpeedConfig) validate() error {
 	default:
 		return errors.New("invalid speed units: " + sc.SpeedUnits)
 	}
-}
-
-// validate validates BLEConfig elements
-func (bc *BLEConfig) validate() error {
-
-	// Check if the sensor UUID is specified
-	if bc.SensorUUID == "" {
-		return errors.New("sensor UUID must be specified in configuration")
-	}
-	return nil
 }
 
 // validate validates VideoConfig elements
