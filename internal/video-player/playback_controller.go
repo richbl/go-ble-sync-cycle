@@ -24,6 +24,11 @@ var (
 	ErrSpeedUpdate     = errors.New("failed to update video speed")
 )
 
+// wrapError wraps an error with a specific error type for more context
+func wrapError(baseErr error, contextErr error) error {
+	return fmt.Errorf("%w: %v", baseErr, contextErr)
+}
+
 // PlaybackController manages video playback using MPV media player
 type PlaybackController struct {
 	config      config.VideoConfig
@@ -148,7 +153,7 @@ func (p *PlaybackController) pausePlayback() error {
 	logger.Debug(logger.VIDEO, "no speed detected, so pausing video")
 
 	if err := p.updateMPVDisplay(0.0, 0.0); err != nil {
-		return fmt.Errorf("%w: %v", ErrOSDUpdate, err)
+		return wrapError(ErrOSDUpdate, err)
 	}
 
 	return p.setMPVPauseState(true)
@@ -161,13 +166,13 @@ func (p *PlaybackController) adjustPlayback(currentSpeed float64, lastSpeed *flo
 	logger.Info(logger.VIDEO, logger.Cyan+"updating video playback speed to "+strconv.FormatFloat(playbackSpeed, 'f', 2, 64))
 
 	if err := p.updateMPVPlaybackSpeed(playbackSpeed); err != nil {
-		return fmt.Errorf("%w: %v", ErrPlaybackSpeed, err)
+		return wrapError(ErrPlaybackSpeed, err)
 	}
 
 	*lastSpeed = currentSpeed
 
 	if err := p.updateMPVDisplay(currentSpeed, playbackSpeed); err != nil {
-		return fmt.Errorf("%w: %v", ErrOSDUpdate, err)
+		return wrapError(ErrOSDUpdate, err)
 	}
 
 	return p.setMPVPauseState(false)

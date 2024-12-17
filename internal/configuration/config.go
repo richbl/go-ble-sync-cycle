@@ -130,7 +130,7 @@ func (ac *AppConfig) validate() error {
 
 	// Validate log level
 	switch ac.LogLevel {
-	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError, logLevelFatal:
+	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError:
 		return nil
 	default:
 		return errors.New("invalid log level: " + ac.LogLevel)
