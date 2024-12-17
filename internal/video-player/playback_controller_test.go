@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/gen2brain/go-mpv"
+	"github.com/stretchr/testify/assert"
+
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	"github.com/richbl/go-ble-sync-cycle/internal/speed"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -27,7 +27,7 @@ func init() {
 	logger.Initialize("debug")
 }
 
-// TestNewPlaybackController tests the creation of a new PlaybackController
+// TestNewPlaybackController verifies PlaybackController creation
 func TestNewPlaybackController(t *testing.T) {
 	_ = createTestController(t)
 }
@@ -35,7 +35,6 @@ func TestNewPlaybackController(t *testing.T) {
 // createTestController creates a PlaybackController with default test configurations
 func createTestController(t *testing.T) *PlaybackController {
 
-	// Create test Video and Speed configurations
 	vc := config.VideoConfig{
 		FilePath:          testFilename,
 		WindowScaleFactor: defaultWindowScale,
@@ -49,7 +48,6 @@ func createTestController(t *testing.T) *PlaybackController {
 		SpeedThreshold: speedThreshold,
 	}
 
-	// Create new PlaybackController
 	controller, err := NewPlaybackController(vc, sc)
 	assert.NotNil(t, controller, "PlaybackController should not be nil")
 	assert.NoError(t, err, "Error while creating PlaybackController")
@@ -57,45 +55,37 @@ func createTestController(t *testing.T) *PlaybackController {
 	return controller
 }
 
-// TestPlaybackControllerStart tests the Start method of the PlaybackController
+// TestPlaybackControllerStart checks the Start method
 func TestPlaybackControllerStart(t *testing.T) {
 
-	// Create test controller
 	controller := createTestController(t)
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
-	// Create new SpeedController
 	speedController := &speed.SpeedController{}
 	err := controller.Start(ctx, speedController)
 	assert.NoError(t, err, "Error while starting PlaybackController")
 }
 
-// TestPlaybackControllerConfigurePlayer tests the configurePlayer method of the PlaybackController
+// TestPlaybackControllerConfigurePlayer tests player configuration
 func TestPlaybackControllerConfigurePlayer(t *testing.T) {
-
-	// Create test controller
 	controller := createTestController(t)
 	err := controller.configureMPVPlayer()
 	assert.NoError(t, err, "Error while configuring MPV player")
 }
 
-// TestPlaybackControllerLoadVideoFile tests the loadVideoFile method of the PlaybackController
+// TestPlaybackControllerLoadVideoFile checks video file loading
 func TestPlaybackControllerLoadVideoFile(t *testing.T) {
-
-	// Create test controller
 	controller := createTestController(t)
-	err := controller.loadMPVvideo()
+	err := controller.loadMPVVideo()
 	assert.NoError(t, err, "Error while loading video file")
 }
 
-// TestPlaybackControllerSetPauseStatus tests the setPauseStatus method of the PlaybackController
+// TestPlaybackControllerSetPauseStatus verifies pause state setting
 func TestPlaybackControllerSetPauseStatus(t *testing.T) {
 
-	// Create test controller
 	controller := createTestController(t)
 
-	// Set and check pause status
 	err := controller.player.SetProperty("pause", mpv.FormatFlag, true)
 	assert.NoError(t, err, "Error while setting pause property")
 

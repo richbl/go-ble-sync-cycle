@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +15,6 @@ const (
 	defaultOptions = slog.LevelDebug
 )
 
-// testCase represents a generic test case for logging tests
 type testCase struct {
 	name     string
 	level    interface{} // can be string or slog.Level
@@ -22,15 +22,13 @@ type testCase struct {
 	setLevel slog.Level  // used only for Enabled tests
 }
 
-// setupTestLogger creates a new logger with a buffer for testing
 func setupTestLogger() (*bytes.Buffer, *slog.Logger) {
-
 	buf := &bytes.Buffer{}
 	handler := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: defaultOptions})
 	return buf, slog.New(handler)
-
 }
 
+// TestInitialize tests the Initialize function
 func TestInitialize(t *testing.T) {
 
 	// Define test cases
@@ -68,11 +66,11 @@ func TestCustomTextHandler(t *testing.T) {
 
 	// Define test cases
 	tests := []testCase{
-		{"debug", slog.LevelDebug, "\033[34mDEBUG\033[0m", 0},
-		{"info", slog.LevelInfo, "\033[32mINFO\033[0m", 0},
-		{"warn", slog.LevelWarn, "\033[33mWARN\033[0m", 0},
-		{"error", slog.LevelError, "\033[31mERROR\033[0m", 0},
-		{"fatal", LevelFatal, "\033[35mFATAL\033[0m", 0},
+		{"debug", slog.LevelDebug, "\033[34m[DEBUG] \033[0m", 0},
+		{"info", slog.LevelInfo, "\033[32m[INFO] \033[0m", 0},
+		{"warn", slog.LevelWarn, "\033[33m[WARN] \033[0m", 0},
+		{"error", slog.LevelError, "\033[31m[ERROR] \033[0m", 0},
+		{"fatal", LevelFatal, "\033[35mFATAL \033[0m", 0},
 	}
 
 	// Run tests
@@ -85,14 +83,27 @@ func TestCustomTextHandler(t *testing.T) {
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
-			if !strings.Contains(buf.String(), tt.want.(string)) {
-				t.Errorf("got %q, want %q", buf.String(), tt.want)
+			
+			output := buf.String()
+			expectedLevel := tt.want.(string)
+			
+			timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `
+			if !regexp.MustCompile(timestampRegex).MatchString(output) {
+				t.Errorf("output does not start with a valid timestamp")
+			}
+
+			if !strings.Contains(output, expectedLevel) {
+				t.Errorf("output %q does not contain expected level %q", output, expectedLevel)
+			}
+
+			if !strings.Contains(output, testMessage) {
+				t.Errorf("output %q does not contain message %q", output, testMessage)
 			}
 		})
 	}
 }
 
-// TestLogLevels tests all logging level functions
+// TestLogLevels tests the log levels
 func TestLogLevels(t *testing.T) {
 
 	// Define test cases
@@ -127,12 +138,10 @@ func TestFatal(t *testing.T) {
 	buf, testLogger := setupTestLogger()
 	logger = testLogger
 
-	// Save and restore exit function so we can check if it was called
 	savedExitFunc := ExitFunc
 	defer func() { ExitFunc = savedExitFunc }()
 	exitCalled := false
 
-	// Mock exit function
 	ExitFunc = func(code int) {
 		exitCalled = true
 		if code != 1 {
@@ -140,7 +149,6 @@ func TestFatal(t *testing.T) {
 		}
 	}
 
-	// Call Fatal function for testing
 	Fatal(testMessage)
 	if !exitCalled {
 		t.Error("Fatal did not call exit function")

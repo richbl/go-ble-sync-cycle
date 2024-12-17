@@ -5,20 +5,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/richbl/go-ble-sync-cycle/internal/ble"
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
-	"github.com/stretchr/testify/assert"
 )
 
+// Constants for test configuration and messages
 const (
-	speedUnitsKMH          = "kph"
-	speedUnitsMPH          = "mph"
-	sensorTestUUID         = "test-uuid"
-	testTimeout            = 2 * time.Second
-	initialScanDelay       = 2 * time.Second
+	// Speed units
+	speedUnitsKMH = "kph"
+	speedUnitsMPH = "mph"
+
+	// Test identifiers and parameters
+	sensorTestUUID       = "test-uuid"
+	testTimeout          = 2 * time.Second
+	initialScanDelay     = 2 * time.Second
+	wheelCircumferenceMM = 2000
+
+	// Error and test case messages
 	noBLEAdapterError      = "Skipping test as BLE adapter is not available"
-	wheelCircumferenceMM   = 2000
 	emptyData              = "empty data"
 	invalidFlags           = "invalid flags"
 	validDataKPHFirst      = "valid data kph - first reading"
@@ -57,6 +64,21 @@ func createTestController(speedUnits string) (*ble.BLEController, error) {
 	}
 
 	return ble.NewBLEController(bleConfig, speedConfig)
+}
+
+// controllersIntegrationTest pauses BLE scan and then creates controllers
+func controllersIntegrationTest() (*ble.BLEController, error) {
+
+	// Pause to permit BLE adapter to reset
+	waitForScanReset()
+
+	// Create test BLE and speed controllers
+	controller, err := createTestController(speedUnitsKMH)
+	if err != nil {
+		return nil, err
+	}
+
+	return controller, nil
 }
 
 // TestProcessBLESpeed tests the ProcessBLESpeed() function
@@ -116,7 +138,6 @@ func TestProcessBLESpeed(t *testing.T) {
 	// Loop through the test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Create test BLE and speed controllers
 			controller, err := createTestController(tt.speedUnits)
 			if err != nil {
@@ -187,19 +208,4 @@ func TestGetBLECharacteristicIntegration(t *testing.T) {
 	// Expect error since test UUID won't be found
 	_, err = controller.GetBLECharacteristic(ctx, nil)
 	assert.Error(t, err)
-}
-
-// controllersIntegrationTest pauses BLE scan and then creates controllers
-func controllersIntegrationTest() (*ble.BLEController, error) {
-
-	// Pause to permit BLE adapter to reset
-	waitForScanReset()
-
-	// Create test BLE and speed controllers
-	controller, err := createTestController(speedUnitsKMH)
-	if err != nil {
-		return nil, err
-	}
-
-	return controller, nil
 }
