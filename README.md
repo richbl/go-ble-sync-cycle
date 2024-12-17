@@ -45,6 +45,10 @@ While there are several existing solutions that allow for "virtual" indoor cycli
 
 Since I already use a mechanical (no electronics) portable bicycle trainer while riding indoors, it made sense for me to find a way to pair my existing Bluetooth cycling sensors with a local computer which could then drive some kind of interesting feedback while cycling. This project was created to fit that need.
 
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6"><img src="[[https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6)]([https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6))" width=700></picture>
+</p>
+
 ## Requirements
 
 ### Hardware Components
