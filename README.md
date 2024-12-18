@@ -1,8 +1,7 @@
 # BLE Sync Cycle
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle)
-[![codebeat badge](https://codebeat.co/badges/c19c847e-396d-4f7d-bad7-799f57db8ed8)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/richbl/go-ble-sync-cycle?include_prereleases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle) [![codebeat badge](https://codebeat.co/badges/c19c847e-396d-4f7d-bad7-799f57db8ed8)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419)](https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## Overview
 
