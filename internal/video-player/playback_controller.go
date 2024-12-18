@@ -18,10 +18,10 @@ import (
 
 // Common errors for playback control
 var (
-	ErrOSDUpdate       = errors.New("failed to update OSD")
-	ErrPlaybackSpeed   = errors.New("failed to set playback speed")
-	ErrVideoComplete   = errors.New("playback completed: normal exit")
-	ErrSpeedUpdate     = errors.New("failed to update video speed")
+	ErrOSDUpdate     = errors.New("failed to update OSD")
+	ErrPlaybackSpeed = errors.New("failed to set playback speed")
+	ErrVideoComplete = errors.New("playback completed: normal exit")
+	ErrSpeedUpdate   = errors.New("failed to update video speed")
 )
 
 // wrapError wraps an error with a specific error type for more context
@@ -66,12 +66,14 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 		return err
 	}
 
+	// Define playback loop interval
 	ticker := time.NewTicker(time.Millisecond * time.Duration(p.config.UpdateIntervalSec*1000))
 	defer ticker.Stop()
 
 	var lastSpeed float64
 	logger.Debug(logger.VIDEO, "entering MPV playback loop...")
 
+	// Start playback loop
 	for {
 		select {
 		case <-ctx.Done():
@@ -95,15 +97,19 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 // configureMPVPlayer configures the MPV video player settings
 func (p *PlaybackController) configureMPVPlayer() error {
 
+	// Keep video window open so we can later determine mpv video file EOF status
+	if err := p.player.SetOptionString("keep-open", "yes"); err != nil {
+		return err
+	}
+
+	// Set video window size, forcing window-maximized if scale factor is 1.0
 	if p.config.WindowScaleFactor == 1.0 {
 		logger.Debug(logger.VIDEO, "maximizing video window")
 		return p.player.SetOptionString("window-maximized", "yes")
 	}
 
-	if err := p.player.SetOptionString("keep-open", "yes"); err != nil {
-		return err
-	}
-
+	// Scale video window
+	logger.Debug(logger.VIDEO, "scaling video window")
 	return p.player.SetOptionString("autofit", strconv.Itoa(int(p.config.WindowScaleFactor*100))+"%")
 }
 
@@ -186,14 +192,20 @@ func (p *PlaybackController) updateMPVDisplay(cycleSpeed, playbackSpeed float64)
 	}
 
 	var osdText string
+
+	// Build and display OSD text based on display flags
 	if cycleSpeed > 0 {
-		osdText = fmt.Sprintf("Cycle Speed: %.2f %s\nPlayback Speed: %.2fx", 
-			cycleSpeed, p.speedConfig.SpeedUnits, playbackSpeed)
+		if p.config.OnScreenDisplay.DisplayCycleSpeed {
+			osdText += fmt.Sprintf(" Cycle Speed: %.2f %s\n", cycleSpeed, p.speedConfig.SpeedUnits)
+		}
+		if p.config.OnScreenDisplay.DisplayPlaybackSpeed {
+			osdText += fmt.Sprintf(" Playback Speed: %.2fx\n", playbackSpeed)
+		}
 	} else {
-		osdText = "Paused"
+		osdText = " Paused"
 	}
 
-	return p.player.SetProperty("osd-msg", mpv.FormatString, osdText)
+	return p.player.SetOptionString("osd-msg1", osdText)
 }
 
 // updateMPVPlaybackSpeed sets the video playback speed
