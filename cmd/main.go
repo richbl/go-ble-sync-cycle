@@ -205,6 +205,7 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 	// Wait for the characteristic or an error
 	select {
 	case <-ctx.Done():
+		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE characteristic scan...")
 		return nil, ctx.Err()
 	case err := <-errChan:
 		return nil, err
