@@ -21,7 +21,6 @@ var mutex sync.RWMutex
 
 // NewSpeedController creates a new speed controller with a specified window size
 func NewSpeedController(window int) *SpeedController {
-
 	r := ring.New(window)
 
 	// Initialize ring with zero values
@@ -38,7 +37,6 @@ func NewSpeedController(window int) *SpeedController {
 
 // GetSmoothedSpeed returns the smoothed speed measurement
 func (t *SpeedController) GetSmoothedSpeed() float64 {
-
 	mutex.RLock()
 	defer mutex.RUnlock()
 
@@ -47,15 +45,16 @@ func (t *SpeedController) GetSmoothedSpeed() float64 {
 
 // GetSpeedBuffer returns the speed buffer as an array of formatted strings
 func (t *SpeedController) GetSpeedBuffer() []string {
-
 	mutex.RLock()
 	defer mutex.RUnlock()
 
 	var speeds []string
 	t.speeds.Do(func(x interface{}) {
+
 		if x != nil {
 			speeds = append(speeds, fmt.Sprintf("%.2f", x.(float64)))
 		}
+
 	})
 
 	return speeds
@@ -63,7 +62,6 @@ func (t *SpeedController) GetSpeedBuffer() []string {
 
 // UpdateSpeed updates the current speed measurement and calculates a smoothed average
 func (t *SpeedController) UpdateSpeed(speed float64) {
-
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -74,9 +72,11 @@ func (t *SpeedController) UpdateSpeed(speed float64) {
 	// Calculate smoothed speed
 	sum := float64(0)
 	t.speeds.Do(func(x interface{}) {
+
 		if x != nil {
 			sum += x.(float64)
 		}
+
 	})
 
 	t.smoothedSpeed = sum / float64(t.window)

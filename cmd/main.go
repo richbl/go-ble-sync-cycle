@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
@@ -30,11 +32,18 @@ func main() {
 	// Load configuration
 	cfg, err := config.LoadFile("config.toml")
 	if err != nil {
-		log.Fatal(logger.Magenta+"[FATAL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
+		log.Fatal(logger.Magenta + "[FATAL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
 	}
 
 	// Initialize logger
 	logger.Initialize(cfg.App.LogLevel)
+
+	// Configure terminal output to prevent display of break (^C) character
+	restoreTerm := configureTerminal()
+	defer restoreTerm()
+
+	// Ensure goodbye message is always output last
+	defer logger.Info(logger.APP, "BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
 
 	// Create contexts for managing goroutines and cancellations
 	rootCtx, rootCancel := context.WithCancel(context.Background())
@@ -46,18 +55,33 @@ func main() {
 		logger.Fatal(componentType, "failed to create controllers: "+err.Error())
 	}
 
-	// Run the application
-	if componentType, err := startAppControllers(rootCtx, controllers); err != nil {
+	// Create a WaitGroup to track goroutine lifetimes, and run the application controllers
+	var wg sync.WaitGroup
+
+	if componentType, err := startAppControllers(rootCtx, controllers, &wg); err != nil {
 		logger.Error(componentType, err.Error())
 	}
 
-	// Shutdown the application... buh bye!
-	log.Println("BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
+	wg.Wait() // Wait here for all goroutines to finish in main()... be patient
+}
+
+// configureTerminal handles terminal char echo to prevent display of break (^C) character
+func configureTerminal() func() {
+	// Disable control character echo using stty
+	rawMode := exec.Command("stty", "-echo")
+	rawMode.Stdin = os.Stdin
+	_ = rawMode.Run()
+
+	// Return cleanup function
+	return func() {
+		cooked := exec.Command("stty", "echo")
+		cooked.Stdin = os.Stdin
+		_ = cooked.Run()
+	}
 }
 
 // setupAppControllers creates and initializes the application controllers
 func setupAppControllers(cfg config.Config) (appControllers, logger.ComponentType, error) {
-
 	// Create speed  and video controllers
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
@@ -79,12 +103,11 @@ func setupAppControllers(cfg config.Config) (appControllers, logger.ComponentTyp
 }
 
 // startAppControllers is responsible for starting and managing the component controllers
-func startAppControllers(ctx context.Context, controllers appControllers) (logger.ComponentType, error) {
-	
+func startAppControllers(ctx context.Context, controllers appControllers, wg *sync.WaitGroup) (logger.ComponentType, error) {
 	// componentErr holds the error type and component type used for logging
 	type componentErr struct {
 		componentType logger.ComponentType
-		err          error
+		err           error
 	}
 
 	// Create shutdown signal
@@ -94,38 +117,67 @@ func startAppControllers(ctx context.Context, controllers appControllers) (logge
 	// Scan for BLE peripheral of interest
 	bleSpeedCharacter, err := scanForBLESpeedCharacteristic(ctx, controllers)
 	if err != nil {
+
+		// Check if the context was cancelled (user pressed Ctrl+C)
+		if ctx.Err() == context.Canceled {
+			return logger.APP, nil
+		}
+
 		return logger.BLE, errors.New("BLE peripheral scan failed: " + err.Error())
 	}
 
 	// Start component controllers concurrently
 	errs := make(chan componentErr, 1)
 
+	// Add two goroutines to the WaitGroup
+	wg.Add(2) // One for BLE monitoring, one for video playback
+
 	// Monitor BLE speed (goroutine)
 	go func() {
+		defer wg.Done()
+
 		if err := monitorBLESpeed(ctx, controllers, bleSpeedCharacter); err != nil {
+
+			// Check if the context was cancelled (user pressed Ctrl+C)
+			if ctx.Err() == context.Canceled {
+				errs <- componentErr{logger.BLE, nil}
+				return
+			}
+
 			errs <- componentErr{logger.BLE, err}
 			return
 		}
+
 		errs <- componentErr{logger.BLE, nil}
 	}()
 
 	// Play video (goroutine)
 	go func() {
+		defer wg.Done()
+
 		if err := playVideo(ctx, controllers); err != nil {
+
+			// Check if the context was cancelled (user pressed Ctrl+C)
+			if ctx.Err() == context.Canceled {
+				errs <- componentErr{logger.VIDEO, nil}
+				return
+			}
+
 			errs <- componentErr{logger.VIDEO, err}
 			return
 		}
+
 		errs <- componentErr{logger.VIDEO, nil}
 	}()
 
-	// Wait for context cancellation or error
-	select {
-	case <-ctx.Done():
-		return logger.APP, ctx.Err()
-	case compErr := <-errs:
+	// Wait for both component results
+	for i := 0; i < 2; i++ {
+		compErr := <-errs
+
 		if compErr.err != nil {
 			return compErr.componentType, compErr.err
 		}
+
 	}
 
 	return logger.APP, nil
@@ -133,7 +185,6 @@ func startAppControllers(ctx context.Context, controllers appControllers) (logge
 
 // scanForBLESpeedCharacteristic scans for the BLE CSC speed characteristic
 func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControllers) (*bluetooth.DeviceCharacteristic, error) {
-
 	// create a channel to receive the characteristic
 	results := make(chan *bluetooth.DeviceCharacteristic, 1)
 	errChan := make(chan error, 1)
@@ -141,6 +192,7 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 	// Scan for the BLE CSC speed characteristic
 	go func() {
 		characteristic, err := controllers.bleController.GetBLECharacteristic(ctx, controllers.speedController)
+
 		if err != nil {
 			errChan <- err
 			return
@@ -159,6 +211,7 @@ func scanForBLESpeedCharacteristic(ctx context.Context, controllers appControlle
 	case characteristic := <-results:
 		return characteristic, nil
 	}
+
 }
 
 // monitorBLESpeed monitors the BLE speed characteristic

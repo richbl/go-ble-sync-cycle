@@ -112,6 +112,7 @@ func runValidationTests[T any](t *testing.T, tests []testConfig[T]) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
+
 			if v, ok := any(tt.input).(interface{ validate() error }); ok {
 				err = v.validate()
 			} else if v, ok := any(&tt.input).(interface{ validate() error }); ok {
@@ -123,8 +124,10 @@ func runValidationTests[T any](t *testing.T, tests []testConfig[T]) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
 		})
 	}
+
 }
 
 func TestLoadFile(t *testing.T) {
@@ -148,8 +151,10 @@ func TestLoadFile(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadFile() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
 		})
 	}
+
 }
 
 // TestValidateAppConfig tests AppConfig validation
@@ -264,17 +269,23 @@ func TestValidateVideoConfig(t *testing.T) {
 	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			if tt.input.FilePath != td.invalidFile {
 				tmpFile, err := os.CreateTemp("", "test")
+
 				if err != nil {
 					t.Fatal(err)
 				}
+
 				defer os.Remove(tmpFile.Name())
 				tt.input.FilePath = tmpFile.Name()
 			}
+
 			if err := tt.input.validate(); (err != nil) != tt.wantErr {
 				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
 		})
 	}
+
 }

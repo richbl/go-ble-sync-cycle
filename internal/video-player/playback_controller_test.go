@@ -118,6 +118,7 @@ func TestPauseControl(t *testing.T) {
 			assert.Equal(t, tt.setPause, result.(bool), "pause state should match")
 		})
 	}
+
 }
 
 // createTestController creates a PlaybackController with default test configurations

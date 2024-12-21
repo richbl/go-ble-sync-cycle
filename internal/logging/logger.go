@@ -48,7 +48,7 @@ const (
 const LevelFatal slog.Level = slog.Level(12)
 
 // Initialize sets up the logger
-func Initialize(logLevel string) (*slog.Logger) {
+func Initialize(logLevel string) *slog.Logger {
 	level := parseLogLevel(logLevel)
 	logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 	return logger
@@ -82,11 +82,11 @@ func Fatal(first interface{}, args ...interface{}) {
 
 // NewCustomTextHandler creates a new custom text handler
 func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHandler {
-
 	// Set default values if not provided
 	if w == nil {
 		w = os.Stdout
 	}
+
 	if opts == nil {
 		opts = &slog.HandlerOptions{Level: slog.LevelInfo}
 	}
@@ -102,7 +102,6 @@ func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHan
 
 // Handle handles the log record
 func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
-
 	// Check if context is done
 	if ctx.Err() != nil {
 		return ctx.Err()
@@ -110,15 +109,17 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 	// Create custom logger output
 	timestamp := r.Time.Format("2006/01/02 15:04:05")
-	level := strings.TrimSpace("["+(r.Level.String())+"]")
+	level := strings.TrimSpace("[" + (r.Level.String()) + "]")
+
 	if r.Level == LevelFatal {
 		level = "[FATAL]"
 	}
+
 	msg := r.Message
 
 	// Write output format to writer
-	fmt.Fprintf(h.out, "%s %s%s %s%s%s%s\n", 
-		timestamp, 
+	fmt.Fprintf(h.out, "%s %s%s %s%s%s%s\n",
+		timestamp,
 		h.getColorForLevel(r.Level),
 		level,
 		Reset,
@@ -167,22 +168,26 @@ func (h *CustomTextHandler) getColorForLevel(level slog.Level) string {
 	default:
 		return White
 	}
+
 }
 
 // getComponentFromAttrs extracts and formats the component from record attributes
 func (h *CustomTextHandler) getComponentFromAttrs(r slog.Record) string {
-
 	var component string
 
 	// Extract optional component from attributes
 	r.Attrs(func(a slog.Attr) bool {
+
 		if a.Key == "component" {
 			component = a.Value.String()
+
 			if component != "" {
 				component = component + " "
 			}
+
 			return false
 		}
+
 		return true
 	})
 
@@ -190,7 +195,7 @@ func (h *CustomTextHandler) getComponentFromAttrs(r slog.Record) string {
 }
 
 // parseLogLevel converts a string log level to slog.Level
-func parseLogLevel(level string) (slog.Level) {
+func parseLogLevel(level string) slog.Level {
 
 	// Convert log level to slog.Level
 	switch strings.ToLower(level) {
@@ -205,11 +210,11 @@ func parseLogLevel(level string) (slog.Level) {
 	default:
 		return slog.LevelInfo // default to Info level
 	}
+
 }
 
 // logWithOptionalComponent logs a message with an optional component
 func logWithOptionalComponent(ctx context.Context, level slog.Level, first interface{}, args ...interface{}) {
-
 	// Check if context is nil
 	if ctx == nil {
 		ctx = context.Background()
