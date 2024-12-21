@@ -38,7 +38,6 @@ type PlaybackController struct {
 
 // NewPlaybackController creates a new video player with the given configuration
 func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.SpeedConfig) (*PlaybackController, error) {
-
 	player := mpv.New()
 	if err := player.Initialize(); err != nil {
 		return nil, err
@@ -53,7 +52,6 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 
 // Start configures and starts the MPV media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.SpeedController) error {
-
 	logger.Info(logger.VIDEO, "starting MPV video player...")
 	defer p.player.TerminateDestroy()
 
@@ -81,22 +79,26 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 			return nil
 		case <-ticker.C:
 			reachedEOF, err := p.player.GetProperty("eof-reached", mpv.FormatFlag)
+
 			if err == nil && reachedEOF.(bool) {
 				return ErrVideoComplete
 			}
 
 			if err := p.updatePlaybackSpeed(speedController, &lastSpeed); err != nil {
+
 				if !strings.Contains(err.Error(), "end of file") {
 					logger.Warn(logger.VIDEO, "error updating playback speed: "+err.Error())
 				}
+
 			}
+
 		}
 	}
+
 }
 
 // configureMPVPlayer configures the MPV video player settings
 func (p *PlaybackController) configureMPVPlayer() error {
-
 	// Keep video window open so we can later determine mpv video file EOF status
 	if err := p.player.SetOptionString("keep-open", "yes"); err != nil {
 		return err
@@ -120,7 +122,6 @@ func (p *PlaybackController) loadMPVVideo() error {
 
 // updatePlaybackSpeed updates the video playback speed based on the sensor speed
 func (p *PlaybackController) updatePlaybackSpeed(speedController *speed.SpeedController, lastSpeed *float64) error {
-
 	currentSpeed := speedController.GetSmoothedSpeed()
 	p.logSpeedInfo(speedController, currentSpeed)
 
@@ -155,7 +156,6 @@ func (p *PlaybackController) checkSpeedState(currentSpeed float64, lastSpeed *fl
 
 // pausePlayback pauses the video playback in the MPV media player
 func (p *PlaybackController) pausePlayback() error {
-
 	logger.Debug(logger.VIDEO, "no speed detected, so pausing video")
 
 	if err := p.updateMPVDisplay(0.0, 0.0); err != nil {
@@ -167,7 +167,6 @@ func (p *PlaybackController) pausePlayback() error {
 
 // adjustPlayback adjusts the video playback speed
 func (p *PlaybackController) adjustPlayback(currentSpeed float64, lastSpeed *float64) error {
-
 	playbackSpeed := (currentSpeed * p.config.SpeedMultiplier) / 10.0
 	logger.Info(logger.VIDEO, logger.Cyan+"updating video playback speed to "+strconv.FormatFloat(playbackSpeed, 'f', 2, 64))
 
@@ -195,12 +194,15 @@ func (p *PlaybackController) updateMPVDisplay(cycleSpeed, playbackSpeed float64)
 
 	// Build and display OSD text based on display flags
 	if cycleSpeed > 0 {
+
 		if p.config.OnScreenDisplay.DisplayCycleSpeed {
 			osdText += fmt.Sprintf(" Cycle Speed: %.2f %s\n", cycleSpeed, p.speedConfig.SpeedUnits)
 		}
+
 		if p.config.OnScreenDisplay.DisplayPlaybackSpeed {
 			osdText += fmt.Sprintf(" Playback Speed: %.2fx\n", playbackSpeed)
 		}
+
 	} else {
 		osdText = " Paused"
 	}

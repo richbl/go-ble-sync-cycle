@@ -25,6 +25,7 @@ var td = testData{
 
 // helper function to calculate average of speeds
 func calculateAverage(data []float64) float64 {
+
 	if len(data) == 0 {
 		return 0.0
 	}
@@ -55,6 +56,7 @@ func TestNewSpeedController(t *testing.T) {
 	if got := controller.smoothedSpeed; got != 0 {
 		t.Errorf("smoothedSpeed = %f, want 0", got)
 	}
+
 }
 
 // TestUpdateSpeed tests the UpdateSpeed method of SpeedController
@@ -72,6 +74,7 @@ func TestUpdateSpeed(t *testing.T) {
 	if got != want {
 		t.Errorf("GetSmoothedSpeed() = %f, want %f", got, want)
 	}
+
 }
 
 // TestGetSmoothedSpeed tests the GetSmoothedSpeed method of SpeedController
@@ -90,14 +93,18 @@ func TestGetSmoothedSpeed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			controller := NewSpeedController(td.window)
+
 			for _, speed := range tt.updates {
 				controller.UpdateSpeed(speed)
 			}
+
 			if got := controller.GetSmoothedSpeed(); got != tt.expected {
 				t.Errorf("GetSmoothedSpeed() = %f, want %f", got, tt.expected)
 			}
+
 		})
 	}
+
 }
 
 func TestGetSpeedBuffer(t *testing.T) {
@@ -113,11 +120,15 @@ func TestGetSpeedBuffer(t *testing.T) {
 
 	// Verify buffer
 	got := controller.GetSpeedBuffer()
+
 	for i, val := range want {
+
 		if got[i] != val {
 			t.Errorf("GetSpeedBuffer()[%d] = %s, want %s", i, got[i], val)
 		}
+
 	}
+
 }
 
 func TestConcurrency(t *testing.T) {
@@ -128,11 +139,13 @@ func TestConcurrency(t *testing.T) {
 	// Run concurrent updates
 	for i := 1; i <= td.updateCount; i++ {
 		wg.Add(1)
+
 		go func(speed float64) {
 			defer wg.Done()
 			controller.UpdateSpeed(speed)
 			time.Sleep(td.sleepDuration)
 		}(float64(i))
+
 	}
 
 	wg.Wait()
@@ -140,4 +153,5 @@ func TestConcurrency(t *testing.T) {
 	if got := controller.GetSmoothedSpeed(); got == 0 {
 		t.Error("GetSmoothedSpeed() = 0, want non-zero value after concurrent updates")
 	}
+
 }

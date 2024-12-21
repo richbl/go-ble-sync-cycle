@@ -17,12 +17,13 @@ require (
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
 	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/gen2brain/go-mpv v0.2.3
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/term v0.27.0
 	tinygo.org/x/bluetooth v0.10.0
 )

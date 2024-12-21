@@ -83,6 +83,7 @@ func controllersIntegrationTest() (*ble.BLEController, error) {
 func createTestContextWithTimeout(t *testing.T) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	t.Cleanup(cancel)
+
 	return ctx, cancel
 }
 
@@ -93,6 +94,7 @@ func setupTestBLEController(t *testing.T) *ble.BLEController {
 		t.Skip(noBLEAdapterError)
 		return nil
 	}
+
 	return controller
 }
 
@@ -175,6 +177,7 @@ func TestProcessBLESpeed(t *testing.T) {
 			assert.InDelta(t, tt.want, got, 0.1, "Speed calculation mismatch")
 		})
 	}
+
 }
 
 // TestNewBLEControllerIntegration tests the creation of a new BLEController
@@ -193,6 +196,7 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
 	// Expect error since test UUID won't be found
 	_, err := controller.ScanForBLEPeripheral(ctx)
+
 	assert.Error(t, err)
 }
 
@@ -204,5 +208,6 @@ func TestGetBLECharacteristicIntegration(t *testing.T) {
 
 	// Expect error since test UUID won't be found
 	_, err := controller.GetBLECharacteristic(ctx, nil)
+
 	assert.Error(t, err)
 }

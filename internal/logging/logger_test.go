@@ -63,6 +63,7 @@ func validateLogOutput(t *testing.T, output, expectedLevel string) {
 	if !strings.Contains(output, td.message) {
 		t.Errorf("output %q missing message %q", output, td.message)
 	}
+
 }
 
 func TestInitialize(t *testing.T) {
@@ -96,8 +97,10 @@ func TestInitialize(t *testing.T) {
 			if h.level != tt.wantLevel {
 				t.Errorf("got level %v, want %v", h.level, tt.wantLevel)
 			}
+
 		})
 	}
+
 }
 
 func TestCustomTextHandler(t *testing.T) {
@@ -135,8 +138,10 @@ func TestCustomTextHandler(t *testing.T) {
 			if !strings.Contains(output, td.message) {
 				t.Errorf("output %q does not contain message %q", output, td.message)
 			}
+
 		})
 	}
+
 }
 
 func TestLogLevels(t *testing.T) {
@@ -162,6 +167,7 @@ func TestLogLevels(t *testing.T) {
 			validateLogOutput(t, buf.String(), tt.level)
 		})
 	}
+
 }
 
 func TestFatal(t *testing.T) {
@@ -195,9 +201,12 @@ func TestEnabled(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
+
 			if got := h.Enabled(context.Background(), tt.level); got != tt.want.(bool) {
 				t.Errorf("Enabled() = %v, want %v", got, tt.want)
 			}
+
 		})
 	}
+
 }

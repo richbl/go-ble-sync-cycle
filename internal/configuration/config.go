@@ -69,7 +69,6 @@ type VideoConfig struct {
 // LoadFile attempts to load the TOML configuration file from the specified path,
 // falling back to the default configuration directory if not found
 func LoadFile(filename string) (*Config, error) {
-
 	// Define configuration file paths
 	paths := []string{
 		filename,
@@ -84,9 +83,11 @@ func LoadFile(filename string) (*Config, error) {
 
 		// Load TOML file
 		if _, err := toml.DecodeFile(path, cfg); err != nil {
+
 			if !os.IsNotExist(err) || path == paths[len(paths)-1] {
 				lastErr = fmt.Errorf("failed to load config from %s: %w", path, err)
 			}
+
 			continue
 		}
 
@@ -115,9 +116,11 @@ func (c *Config) validate() error {
 	if err := c.Speed.validate(); err != nil {
 		return err
 	}
+
 	if err := c.BLE.validate(); err != nil {
 		return err
 	}
+
 	if err := c.Video.validate(); err != nil {
 		return err
 	}
@@ -127,7 +130,6 @@ func (c *Config) validate() error {
 
 // validate validates AppConfig elements
 func (ac *AppConfig) validate() error {
-
 	// Validate log level
 	switch ac.LogLevel {
 	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError:
@@ -135,6 +137,7 @@ func (ac *AppConfig) validate() error {
 	default:
 		return errors.New("invalid log level: " + ac.LogLevel)
 	}
+
 }
 
 // validate validates BLEConfig elements
@@ -158,6 +161,7 @@ func (sc *SpeedConfig) validate() error {
 	default:
 		return errors.New("invalid speed units: " + sc.SpeedUnits)
 	}
+
 }
 
 // validate validates VideoConfig elements
