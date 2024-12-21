@@ -86,6 +86,7 @@ func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 	case err := <-errChan:
 		return bluetooth.ScanResult{}, err
 	case <-scanCtx.Done():
+		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE component scan...")
 
 		if err := m.bleAdapter.StopScan(); err != nil {
 			logger.Error(logger.BLE, "failed to stop scan: "+err.Error())
@@ -187,6 +188,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 	// Handle context cancellation in separate goroutine
 	go func() {
 		<-ctx.Done()
+		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE component reporting...")
 		errChan <- nil
 	}()
 

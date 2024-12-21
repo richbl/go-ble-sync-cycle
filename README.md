@@ -292,7 +292,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed delta: 0.16 mph
 2024/12/16 15:13:33 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
 2024/12/16 15:13:33 [INFO] [SPEED] BLE sensor speed: 0.00 mph
-2024/12/16 15:13:33 [INFO] [VIDEO] context cancelled, stopping video player...
+2024/12/16 15:13:33 [INFO] [VIDEO] user-generated interrupt, stopping video player...
 2024/12/16 15:13:33 [ERROR] [APP] context canceled
 2024/12/16 15:13:33 [INFO] [APP] application shutdown complete... goodbye!
 ```

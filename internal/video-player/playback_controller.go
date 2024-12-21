@@ -75,7 +75,7 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.S
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info(logger.VIDEO, "context cancelled, stopping video player...")
+			logger.Info(logger.VIDEO, "user-generated interrupt, stopping video player...")
 			return nil
 		case <-ticker.C:
 			reachedEOF, err := p.player.GetProperty("eof-reached", mpv.FormatFlag)
