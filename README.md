@@ -110,13 +110,13 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
   sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
   scan_timeout_secs = 30            # Seconds to wait for peripheral response before generating error
 
-[speed]
+[SPD]
   smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
   speed_threshold = 1.0         # Minimum speed change to trigger video speed update
   wheel_circumference_mm = 1932 # Wheel circumference in millimeters
   speed_units = "mph"           # "km/h" or "mph"
 
-[video]
+[VID]
   file_path = "cycling_test.mp4" # Path to the video file to play
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
   update_interval_sec = 0.5     # Seconds (>0.0) to wait between video player updates
@@ -144,9 +144,9 @@ The `[ble]` section configures your computer (referred to as the BLE central con
 
 > To find the UUID of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device UUIDs are typically in the form of "11:22:33:44:55:66."
 
-#### The `[speed]` Section
+#### The `[SPD]` Section
 
-The `[speed]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
+The `[SPD]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
 
 - `smoothing_window`: The number of look-backs (or buffered speed measurements) to use for generating a moving average for the speed value
 - `speed_threshold`: The minimum speed change to trigger video speed updates
@@ -155,9 +155,9 @@ The `[speed]` section defines the configuration for the speed controller compone
 
 > The smoothing window is a simple ring buffer that stores the last (n) speed measurements, meaning that it will create a moving average for the speed value. This helps to smooth out the speed data and provide a more natural video playback experience.
 
-#### The `[video]` Section
+#### The `[VID]` Section
 
-The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
+The `[VID]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
 - `file_path`: The path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful (e.g., 0.5 = half screen)
@@ -196,71 +196,71 @@ go run cmd/main.go
 
 At this point, you should see the following output:
 
-  ```console
-2024/12/16 15:08:56 Starting BLE Sync Cycle 0.6.2
-2024/12/16 15:08:56 [INFO] [BLE] created new BLE central controller
-2024/12/16 15:08:56 [INFO] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
-2024/12/16 15:08:58 [DEBUG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
-2024/12/16 15:08:58 [DEBUG] [BLE] connecting to BLE peripheral device F1:42:D8:DE:35:16
-2024/12/16 15:09:00 [INFO] [BLE] BLE peripheral device connected
-2024/12/16 15:09:00 [DEBUG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
-2024/12/16 15:09:10 [ERROR] [BLE] CSC services discovery failed: timeout on DiscoverServices
-2024/12/16 15:09:10 [ERROR] [BLE] BLE peripheral scan failed: timeout on DiscoverServices
-2024/12/16 15:09:10 [INFO] [APP] application shutdown complete... goodbye!
-  ```
+```console
+ 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.6.2
+  2024/12/16 15:08:56 [INF] [BLE] created new BLE central controller
+  2024/12/16 15:08:56 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
+  2024/12/16 15:08:58 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
+  2024/12/16 15:08:58 [DBG] [BLE] connecting to BLE peripheral device F1:42:D8:DE:35:16
+  2024/12/16 15:09:00 [INF] [BLE] BLE peripheral device connected
+  2024/12/16 15:09:00 [DBG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
+  2024/12/16 15:09:10 [ERR] [BLE] CSC services discovery failed: timeout on DiscoverServices
+  2024/12/16 15:09:10 [ERR] [BLE] BLE peripheral scan failed: timeout on DiscoverServices
+  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!
+```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
-  ```console
-2024/12/16 15:09:47 Starting BLE Sync Cycle 0.6.2
-2024/12/16 15:09:47 [INFO] [BLE] created new BLE central controller
-2024/12/16 15:09:47 [INFO] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
-2024/12/16 15:09:47 [DEBUG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
-2024/12/16 15:09:47 [DEBUG] [BLE] connecting to BLE peripheral device F1:42:D8:DE:35:16
-2024/12/16 15:09:47 [INFO] [BLE] BLE peripheral device connected
-2024/12/16 15:09:47 [DEBUG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
-2024/12/16 15:09:47 [DEBUG] [BLE] found CSC service 00001816-0000-1000-8000-00805f9b34fb
-2024/12/16 15:09:47 [DEBUG] [BLE] discovering CSC characteristics 00002a5b-0000-1000-8000-00805f9b34fb
-2024/12/16 15:09:47 [DEBUG] [BLE] found CSC characteristic 00002a5b-0000-1000-8000-00805f9b34fb
-2024/12/16 15:09:47 [INFO] [VIDEO] starting MPV video player...
-2024/12/16 15:09:47 [DEBUG] [BLE] starting real-time monitoring of BLE sensor notifications...
-2024/12/16 15:09:47 [DEBUG] [VIDEO] loading video file: cycling_test.mp4
-2024/12/16 15:09:47 [DEBUG] [VIDEO] entering MPV playback loop...
-2024/12/16 15:09:47 [DEBUG] [VIDEO] sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
-2024/12/16 15:09:47 [INFO] [VIDEO] smoothed sensor speed: 0.00 mph
-2024/12/16 15:09:47 [DEBUG] [VIDEO] no speed detected, so pausing video
-2024/12/16 15:09:47 [DEBUG] [VIDEO] video paused successfully
-  ```
+```console
+ 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.6.2
+  2024/12/16 15:09:47 [INF] [BLE] created new BLE central controller
+  2024/12/16 15:09:47 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
+  2024/12/16 15:09:47 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
+  2024/12/16 15:09:47 [DBG] [BLE] connecting to BLE peripheral device F1:42:D8:DE:35:16
+  2024/12/16 15:09:47 [INF] [BLE] BLE peripheral device connected
+  2024/12/16 15:09:47 [DBG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
+  2024/12/16 15:09:47 [DBG] [BLE] found CSC service 00001816-0000-1000-8000-00805f9b34fb
+  2024/12/16 15:09:47 [DBG] [BLE] discovering CSC characteristics 00002a5b-0000-1000-8000-00805f9b34fb
+  2024/12/16 15:09:47 [DBG] [BLE] found CSC characteristic 00002a5b-0000-1000-8000-00805f9b34fb
+  2024/12/16 15:09:47 [INF] [VID] starting MPV video player...
+  2024/12/16 15:09:47 [DBG] [BLE] starting real-time monitoring of BLE sensor notifications...
+  2024/12/16 15:09:47 [DBG] [VID] loading video file: cycling_test.mp4
+  2024/12/16 15:09:47 [DBG] [VID] entering MPV playback loop...
+  2024/12/16 15:09:47 [DBG] [VID] sensor speed buffer: [0.00 0.00 0.00 0.00 0.00]
+  2024/12/16 15:09:47 [INF] [VID] smoothed sensor speed: 0.00 mph
+  2024/12/16 15:09:47 [DBG] [VID] no speed detected, so pausing video
+  2024/12/16 15:09:47 [DBG] [VID] video paused successfully
+```
 
 In the example above, the application is now running in a loop, periodically querying the BLE peripheral for speed data. The application will also update the video player to match the speed of the sensor. Here, since the video has just begun, its speed is set to 0.0 (paused).
 
 ```console
-...
-2024/12/16 15:13:26 [INFO] [SPEED] BLE sensor speed: 24.14 mph
-2024/12/16 15:13:26 [DEBUG] [VIDEO] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
-2024/12/16 15:13:26 [INFO] [VIDEO] smoothed sensor speed: 9.28 mph
-2024/12/16 15:13:26 [DEBUG] [VIDEO] last playback speed: 1.74 mph
-2024/12/16 15:13:26 [DEBUG] [VIDEO] sensor speed delta: 7.54 mph
-2024/12/16 15:13:26 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:26 [INFO] [VIDEO] updating video playback speed to 0.56
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
-2024/12/16 15:13:27 [INFO] [VIDEO] smoothed sensor speed: 9.28 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] last playback speed: 9.28 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed delta: 0.00 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
-2024/12/16 15:13:27 [INFO] [VIDEO] smoothed sensor speed: 9.28 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] last playback speed: 9.28 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed delta: 0.00 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:27 [INFO] [SPEED] BLE sensor speed: 27.35 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed buffer: [3.17 5.54 13.53 24.14 27.35]
-2024/12/16 15:13:27 [INFO] [VIDEO] smoothed sensor speed: 14.75 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] last playback speed: 9.28 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] sensor speed delta: 5.47 mph
-2024/12/16 15:13:27 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:27 [INFO] [VIDEO] updating video playback speed to 0.88
-...
+ ...
+  2024/12/16 15:13:26 [INF] [SPD] BLE sensor speed: 24.14 mph
+  2024/12/16 15:13:26 [DBG] [VID] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
+  2024/12/16 15:13:26 [INF] [VID] smoothed sensor speed: 9.28 mph
+  2024/12/16 15:13:26 [DBG] [VID] last playback speed: 1.74 mph
+  2024/12/16 15:13:26 [DBG] [VID] sensor speed delta: 7.54 mph
+  2024/12/16 15:13:26 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:26 [INF] [VID] updating video playback speed to 0.56
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
+  2024/12/16 15:13:27 [INF] [VID] smoothed sensor speed: 9.28 mph
+  2024/12/16 15:13:27 [DBG] [VID] last playback speed: 9.28 mph
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed delta: 0.00 mph
+  2024/12/16 15:13:27 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed buffer: [0.00 3.17 5.54 13.53 24.14]
+  2024/12/16 15:13:27 [INF] [VID] smoothed sensor speed: 9.28 mph
+  2024/12/16 15:13:27 [DBG] [VID] last playback speed: 9.28 mph
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed delta: 0.00 mph
+  2024/12/16 15:13:27 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:27 [INF] [SPD] BLE sensor speed: 27.35 mph
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed buffer: [3.17 5.54 13.53 24.14 27.35]
+  2024/12/16 15:13:27 [INF] [VID] smoothed sensor speed: 14.75 mph
+  2024/12/16 15:13:27 [DBG] [VID] last playback speed: 9.28 mph
+  2024/12/16 15:13:27 [DBG] [VID] sensor speed delta: 5.47 mph
+  2024/12/16 15:13:27 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:27 [INF] [VID] updating video playback speed to 0.88
+  ...
 ```
 
 In this last example, **BLE Sync Cycle** is coordinating with both the BLE peripheral (the speed sensor) and the video player, updating the video player to match the speed of the sensor.
@@ -268,33 +268,33 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 **To quit the application, press `Ctrl+C`.**
 
 ```console
-...
-2024/12/16 15:13:32 [INFO] [VIDEO] updating video playback speed to 0.41
-2024/12/16 15:13:32 [DEBUG] [VIDEO] sensor speed buffer: [11.62 10.58 11.68 0.00 0.00]
-2024/12/16 15:13:32 [INFO] [VIDEO] smoothed sensor speed: 6.78 mph
-2024/12/16 15:13:32 [DEBUG] [VIDEO] last playback speed: 6.78 mph
-2024/12/16 15:13:32 [DEBUG] [VIDEO] sensor speed delta: 0.00 mph
-2024/12/16 15:13:32 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:33 [INFO] [SPEED] BLE sensor speed: 12.42 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
-2024/12/16 15:13:33 [INFO] [VIDEO] smoothed sensor speed: 6.94 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] last playback speed: 6.78 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed delta: 0.16 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
-2024/12/16 15:13:33 [INFO] [VIDEO] smoothed sensor speed: 6.94 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] last playback speed: 6.78 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed delta: 0.16 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
-2024/12/16 15:13:33 [INFO] [VIDEO] smoothed sensor speed: 6.94 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] last playback speed: 6.78 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] sensor speed delta: 0.16 mph
-2024/12/16 15:13:33 [DEBUG] [VIDEO] playback speed update threshold: 0.25 mph
-2024/12/16 15:13:33 [INFO] [SPEED] BLE sensor speed: 0.00 mph
-2024/12/16 15:13:33 [INFO] [VIDEO] user-generated interrupt, stopping video player...
-2024/12/16 15:13:33 [ERROR] [APP] context canceled
-2024/12/16 15:13:33 [INFO] [APP] application shutdown complete... goodbye!
+ ...
+  2024/12/16 15:13:32 [INF] [VID] updating video playback speed to 0.41
+  2024/12/16 15:13:32 [DBG] [VID] sensor speed buffer: [11.62 10.58 11.68 0.00 0.00]
+  2024/12/16 15:13:32 [INF] [VID] smoothed sensor speed: 6.78 mph
+  2024/12/16 15:13:32 [DBG] [VID] last playback speed: 6.78 mph
+  2024/12/16 15:13:32 [DBG] [VID] sensor speed delta: 0.00 mph
+  2024/12/16 15:13:32 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:33 [INF] [SPD] BLE sensor speed: 12.42 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
+  2024/12/16 15:13:33 [INF] [VID] smoothed sensor speed: 6.94 mph
+  2024/12/16 15:13:33 [DBG] [VID] last playback speed: 6.78 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed delta: 0.16 mph
+  2024/12/16 15:13:33 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
+  2024/12/16 15:13:33 [INF] [VID] smoothed sensor speed: 6.94 mph
+  2024/12/16 15:13:33 [DBG] [VID] last playback speed: 6.78 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed delta: 0.16 mph
+  2024/12/16 15:13:33 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed buffer: [10.58 11.68 0.00 0.00 12.42]
+  2024/12/16 15:13:33 [INF] [VID] smoothed sensor speed: 6.94 mph
+  2024/12/16 15:13:33 [DBG] [VID] last playback speed: 6.78 mph
+  2024/12/16 15:13:33 [DBG] [VID] sensor speed delta: 0.16 mph
+  2024/12/16 15:13:33 [DBG] [VID] playback speed update threshold: 0.25 mph
+  2024/12/16 15:13:33 [INF] [SPD] BLE sensor speed: 0.00 mph
+  2024/12/16 15:13:33 [INF] [VID] user-generated interrupt, stopping video player...
+  2024/12/16 15:13:33 [ERR] [APP] context canceled
+  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!
 ```
 
 ## FAQ
@@ -323,6 +323,7 @@ Future enhancements include (in no particular order):
 - Create a desktop application (GUI) for **BLE Sync Cycle**
 - Add support for non-BLE peripheral devices
 - Automatically quit the application after a period of inactivity
+- Restart the application at some specific point in the video file
 - As an exercise, refactor using [the Rust language](https://www.rust-lang.org/)
 
 ## Acknowledgments

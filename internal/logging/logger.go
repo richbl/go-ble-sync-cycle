@@ -21,15 +21,16 @@ type ComponentType string
 // CustomTextHandler represents a custom text handler
 type CustomTextHandler struct {
 	slog.Handler
-	out   io.Writer
-	level slog.Level
+	out        io.Writer
+	level      slog.Level
+	levelNames map[slog.Level]string
 }
 
 const (
 	APP   ComponentType = "[APP]"
 	BLE   ComponentType = "[BLE]"
-	SPEED ComponentType = "[SPEED]"
-	VIDEO ComponentType = "[VIDEO]"
+	SPEED ComponentType = "[SPD]"
+	VIDEO ComponentType = "[VID]"
 )
 
 // Color constants
@@ -46,6 +47,19 @@ const (
 
 // Create a new slog level for the Fatal logging level
 const LevelFatal slog.Level = slog.Level(12)
+
+// ExitHandler is a function type for handling fatal exits
+type ExitHandler func()
+
+var (
+	exitHandler ExitHandler
+	exitChan    = make(chan struct{})
+)
+
+// SetExitHandler sets the handler for fatal exits
+func SetExitHandler(handler ExitHandler) {
+	exitHandler = handler
+}
 
 // Initialize sets up the logger
 func Initialize(logLevel string) *slog.Logger {
@@ -74,10 +88,13 @@ func Debug(first interface{}, args ...interface{}) {
 	logWithOptionalComponent(context.Background(), slog.LevelDebug, first, args...)
 }
 
-// Fatal logs a fatal message
+// Fatal logs a fatal message and triggers exit handler
 func Fatal(first interface{}, args ...interface{}) {
 	logWithOptionalComponent(context.Background(), LevelFatal, first, args...)
-	ExitFunc(1)
+	if exitHandler != nil {
+		exitHandler()
+	}
+	close(exitChan) // Signal that we're exiting
 }
 
 // NewCustomTextHandler creates a new custom text handler
@@ -91,12 +108,21 @@ func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHan
 		opts = &slog.HandlerOptions{Level: slog.LevelInfo}
 	}
 
+	levelNames := map[slog.Level]string{
+		slog.LevelDebug: "DBG",
+		slog.LevelInfo:  "INF",
+		slog.LevelWarn:  "WRN",
+		slog.LevelError: "ERR",
+		LevelFatal:      "FTL",
+	}
+
 	// Create the custom text handler
 	textHandler := slog.NewTextHandler(w, opts)
 	return &CustomTextHandler{
-		Handler: textHandler,
-		out:     w,
-		level:   opts.Level.(slog.Level),
+		Handler:    textHandler,
+		out:        w,
+		level:      opts.Level.(slog.Level),
+		levelNames: levelNames,
 	}
 }
 
@@ -109,11 +135,7 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 	// Create custom logger output
 	timestamp := r.Time.Format("2006/01/02 15:04:05")
-	level := strings.TrimSpace("[" + (r.Level.String()) + "]")
-
-	if r.Level == LevelFatal {
-		level = "[FATAL]"
-	}
+	level := strings.TrimSpace("[" + h.levelNames[r.Level] + "]")
 
 	msg := r.Message
 
@@ -137,16 +159,20 @@ func (h *CustomTextHandler) Enabled(ctx context.Context, level slog.Level) bool 
 // WithAttrs adds attributes to the handler
 func (h *CustomTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &CustomTextHandler{
-		Handler: h.Handler.WithAttrs(attrs),
-		out:     h.out,
+		Handler:    h.Handler.WithAttrs(attrs),
+		out:        h.out,
+		level:      h.level,
+		levelNames: h.levelNames,
 	}
 }
 
 // WithGroup adds a group to the handler
 func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
 	return &CustomTextHandler{
-		Handler: h.Handler.WithGroup(name),
-		out:     h.out,
+		Handler:    h.Handler.WithGroup(name),
+		out:        h.out,
+		level:      h.level,
+		levelNames: h.levelNames,
 	}
 }
 
@@ -162,9 +188,9 @@ func (h *CustomTextHandler) getColorForLevel(level slog.Level) string {
 	case slog.LevelWarn:
 		return Yellow
 	case slog.LevelError:
-		return Red
-	case LevelFatal:
 		return Magenta
+	case LevelFatal:
+		return Red
 	default:
 		return White
 	}
