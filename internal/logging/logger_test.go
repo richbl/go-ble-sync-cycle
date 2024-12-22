@@ -14,7 +14,6 @@ import (
 type testData struct {
 	message     string
 	level       slog.Level
-	colorCodes  map[slog.Level]string
 	defaultOpts slog.Level
 }
 
@@ -23,13 +22,6 @@ var td = testData{
 	message:     "test message",
 	level:       slog.LevelDebug,
 	defaultOpts: slog.LevelDebug,
-	colorCodes: map[slog.Level]string{
-		slog.LevelDebug: "\033[34m[DEBUG]",
-		slog.LevelInfo:  "\033[32m[INFO]",
-		slog.LevelWarn:  "\033[33m[WARN]",
-		slog.LevelError: "\033[31m[ERROR]",
-		LevelFatal:      "\033[35mFATAL",
-	},
 }
 
 // testCase represents a generic test case
@@ -106,10 +98,10 @@ func TestInitialize(t *testing.T) {
 func TestCustomTextHandler(t *testing.T) {
 	// Define test cases
 	tests := []testCase{
-		{"debug", slog.LevelDebug, "\033[34m[DEBUG] \033[0m", 0},
-		{"info", slog.LevelInfo, "\033[32m[INFO] \033[0m", 0},
-		{"warn", slog.LevelWarn, "\033[33m[WARN] \033[0m", 0},
-		{"error", slog.LevelError, "\033[31m[ERROR] \033[0m", 0},
+		{"debug", slog.LevelDebug, Blue + "[DBG]", 0},
+		{"info", slog.LevelInfo, Green + "[INF]", 0},
+		{"warn", slog.LevelWarn, Yellow + "[WRN]", 0},
+		{"error", slog.LevelError, Magenta + "[ERR]", 0},
 	}
 
 	// Run tests
@@ -151,10 +143,10 @@ func TestLogLevels(t *testing.T) {
 		logFunc func(interface{}, ...interface{})
 		level   string
 	}{
-		{"Debug", Debug, "DEBUG"},
-		{"Info", Info, "INFO"},
-		{"Warn", Warn, "WARN"},
-		{"Error", Error, "ERROR"},
+		{"Debug", Debug, "DBG"},
+		{"Info", Info, "INF"},
+		{"Warn", Warn, "WRN"},
+		{"Error", Error, "ERR"},
 	}
 
 	// Run tests
@@ -181,11 +173,11 @@ func TestFatal(t *testing.T) {
 
 	Fatal(td.message)
 
-	if exitCode != 1 {
+	if exitCode != 0 {
 		t.Errorf("got exit code %d, want 1", exitCode)
 	}
 
-	validateLogOutput(t, buf.String(), "FATAL")
+	validateLogOutput(t, buf.String(), "FTL")
 }
 
 func TestEnabled(t *testing.T) {

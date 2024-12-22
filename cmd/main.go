@@ -26,43 +26,92 @@ type appControllers struct {
 	bleController   *ble.BLEController
 }
 
+// shutdownHandler encapsulates shutdown coordination
+type shutdownHandler struct {
+	done           chan struct{}
+	componentsDown chan struct{}
+	cleanupOnce    sync.Once
+	wg             *sync.WaitGroup
+	rootCancel     context.CancelFunc
+	restoreTerm    func()
+}
+
 func main() {
-	log.Println("Starting BLE Sync Cycle 0.6.2")
+	log.Println("----- ----- Starting BLE Sync Cycle 0.6.2")
 
 	// Load configuration
 	cfg, err := config.LoadFile("config.toml")
 	if err != nil {
-		log.Fatal(logger.Magenta + "[FATAL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
+		log.Println(logger.Red + "[FTL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
+		log.Println("----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
+		os.Exit(0)
 	}
 
-	// Initialize logger
 	logger.Initialize(cfg.App.LogLevel)
 
-	// Configure terminal output to prevent display of break (^C) character
-	restoreTerm := configureTerminal()
-	defer restoreTerm()
-
-	// Ensure goodbye message is always output last
-	defer logger.Info(logger.APP, "BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
-
-	// Create contexts for managing goroutines and cancellations
+	// Initialize shutdown coordination
+	var wg sync.WaitGroup
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	defer rootCancel()
+
+	sh := &shutdownHandler{
+		done:           make(chan struct{}),
+		componentsDown: make(chan struct{}),
+		wg:             &wg,
+		rootCancel:     rootCancel,
+		restoreTerm:    configureTerminal(),
+	}
+
+	// Set up shutdown handlers
+	setupSignalHandling(sh)
+	logger.SetExitHandler(sh.cleanup)
 
 	// Create component controllers
 	controllers, componentType, err := setupAppControllers(*cfg)
 	if err != nil {
 		logger.Fatal(componentType, "failed to create controllers: "+err.Error())
+		<-sh.done
+		os.Exit(0)
 	}
 
-	// Create a WaitGroup to track goroutine lifetimes, and run the application controllers
-	var wg sync.WaitGroup
-
-	if componentType, err := startAppControllers(rootCtx, controllers, &wg); err != nil {
+	// Start components
+	if componentType, err := startAppControllers(rootCtx, controllers, sh.wg); err != nil {
 		logger.Error(componentType, err.Error())
+		sh.cleanup()
+		<-sh.done
+		os.Exit(0)
 	}
 
-	wg.Wait() // Wait here for all goroutines to finish in main()... be patient
+	<-sh.done
+}
+
+// cleanup handles graceful shutdown of all components
+func (sh *shutdownHandler) cleanup() {
+
+	sh.cleanupOnce.Do(func() {
+
+		// Signal components to shut down and wait for them to finish
+		sh.rootCancel()
+		sh.wg.Wait()
+		close(sh.componentsDown)
+
+		// Perform final cleanup
+		sh.restoreTerm()
+
+		log.Println("----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!")
+		close(sh.done)
+	})
+}
+
+// setupSignalHandling configures OS signal handling
+func setupSignalHandling(sh *shutdownHandler) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+		sh.cleanup()
+	}()
 }
 
 // configureTerminal handles terminal char echo to prevent display of break (^C) character
@@ -129,9 +178,8 @@ func startAppControllers(ctx context.Context, controllers appControllers, wg *sy
 	// Start component controllers concurrently
 	errs := make(chan componentErr, 1)
 
-	// Add two goroutines to the WaitGroup
-	wg.Add(2) // One for BLE monitoring, one for video playback
-
+	// Add the goroutines to WaitGroup before starting them
+	wg.Add(2)
 	// Monitor BLE speed (goroutine)
 	go func() {
 		defer wg.Done()
