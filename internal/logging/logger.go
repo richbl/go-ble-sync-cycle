@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 )
 
 // logger is the global logger
@@ -53,7 +54,7 @@ type ExitHandler func()
 
 var (
 	exitHandler ExitHandler
-	exitChan    = make(chan struct{})
+	exitOnce    sync.Once
 )
 
 // SetExitHandler sets the handler for fatal exits
@@ -91,10 +92,16 @@ func Debug(first interface{}, args ...interface{}) {
 // Fatal logs a fatal message and triggers exit handler
 func Fatal(first interface{}, args ...interface{}) {
 	logWithOptionalComponent(context.Background(), LevelFatal, first, args...)
-	if exitHandler != nil {
-		exitHandler()
-	}
-	close(exitChan) // Signal that we're exiting
+
+	// Trigger exit handler
+	exitOnce.Do(func() {
+
+		if exitHandler != nil {
+			exitHandler()
+		}
+
+		ExitFunc(0)
+	})
 }
 
 // NewCustomTextHandler creates a new custom text handler
