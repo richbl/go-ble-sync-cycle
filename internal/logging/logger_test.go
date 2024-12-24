@@ -34,13 +34,16 @@ type testCase struct {
 
 // setupTest creates a new test logger with buffer
 func setupTest() (*bytes.Buffer, *slog.Logger) {
+
 	buf := &bytes.Buffer{}
 	handler := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: td.level})
+
 	return buf, slog.New(handler)
 }
 
 // validateLogOutput checks if log output matches expected format
 func validateLogOutput(t *testing.T, output, expectedLevel string) {
+
 	t.Helper()
 
 	timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}`
@@ -58,7 +61,9 @@ func validateLogOutput(t *testing.T, output, expectedLevel string) {
 
 }
 
+// TestNewCustomTextHandler tests the NewCustomTextHandler function
 func TestInitialize(t *testing.T) {
+
 	// Define test cases
 	tests := []struct {
 		name      string
@@ -95,7 +100,9 @@ func TestInitialize(t *testing.T) {
 
 }
 
+// TestCustomTextHandler tests the CustomTextHandler struct
 func TestCustomTextHandler(t *testing.T) {
+
 	// Define test cases
 	tests := []testCase{
 		{"debug", slog.LevelDebug, Blue + "[DBG]", 0},
@@ -136,7 +143,9 @@ func TestCustomTextHandler(t *testing.T) {
 
 }
 
+// TestLogLevels tests the log level functions
 func TestLogLevels(t *testing.T) {
+
 	// Define test cases
 	tests := []struct {
 		name    string
@@ -162,7 +171,9 @@ func TestLogLevels(t *testing.T) {
 
 }
 
+// TestFatal tests the Fatal function
 func TestFatal(t *testing.T) {
+
 	buf, testLogger := setupTest()
 	logger = testLogger
 
@@ -180,7 +191,9 @@ func TestFatal(t *testing.T) {
 	validateLogOutput(t, buf.String(), "FTL")
 }
 
+// TestEnabled tests the Enabled function
 func TestEnabled(t *testing.T) {
+
 	// Define test cases
 	tests := []testCase{
 		{"debug enabled", slog.LevelDebug, true, slog.LevelDebug},

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"time"
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
@@ -34,6 +34,8 @@ type appControllers struct {
 }
 
 func main() {
+
+	// Hello world!
 	log.Println(appPrefix, "Starting", appName, appVersion)
 
 	cfg := loadConfig("config.toml")
@@ -41,9 +43,6 @@ func main() {
 	// Initialize the shutdown manager and exit handler
 	sm := NewShutdownManager(shutdownTimeout)
 	exitHandler := NewExitHandler(sm)
-
-	// Add configureTerminal cleanup function to reset terminal settings on exit
-	sm.AddCleanupFn(configureTerminal())
 	sm.Start()
 
 	// Initialize the logger with the configured log level and exit handler
@@ -56,7 +55,7 @@ func main() {
 	// Initialize the application controllers
 	controllers, componentType, err := setupAppControllers(*cfg)
 	if err != nil {
-		logger.Fatal(componentType, "failed to create controllers: "+err.Error())
+		logger.Fatal(componentType, "failed to create controllers:", err.Error())
 		return
 	}
 
@@ -65,7 +64,7 @@ func main() {
 	if err != nil {
 
 		if err != context.Canceled {
-			logger.Fatal(logger.BLE, "failed to scan for BLE characteristic: "+err.Error())
+			logger.Fatal(logger.BLE, "failed to scan for BLE characteristic:", err.Error())
 			return
 		}
 
@@ -88,7 +87,7 @@ func main() {
 	// Wait for services to complete and check for errors
 	for _, runner := range []*ServiceRunner{bleRunner, videoRunner} {
 		if err := runner.Error(); err != nil {
-			logger.Fatal(logger.APP, "service error: "+err.Error())
+			logger.Fatal(logger.APP, "service error:", err.Error())
 			return
 		}
 	}
@@ -140,6 +139,7 @@ func scanForBLECharacteristic(ctx context.Context, controllers appControllers) (
 
 	select {
 	case <-ctx.Done():
+		fmt.Print("\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE discovery...")
 		return nil, ctx.Err()
 	case result := <-resultsChan:
@@ -152,26 +152,11 @@ func loadConfig(file string) *config.Config {
 
 	cfg, err := config.LoadFile(file)
 	if err != nil {
-		log.Println(logger.Red + "[FTL]" + logger.Reset + " [APP] failed to load TOML configuration: " + err.Error())
+		log.Println(logger.Red+"[FTL] "+logger.Reset+"[APP] failed to load TOML configuration:", err.Error())
 		waveGoodbye()
 	}
 
 	return cfg
-}
-
-// configureTerminal handles terminal character echo settings, returning a cleanup function
-// to restore original terminal settings
-func configureTerminal() func() {
-
-	rawMode := exec.Command("stty", "-echo")
-	rawMode.Stdin = os.Stdin
-	_ = rawMode.Run()
-
-	return func() {
-		cooked := exec.Command("stty", "echo")
-		cooked.Stdin = os.Stdin
-		_ = cooked.Run()
-	}
 }
 
 // waveGoodbye outputs a goodbye message and exits the program

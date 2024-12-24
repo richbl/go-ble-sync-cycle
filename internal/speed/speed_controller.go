@@ -1,3 +1,4 @@
+// Package speed provides speed measurement and smoothing functionality
 package speed
 
 import (
@@ -7,8 +8,9 @@ import (
 	"time"
 )
 
-// SpeedController manages speed measurements with smoothing
+// SpeedController manages speed measurements with smoothing over a specified time window
 type SpeedController struct {
+	mu            sync.RWMutex // protects all fields
 	speeds        *ring.Ring
 	window        int
 	currentSpeed  float64
@@ -16,14 +18,12 @@ type SpeedController struct {
 	lastUpdate    time.Time
 }
 
-// mutex manages concurrent access to SpeedController
-var mutex sync.RWMutex
-
-// NewSpeedController creates a new speed controller with a specified window size
+// NewSpeedController creates a new speed controller with a specified window size, which
+// determines the number of speed measurements used for smoothing
 func NewSpeedController(window int) *SpeedController {
+
 	r := ring.New(window)
 
-	// Initialize ring with zero values
 	for i := 0; i < window; i++ {
 		r.Value = float64(0)
 		r = r.Next()
@@ -35,21 +35,50 @@ func NewSpeedController(window int) *SpeedController {
 	}
 }
 
-// GetSmoothedSpeed returns the smoothed speed measurement
-func (t *SpeedController) GetSmoothedSpeed() float64 {
-	mutex.RLock()
-	defer mutex.RUnlock()
+// UpdateSpeed updates the current speed measurement and calculates a smoothed average
+func (sc *SpeedController) UpdateSpeed(speed float64) {
 
-	return t.smoothedSpeed
+	// Lock the mutex to protect the fields
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	sc.currentSpeed = speed
+	sc.speeds.Value = speed
+	sc.speeds = sc.speeds.Next()
+
+	var sum float64
+	sc.speeds.Do(func(x interface{}) {
+
+		if x != nil {
+			sum += x.(float64)
+		}
+
+	})
+
+	// Ahhh... smoothness
+	sc.smoothedSpeed = sum / float64(sc.window)
+	sc.lastUpdate = time.Now()
+}
+
+// GetSmoothedSpeed returns the current smoothed speed measurement
+func (sc *SpeedController) GetSmoothedSpeed() float64 {
+
+	// Lock the mutex to protect the fields
+	sc.mu.RLock()
+	defer sc.mu.RUnlock()
+
+	return sc.smoothedSpeed
 }
 
 // GetSpeedBuffer returns the speed buffer as an array of formatted strings
-func (t *SpeedController) GetSpeedBuffer() []string {
-	mutex.RLock()
-	defer mutex.RUnlock()
+func (sc *SpeedController) GetSpeedBuffer() []string {
+
+	// Lock the mutex to protect the fields
+	sc.mu.RLock()
+	defer sc.mu.RUnlock()
 
 	var speeds []string
-	t.speeds.Do(func(x interface{}) {
+	sc.speeds.Do(func(x interface{}) {
 
 		if x != nil {
 			speeds = append(speeds, fmt.Sprintf("%.2f", x.(float64)))
@@ -58,27 +87,4 @@ func (t *SpeedController) GetSpeedBuffer() []string {
 	})
 
 	return speeds
-}
-
-// UpdateSpeed updates the current speed measurement and calculates a smoothed average
-func (t *SpeedController) UpdateSpeed(speed float64) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	t.currentSpeed = speed
-	t.speeds.Value = speed
-	t.speeds = t.speeds.Next()
-
-	// Calculate smoothed speed
-	sum := float64(0)
-	t.speeds.Do(func(x interface{}) {
-
-		if x != nil {
-			sum += x.(float64)
-		}
-
-	})
-
-	t.smoothedSpeed = sum / float64(t.window)
-	t.lastUpdate = time.Now()
 }
