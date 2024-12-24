@@ -44,6 +44,7 @@ var (
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
 func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig) (*BLEController, error) {
+
 	// Enable BLE adapter
 	bleAdapter := bluetooth.DefaultAdapter
 
@@ -62,6 +63,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 
 // ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
 func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
+
 	// Create context with timeout
 	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
@@ -86,7 +88,6 @@ func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 	case err := <-errChan:
 		return bluetooth.ScanResult{}, err
 	case <-scanCtx.Done():
-		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE component scan...")
 
 		if err := m.bleAdapter.StopScan(); err != nil {
 			logger.Error(logger.BLE, "failed to stop scan: "+err.Error())
@@ -99,6 +100,7 @@ func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 
 // startScanning starts the BLE scan and sends the result to the found channel when the target device is discovered
 func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
+
 	// Start BLE scan
 	err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
 
@@ -125,6 +127,7 @@ func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
 
 // GetBLECharacteristic scans for the BLE peripheral and returns CSC services/characteristics
 func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedController *speed.SpeedController) (*bluetooth.DeviceCharacteristic, error) {
+
 	// Scan for BLE peripheral
 	result, err := m.ScanForBLEPeripheral(ctx)
 	if err != nil {
@@ -135,7 +138,6 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 
 	// Connect to BLE peripheral device
 	var device bluetooth.Device
-
 	if device, err = m.bleAdapter.Connect(result.Address, bluetooth.ConnectionParams{}); err != nil {
 		return nil, err
 	}
@@ -165,6 +167,7 @@ func (m *BLEController) GetBLECharacteristic(ctx context.Context, speedControlle
 
 // GetBLEUpdates enables BLE peripheral monitoring to report real-time sensor data
 func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *speed.SpeedController, char *bluetooth.DeviceCharacteristic) error {
+
 	logger.Debug(logger.BLE, "starting real-time monitoring of BLE sensor notifications...")
 	errChan := make(chan error, 1)
 
@@ -197,6 +200,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 
 // ProcessBLESpeed processes the raw speed data from the BLE peripheral
 func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
+
 	// Parse speed data
 	newSpeedData, err := m.parseSpeedData(data)
 	if err != nil {
@@ -213,6 +217,7 @@ func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
 
 // calculateSpeed calculates the current speed based on the sensor data
 func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
+
 	// First time through the loop set the last wheel revs and time
 	if lastWheelTime == 0 {
 		lastWheelRevs = sm.wheelRevs
@@ -247,6 +252,7 @@ func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
 
 // parseSpeedData parses the raw speed data from the BLE peripheral
 func (m *BLEController) parseSpeedData(data []byte) (SpeedMeasurement, error) {
+
 	// Check for data
 	if len(data) < 1 {
 		return SpeedMeasurement{}, errors.New("empty data")
