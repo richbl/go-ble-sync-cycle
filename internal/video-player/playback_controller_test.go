@@ -38,6 +38,7 @@ func init() {
 
 // createTestConfig returns test video and speed configurations
 func createTestConfig() (config.VideoConfig, config.SpeedConfig) {
+
 	vc := config.VideoConfig{
 		FilePath:          td.filename,
 		WindowScaleFactor: td.windowScale,
@@ -57,6 +58,7 @@ func createTestConfig() (config.VideoConfig, config.SpeedConfig) {
 
 // TestNewPlaybackController verifies controller creation and initialization
 func TestNewPlaybackController(t *testing.T) {
+
 	// Create test configuration
 	vc, sc := createTestConfig()
 
@@ -67,6 +69,7 @@ func TestNewPlaybackController(t *testing.T) {
 
 // TestPlaybackFlow tests the complete playback flow
 func TestPlaybackFlow(t *testing.T) {
+
 	// Create test controller
 	controller := createTestController(t)
 
@@ -95,6 +98,7 @@ func TestPlaybackFlow(t *testing.T) {
 
 // TestPauseControl tests pause functionality
 func TestPauseControl(t *testing.T) {
+
 	// Create test controller
 	controller := createTestController(t)
 
@@ -123,6 +127,7 @@ func TestPauseControl(t *testing.T) {
 
 // createTestController creates a PlaybackController with default test configurations
 func createTestController(t *testing.T) *PlaybackController {
+
 	// Create test configuration
 	vc, sc := createTestConfig()
 

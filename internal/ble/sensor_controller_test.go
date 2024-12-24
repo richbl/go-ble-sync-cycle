@@ -50,6 +50,7 @@ func waitForScanReset() {
 
 // createTestController creates test BLE and speed controllers
 func createTestController(speedUnits string) (*ble.BLEController, error) {
+
 	// Create test BLE controller
 	bleConfig := config.BLEConfig{
 		SensorUUID:      sensorTestUUID,
@@ -67,6 +68,7 @@ func createTestController(speedUnits string) (*ble.BLEController, error) {
 
 // controllersIntegrationTest pauses BLE scan and then creates controllers
 func controllersIntegrationTest() (*ble.BLEController, error) {
+
 	// Pause to permit BLE adapter to reset
 	waitForScanReset()
 
@@ -81,6 +83,7 @@ func controllersIntegrationTest() (*ble.BLEController, error) {
 
 // createTestContextWithTimeout creates a context with a predefined timeout
 func createTestContextWithTimeout(t *testing.T) (context.Context, context.CancelFunc) {
+
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	t.Cleanup(cancel)
 
@@ -89,6 +92,7 @@ func createTestContextWithTimeout(t *testing.T) (context.Context, context.Cancel
 
 // setupTestBLEController creates a test BLE controller and handles BLE adapter errors
 func setupTestBLEController(t *testing.T) *ble.BLEController {
+
 	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip(noBLEAdapterError)
@@ -100,6 +104,7 @@ func setupTestBLEController(t *testing.T) *ble.BLEController {
 
 // TestProcessBLESpeed tests the ProcessBLESpeed() function
 func TestProcessBLESpeed(t *testing.T) {
+
 	// Define test cases
 	tests := []struct {
 		name       string
@@ -182,6 +187,7 @@ func TestProcessBLESpeed(t *testing.T) {
 
 // TestNewBLEControllerIntegration tests the creation of a new BLEController
 func TestNewBLEControllerIntegration(t *testing.T) {
+
 	// Create test BLE controller
 	controller := setupTestBLEController(t)
 
@@ -190,6 +196,7 @@ func TestNewBLEControllerIntegration(t *testing.T) {
 
 // TestScanForBLEPeripheralIntegration tests the ScanForBLEPeripheral() function
 func TestScanForBLEPeripheralIntegration(t *testing.T) {
+
 	// Create test BLE controller
 	controller := setupTestBLEController(t)
 	ctx, _ := createTestContextWithTimeout(t)
@@ -202,6 +209,7 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
 // TestGetBLECharacteristicIntegration tests the GetBLECharacteristic() function
 func TestGetBLECharacteristicIntegration(t *testing.T) {
+
 	// Create test BLE controller
 	controller := setupTestBLEController(t)
 	ctx, _ := createTestContextWithTimeout(t)

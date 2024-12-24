@@ -32,6 +32,7 @@ type testConfig[T any] struct {
 
 // generateConfigTOML returns valid or invalid TOML config based on isValid flag
 func generateConfigTOML(isValid bool) string {
+
 	// Generate valid and invalid TOML configs
 	if isValid {
 		return fmt.Sprintf(`
@@ -82,6 +83,7 @@ func generateConfigTOML(isValid bool) string {
 
 // createTempFile creates a temporary file with given content
 func createTempFile(t *testing.T, prefix, content string) (string, func()) {
+
 	t.Helper()
 
 	// Create temp file
@@ -106,6 +108,7 @@ func createTempFile(t *testing.T, prefix, content string) (string, func()) {
 
 // runValidationTests runs validation tests for any config type
 func runValidationTests[T any](t *testing.T, tests []testConfig[T]) {
+
 	t.Helper()
 
 	// Run tests
@@ -131,6 +134,7 @@ func runValidationTests[T any](t *testing.T, tests []testConfig[T]) {
 }
 
 func TestLoadFile(t *testing.T) {
+
 	// Create tests
 	tests := []struct {
 		name    string
@@ -159,6 +163,7 @@ func TestLoadFile(t *testing.T) {
 
 // TestValidateAppConfig tests AppConfig validation
 func TestValidateAppConfig(t *testing.T) {
+
 	// Create tests
 	tests := []testConfig[AppConfig]{
 		{
@@ -179,6 +184,7 @@ func TestValidateAppConfig(t *testing.T) {
 
 // TestValidateBLEConfig tests BLEConfig validation
 func TestValidateBLEConfig(t *testing.T) {
+
 	// Create tests
 	tests := []testConfig[BLEConfig]{
 		{
@@ -205,6 +211,7 @@ func TestValidateBLEConfig(t *testing.T) {
 
 // TestValidateSpeedConfig tests SpeedConfig validation
 func TestValidateSpeedConfig(t *testing.T) {
+
 	// Create tests
 	tests := []testConfig[SpeedConfig]{
 		{

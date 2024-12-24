@@ -1,3 +1,5 @@
+// Package config provides configuration management for the application,
+// including loading and validation of TOML configuration files
 package config
 
 import (
@@ -9,7 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Constants for valid configuration values
+// Configuration constants
 const (
 	// Log levels
 	logLevelDebug = "debug"
@@ -19,11 +21,11 @@ const (
 	logLevelFatal = "fatal"
 
 	// Speed units
-	SpeedUnitsKMH = "km/h"
-	SpeedUnitsMPH = "mph"
+	SpeedUnitsKMH = "km/h" // Kilometers per hour
+	SpeedUnitsMPH = "mph"  // Miles per hour
 )
 
-// Config represents the application configuration
+// Config represents the complete application configuration structure
 type Config struct {
 	App   AppConfig   `toml:"app"`
 	BLE   BLEConfig   `toml:"ble"`
@@ -31,18 +33,18 @@ type Config struct {
 	Video VideoConfig `toml:"video"`
 }
 
-// AppConfig represents the application configuration
+// AppConfig defines application-wide settings
 type AppConfig struct {
 	LogLevel string `toml:"logging_level"`
 }
 
-// BLEConfig represents the BLE controller configuration
+// BLEConfig defines Bluetooth Low Energy settings
 type BLEConfig struct {
 	SensorUUID      string `toml:"sensor_uuid"`
 	ScanTimeoutSecs int    `toml:"scan_timeout_secs"`
 }
 
-// SpeedConfig represents the speed controller configuration
+// SpeedConfig defines speed calculation and measurement settings
 type SpeedConfig struct {
 	SmoothingWindow      int     `toml:"smoothing_window"`
 	SpeedThreshold       float64 `toml:"speed_threshold"`
@@ -50,14 +52,7 @@ type SpeedConfig struct {
 	SpeedUnits           string  `toml:"speed_units"`
 }
 
-// VideoOSDConfig represents the on-screen display configuration
-type VideoOSDConfig struct {
-	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
-	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
-	ShowOSD              bool
-}
-
-// VideoConfig represents the MPV video player configuration
+// VideoConfig defines video playback and display settings
 type VideoConfig struct {
 	FilePath          string         `toml:"file_path"`
 	WindowScaleFactor float64        `toml:"window_scale_factor"`
@@ -66,10 +61,17 @@ type VideoConfig struct {
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
 }
 
-// LoadFile attempts to load the TOML configuration file from the specified path,
-// falling back to the default configuration directory if not found
+// VideoOSDConfig defines on-screen display settings for video playback
+type VideoOSDConfig struct {
+	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
+	ShowOSD              bool // Computed field based on display settings
+}
+
+// LoadFile attempts to load and validate a TOML configuration file, trying multiple paths and
+// returns the first valid configuration found
 func LoadFile(filename string) (*Config, error) {
-	// Define configuration file paths
+
 	paths := []string{
 		filename,
 		filepath.Join("internal", "configuration", filepath.Base(filename)),
@@ -77,11 +79,9 @@ func LoadFile(filename string) (*Config, error) {
 
 	var lastErr error
 
-	// Attempt to load the configuration file from each path
 	for _, path := range paths {
 		cfg := &Config{}
 
-		// Load TOML file
 		if _, err := toml.DecodeFile(path, cfg); err != nil {
 
 			if !os.IsNotExist(err) || path == paths[len(paths)-1] {
@@ -91,59 +91,61 @@ func LoadFile(filename string) (*Config, error) {
 			continue
 		}
 
-		// Validate TOML file
 		if err := cfg.validate(); err != nil {
 			return nil, err
 		}
 
-		// Successfully loaded TOML file
 		return cfg, nil
 	}
 
-	// Failed to load TOML file
 	return nil, lastErr
 }
 
-// validate performs validation on the configuration values
+// validate performs validation across all configuration sections
 func (c *Config) validate() error {
 
-	// Validate application configuration elements
-	if err := c.App.validate(); err != nil {
-		return err
+	validators := []struct {
+		validate func() error
+		name     string
+	}{
+		{c.App.validate, "App"},
+		{c.Speed.validate, "Speed"},
+		{c.BLE.validate, "BLE"},
+		{c.Video.validate, "Video"},
 	}
 
-	// Validate remaining configuration elements
-	if err := c.Speed.validate(); err != nil {
-		return err
-	}
+	for _, v := range validators {
 
-	if err := c.BLE.validate(); err != nil {
-		return err
-	}
+		if err := v.validate(); err != nil {
+			return fmt.Errorf("%s configuration error: %w", v.name, err)
+		}
 
-	if err := c.Video.validate(); err != nil {
-		return err
 	}
 
 	return nil
 }
 
-// validate validates AppConfig elements
+// validate checks AppConfig for valid settings
 func (ac *AppConfig) validate() error {
-	// Validate log level
-	switch ac.LogLevel {
-	case logLevelDebug, logLevelInfo, logLevelWarn, logLevelError:
-		return nil
-	default:
+
+	validLogLevels := map[string]bool{
+		logLevelDebug: true,
+		logLevelInfo:  true,
+		logLevelWarn:  true,
+		logLevelError: true,
+		logLevelFatal: true,
+	}
+
+	if !validLogLevels[ac.LogLevel] {
 		return errors.New("invalid log level: " + ac.LogLevel)
 	}
 
+	return nil
 }
 
-// validate validates BLEConfig elements
+// validate checks BLEConfig for valid settings
 func (bc *BLEConfig) validate() error {
 
-	// Check if the sensor UUID is specified
 	if bc.SensorUUID == "" {
 		return errors.New("sensor UUID must be specified in configuration")
 	}
@@ -151,34 +153,35 @@ func (bc *BLEConfig) validate() error {
 	return nil
 }
 
-// validate validates SpeedConfig elements
+// validate checks SpeedConfig for valid settings
 func (sc *SpeedConfig) validate() error {
 
-	// Validate speed units
-	switch sc.SpeedUnits {
-	case SpeedUnitsKMH, SpeedUnitsMPH:
-		return nil
-	default:
+	validSpeedUnits := map[string]bool{
+		SpeedUnitsKMH: true,
+		SpeedUnitsMPH: true,
+	}
+
+	if !validSpeedUnits[sc.SpeedUnits] {
 		return errors.New("invalid speed units: " + sc.SpeedUnits)
 	}
 
+	return nil
 }
 
-// validate validates VideoConfig elements
+// validate checks VideoConfig for valid settings
 func (vc *VideoConfig) validate() error {
 
-	// Check if the video file exists
 	if _, err := os.Stat(vc.FilePath); err != nil {
-		return err
+		return fmt.Errorf("video file error: %w", err)
 	}
 
-	// Confirm that update_interval_sec is >0.0
 	if vc.UpdateIntervalSec <= 0.0 {
 		return errors.New("update_interval_sec must be greater than 0.0")
 	}
 
-	// Check if at least one OSD display flag is set
-	vc.OnScreenDisplay.ShowOSD = (vc.OnScreenDisplay.DisplayCycleSpeed || vc.OnScreenDisplay.DisplayPlaybackSpeed)
+	// Set computed field based on display settings
+	vc.OnScreenDisplay.ShowOSD = vc.OnScreenDisplay.DisplayCycleSpeed ||
+		vc.OnScreenDisplay.DisplayPlaybackSpeed
 
 	return nil
 }
