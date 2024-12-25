@@ -1,4 +1,3 @@
-// Package ble provides Bluetooth Low Energy (BLE) functionality for cycling speed sensors
 package ble
 
 import (
@@ -24,12 +23,6 @@ const (
 	mphConversion = 2.23694 // Conversion factor for miles per hour
 )
 
-// Package-level variables for tracking speed measurements
-var (
-	lastWheelRevs uint32
-	lastWheelTime uint16
-)
-
 // SpeedMeasurement represents the wheel revolution and time data from a BLE sensor
 type SpeedMeasurement struct {
 	wheelRevs uint32
@@ -38,9 +31,11 @@ type SpeedMeasurement struct {
 
 // BLEController manages BLE communication with cycling speed sensors
 type BLEController struct {
-	bleConfig   config.BLEConfig
-	speedConfig config.SpeedConfig
-	bleAdapter  bluetooth.Adapter
+	bleConfig     config.BLEConfig
+	speedConfig   config.SpeedConfig
+	bleAdapter    bluetooth.Adapter
+	lastWheelRevs uint32
+	lastWheelTime uint16
 }
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -206,26 +201,26 @@ func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
 func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
 
 	// Initialize last wheel data if not set
-	if lastWheelTime == 0 {
-		lastWheelRevs = sm.wheelRevs
-		lastWheelTime = sm.wheelTime
+	if m.lastWheelTime == 0 {
+		m.lastWheelRevs = sm.wheelRevs
+		m.lastWheelTime = sm.wheelTime
 		return 0.0
 	}
 
-	timeDiff := sm.wheelTime - lastWheelTime
+	timeDiff := sm.wheelTime - m.lastWheelTime
 	if timeDiff == 0 {
 		return 0.0
 	}
 
-	revDiff := int32(sm.wheelRevs - lastWheelRevs)
+	revDiff := int32(sm.wheelRevs - m.lastWheelRevs)
 	speedConversion := kphConversion
 	if m.speedConfig.SpeedUnits == config.SpeedUnitsMPH {
 		speedConversion = mphConversion
 	}
 
 	speed := float64(revDiff) * float64(m.speedConfig.WheelCircumferenceMM) * speedConversion / float64(timeDiff)
-	lastWheelRevs = sm.wheelRevs
-	lastWheelTime = sm.wheelTime
+	m.lastWheelRevs = sm.wheelRevs
+	m.lastWheelTime = sm.wheelTime
 
 	return speed
 }
