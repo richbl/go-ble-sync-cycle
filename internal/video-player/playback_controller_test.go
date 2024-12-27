@@ -81,7 +81,8 @@ func TestPlaybackFlow(t *testing.T) {
 
 	// Test video loading
 	t.Run("load video", func(t *testing.T) {
-		err := controller.loadMPVVideo()
+
+		err := controller.player.Command([]string{"loadfile", controller.config.FilePath})
 		assert.NoError(t, err, "should load video")
 	})
 

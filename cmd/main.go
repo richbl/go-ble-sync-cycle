@@ -13,8 +13,6 @@ import (
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 	video "github.com/richbl/go-ble-sync-cycle/internal/video-player"
-
-	"tinygo.org/x/bluetooth"
 )
 
 // Application constants
@@ -38,44 +36,46 @@ func main() {
 	// Hello world!
 	log.Println(appPrefix, "Starting", appName, appVersion)
 
+	// Load configuration
 	cfg := loadConfig("config.toml")
 
-	// Initialize the shutdown manager and exit handler
-	sm := NewShutdownManager(shutdownTimeout)
-	exitHandler := NewExitHandler(sm)
-	sm.Start()
+	// Initialize utility services
+	sm, exitHandler := initializeUtilityServices(cfg)
 
-	// Initialize the logger with the configured log level and exit handler
-	logger.Initialize(cfg.App.LogLevel)
-	logger.SetExitHandler(func() {
-		sm.initiateShutdown()
-		exitHandler.HandleExit()
-	})
+	// Initialize application controllers
+	controllers := initializeControllers(cfg, exitHandler)
 
-	// Initialize the application controllers
-	controllers, componentType, err := setupAppControllers(*cfg)
-	if err != nil {
-		logger.Fatal(componentType, "failed to create controllers:", err.Error())
-		return
-	}
+	// Scan for BLE device
+	bleDeviceDiscovery(sm.shutdownCtx.ctx, controllers, exitHandler)
 
-	// Scan for the BLE characteristic and handle context cancellation
-	bleChar, err := scanForBLECharacteristic(sm.Context(), controllers)
-	if err != nil {
+	// Start and monitor services for BLE and video components
+	monitorServiceRunners(startServiceRunners(sm, controllers))
 
-		if err != context.Canceled {
-			logger.Fatal(logger.BLE, "failed to scan for BLE characteristic:", err.Error())
+	// Wait for final shutdown sequences to complete and wave goodbye!
+	sm.Wait()
+	waveGoodbye()
+}
+
+// monitorServiceRunners monitors the services and logs any errors encountered
+func monitorServiceRunners(runners []*ServiceRunner) {
+
+	for _, runner := range runners {
+
+		if err := runner.Error(); err != nil {
+			logger.Fatal(logger.APP, "service error:", err.Error())
 			return
 		}
 
-		exitHandler.HandleExit()
-		return
 	}
+}
+
+// startServiceRunners starts the BLE and video service runners and returns a slice of service runners
+func startServiceRunners(sm *ShutdownManager, controllers appControllers) []*ServiceRunner {
 
 	// Create and run the BLE service runner
 	bleRunner := NewServiceRunner(sm, "BLE")
 	bleRunner.Run(func(ctx context.Context) error {
-		return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController, bleChar)
+		return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController)
 	})
 
 	// Create and run the video service runner
@@ -84,17 +84,57 @@ func main() {
 		return controllers.videoPlayer.Start(ctx, controllers.speedController)
 	})
 
-	// Wait for services to complete and check for errors
-	for _, runner := range []*ServiceRunner{bleRunner, videoRunner} {
-		if err := runner.Error(); err != nil {
-			logger.Fatal(logger.APP, "service error:", err.Error())
+	return []*ServiceRunner{bleRunner, videoRunner}
+}
+
+// bleDeviceDiscovery scans for the BLE device and CSC speed characteristic
+func bleDeviceDiscovery(ctx context.Context, controllers appControllers, exitHandler *ExitHandler) {
+
+	err := scanForBLECharacteristic(ctx, controllers)
+	if err != nil {
+
+		if err != context.Canceled {
+			logger.Fatal(logger.BLE, "failed to scan for BLE characteristic:", err.Error())
 			return
 		}
+
+		exitHandler.HandleExit()
+	}
+}
+
+// initializeUtilityServices initializes the core components of the application, including the shutdown manager,
+// exit handler, and logger
+func initializeUtilityServices(cfg *config.Config) (*ShutdownManager, *ExitHandler) {
+
+	// Initialize the shutdown manager and exit handler
+	sm := NewShutdownManager(shutdownTimeout)
+	exitHandler := NewExitHandler(sm)
+	sm.Start()
+
+	// Initialize the logger
+	logger.Initialize(cfg.App.LogLevel)
+
+	// Set the exit handler for the shutdown manager
+	logger.SetExitHandler(func() {
+		sm.initiateShutdown()
+		exitHandler.HandleExit()
+	})
+
+	return sm, exitHandler
+}
+
+// initializeControllers initializes the application controllers, including the speed controller,
+// video player, and BLE controller. It returns the initialized controllers
+func initializeControllers(cfg *config.Config, exitHandler *ExitHandler) appControllers {
+
+	controllers, componentType, err := setupAppControllers(*cfg)
+
+	if err != nil {
+		logger.Fatal(componentType, "failed to create controllers:", err.Error())
+		exitHandler.HandleExit()
 	}
 
-	// Wait for final shutdown sequences to complete and wave goodbye!
-	sm.Wait()
-	waveGoodbye()
+	return controllers
 }
 
 // setupAppControllers creates and initializes all application controllers
@@ -119,31 +159,38 @@ func setupAppControllers(cfg config.Config) (appControllers, logger.ComponentTyp
 }
 
 // scanForBLECharacteristic handles the initial BLE device discovery and characteristic scanning
-// using a context for cancellation and returns the discovered characteristic or an error
-func scanForBLECharacteristic(ctx context.Context, controllers appControllers) (*bluetooth.DeviceCharacteristic, error) {
+func scanForBLECharacteristic(ctx context.Context, controllers appControllers) error {
 
-	// Create a channel to receive the result of the BLE characteristic scan
-	resultsChan := make(chan struct {
-		char *bluetooth.DeviceCharacteristic
-		err  error
-	}, 1)
+	// Create a channel to receive errors from the scan goroutine
+	errChan := make(chan error, 1)
 
+	// BLE peripheral scan and connect
 	go func() {
-		defer close(resultsChan)
-		char, err := controllers.bleController.GetBLECharacteristic(ctx, controllers.speedController)
-		resultsChan <- struct {
-			char *bluetooth.DeviceCharacteristic
-			err  error
-		}{char, err}
+		defer close(errChan)
+		scanResult, err := controllers.bleController.ScanForBLEPeripheral(ctx)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		connectResult, err := controllers.bleController.ConnectToBLEPeripheral(scanResult)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		// Get the BLE characteristic from the connected device
+		err = controllers.bleController.GetBLECharacteristic(connectResult)
+		errChan <- err
 	}()
 
 	select {
 	case <-ctx.Done():
 		fmt.Print("\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE discovery...")
-		return nil, ctx.Err()
-	case result := <-resultsChan:
-		return result.char, result.err
+		return ctx.Err()
+	case result := <-errChan:
+		return result
 	}
 }
 

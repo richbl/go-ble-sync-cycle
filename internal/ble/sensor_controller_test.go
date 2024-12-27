@@ -215,7 +215,7 @@ func TestGetBLECharacteristicIntegration(t *testing.T) {
 	ctx, _ := createTestContextWithTimeout(t)
 
 	// Expect error since test UUID won't be found
-	_, err := controller.GetBLECharacteristic(ctx, nil)
+	_, err := controller.ScanForBLEPeripheral(ctx)
 
 	assert.Error(t, err)
 }
