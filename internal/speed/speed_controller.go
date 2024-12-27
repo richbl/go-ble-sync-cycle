@@ -1,4 +1,3 @@
-// Package speed provides speed measurement and smoothing functionality
 package speed
 
 import (
@@ -8,14 +7,19 @@ import (
 	"time"
 )
 
-// SpeedController manages speed measurements with smoothing over a specified time window
-type SpeedController struct {
-	mu            sync.RWMutex // protects all fields
-	speeds        *ring.Ring
-	window        int
+// SpeedState holds the current speed measurement, smoothed speed, and timestamp
+type SpeedState struct {
 	currentSpeed  float64
 	smoothedSpeed float64
-	lastUpdate    time.Time
+	timestamp     time.Time
+}
+
+// SpeedController manages speed measurements with smoothing over a specified time window
+type SpeedController struct {
+	mu         sync.RWMutex // protects all fields
+	speeds     *ring.Ring
+	window     int
+	speedState SpeedState
 }
 
 // NewSpeedController creates a new speed controller with a specified window size, which
@@ -42,7 +46,7 @@ func (sc *SpeedController) UpdateSpeed(speed float64) {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
-	sc.currentSpeed = speed
+	sc.speedState.currentSpeed = speed
 	sc.speeds.Value = speed
 	sc.speeds = sc.speeds.Next()
 
@@ -55,9 +59,9 @@ func (sc *SpeedController) UpdateSpeed(speed float64) {
 
 	})
 
-	// Ahhh... smoothness
-	sc.smoothedSpeed = sum / float64(sc.window)
-	sc.lastUpdate = time.Now()
+	// Ahh... smoothness
+	sc.speedState.smoothedSpeed = sum / float64(sc.window)
+	sc.speedState.timestamp = time.Now()
 }
 
 // GetSmoothedSpeed returns the current smoothed speed measurement
@@ -67,7 +71,7 @@ func (sc *SpeedController) GetSmoothedSpeed() float64 {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
-	return sc.smoothedSpeed
+	return sc.speedState.smoothedSpeed
 }
 
 // GetSpeedBuffer returns the speed buffer as an array of formatted strings

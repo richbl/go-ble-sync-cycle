@@ -3,7 +3,6 @@ package ble
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -92,7 +91,7 @@ func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 			logger.Error(logger.BLE, "failed to stop scan:", err.Error())
 		}
 
-		return bluetooth.ScanResult{}, errors.New("scanning time limit reached")
+		return bluetooth.ScanResult{}, fmt.Errorf("scanning time limit reached")
 	}
 }
 
@@ -243,11 +242,11 @@ func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
 func (m *BLEController) parseSpeedData(data []byte) (SpeedMeasurement, error) {
 
 	if len(data) < 1 {
-		return SpeedMeasurement{}, errors.New("empty data")
+		return SpeedMeasurement{}, fmt.Errorf("empty data")
 	}
 
 	if data[0]&wheelRevFlag == 0 || len(data) < minDataLength {
-		return SpeedMeasurement{}, errors.New("invalid data format or length")
+		return SpeedMeasurement{}, fmt.Errorf("invalid data format or length")
 	}
 
 	return SpeedMeasurement{
