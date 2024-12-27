@@ -18,11 +18,12 @@ import (
 
 // Common errors
 var (
-	ErrOSDUpdate     = errors.New("failed to update OSD")
-	ErrPlaybackSpeed = errors.New("failed to set playback speed")
-	ErrVideoComplete = errors.New("playback completed: normal exit")
-	ErrSpeedUpdate   = errors.New("failed to update video speed")
+	errOSDUpdate     = fmt.Errorf("failed to update OSD")
+	errPlaybackSpeed = fmt.Errorf("failed to set playback speed")
+	errVideoComplete = fmt.Errorf("playback completed: normal exit")
 )
+
+const errFormat = "%w: %v"
 
 // PlaybackController manages video playback using MPV media player
 type PlaybackController struct {
@@ -116,7 +117,7 @@ func (p *PlaybackController) run(ctx context.Context, speedController *speed.Spe
 
 			if err := p.tick(speedController, state); err != nil {
 
-				if errors.Is(err, ErrVideoComplete) {
+				if errors.Is(err, errVideoComplete) {
 					return err
 				}
 
@@ -132,7 +133,7 @@ func (p *PlaybackController) tick(speedController *speed.SpeedController, state 
 
 	// First, check if playback is complete
 	if complete, err := p.isPlaybackComplete(); err != nil || complete {
-		return ErrVideoComplete
+		return errVideoComplete
 	}
 
 	// Next, update the speed
@@ -172,7 +173,7 @@ func (p *PlaybackController) handleZeroSpeed() error {
 	logger.Debug(logger.VIDEO, "no speed detected, pausing video")
 
 	if err := p.updateDisplay(0.0, 0.0); err != nil {
-		return fmt.Errorf("%w: %v", ErrOSDUpdate, err)
+		return fmt.Errorf(errFormat, errOSDUpdate, err)
 	}
 
 	return p.player.SetProperty("pause", mpv.FormatFlag, true)
@@ -187,11 +188,11 @@ func (p *PlaybackController) updateSpeed(state *speedState) error {
 		strconv.FormatFloat(playbackSpeed, 'f', 2, 64))
 
 	if err := p.player.SetProperty("speed", mpv.FormatDouble, playbackSpeed); err != nil {
-		return fmt.Errorf("%w: %v", ErrPlaybackSpeed, err)
+		return fmt.Errorf(errFormat, errPlaybackSpeed, err)
 	}
 
 	if err := p.updateDisplay(state.current, playbackSpeed); err != nil {
-		return fmt.Errorf("%w: %v", ErrOSDUpdate, err)
+		return fmt.Errorf(errFormat, errOSDUpdate, err)
 	}
 
 	state.last = state.current

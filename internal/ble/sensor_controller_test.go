@@ -206,16 +206,3 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 
 	assert.Error(t, err)
 }
-
-// TestGetBLECharacteristicIntegration tests the GetBLECharacteristic() function
-func TestGetBLECharacteristicIntegration(t *testing.T) {
-
-	// Create test BLE controller
-	controller := setupTestBLEController(t)
-	ctx, _ := createTestContextWithTimeout(t)
-
-	// Expect error since test UUID won't be found
-	_, err := controller.ScanForBLEPeripheral(ctx)
-
-	assert.Error(t, err)
-}

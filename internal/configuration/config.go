@@ -3,7 +3,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -108,10 +107,10 @@ func (c *Config) validate() error {
 		validate func() error
 		name     string
 	}{
-		{c.App.validate, "App"},
-		{c.Speed.validate, "Speed"},
+		{c.App.validate, "app"},
+		{c.Speed.validate, "speed"},
 		{c.BLE.validate, "BLE"},
-		{c.Video.validate, "Video"},
+		{c.Video.validate, "video"},
 	}
 
 	for _, v := range validators {
@@ -137,7 +136,7 @@ func (ac *AppConfig) validate() error {
 	}
 
 	if !validLogLevels[ac.LogLevel] {
-		return errors.New("invalid log level: " + ac.LogLevel)
+		return fmt.Errorf("invalid log level: %v", ac.LogLevel)
 	}
 
 	return nil
@@ -147,7 +146,7 @@ func (ac *AppConfig) validate() error {
 func (bc *BLEConfig) validate() error {
 
 	if bc.SensorUUID == "" {
-		return errors.New("sensor UUID must be specified in configuration")
+		return fmt.Errorf("sensor UUID must be specified in configuration")
 	}
 
 	return nil
@@ -162,7 +161,7 @@ func (sc *SpeedConfig) validate() error {
 	}
 
 	if !validSpeedUnits[sc.SpeedUnits] {
-		return errors.New("invalid speed units: " + sc.SpeedUnits)
+		return fmt.Errorf("invalid speed units: %v", sc.SpeedUnits)
 	}
 
 	return nil
@@ -172,11 +171,11 @@ func (sc *SpeedConfig) validate() error {
 func (vc *VideoConfig) validate() error {
 
 	if _, err := os.Stat(vc.FilePath); err != nil {
-		return fmt.Errorf("video file error: %w", err)
+		return fmt.Errorf("video file error: %v", err)
 	}
 
 	if vc.UpdateIntervalSec <= 0.0 {
-		return errors.New("update_interval_sec must be greater than 0.0")
+		return fmt.Errorf("update_interval_sec must be greater than 0.0")
 	}
 
 	// Set computed field based on display settings

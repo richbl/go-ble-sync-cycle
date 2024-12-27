@@ -97,6 +97,7 @@ func (sw *GoroutineManager) Wait() {
 	case <-timeoutCtx.Done():
 		logger.Warn(logger.APP, "shutdown timed out, some goroutines may not have cleaned up properly")
 	}
+
 }
 
 // Wait blocks until the shutdown sequence is complete
@@ -109,6 +110,8 @@ func (sm *ShutdownManager) WaitGroup() *sync.WaitGroup {
 	return sm.routineMgr.wg
 }
 
+// Future functionality:
+//
 // AddCleanupFn adds a cleanup function to be executed during shutdown
 // Note that cleanup functions are executed in reverse order of registration
 // func (sm *ShutdownManager) AddCleanupFn(fn func()) {
@@ -123,15 +126,9 @@ func (sm *ShutdownManager) Start() {
 
 	go func() {
 		<-sigChan
-
-		sm.cleanupOnce.Do(func() {
-			sm.shutdownCtx.cancel()
-			sm.routineMgr.Wait()
-			sm.cleanupMgr.Execute()
-			close(sm.terminated)
-		})
-
+		sm.initiateShutdown()
 	}()
+
 }
 
 // initiateShutdown coordinates the shutdown sequence
@@ -143,6 +140,7 @@ func (sm *ShutdownManager) initiateShutdown() {
 		sm.cleanupMgr.Execute()
 		close(sm.terminated)
 	})
+
 }
 
 // HandleExit waits for the shutdown to complete and then exits the application

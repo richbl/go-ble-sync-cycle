@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -143,12 +142,12 @@ func setupAppControllers(cfg config.Config) (appControllers, logger.ComponentTyp
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		return appControllers{}, logger.VIDEO, errors.New("failed to create video player: " + err.Error())
+		return appControllers{}, logger.VIDEO, fmt.Errorf("failed to create video playback controller: %v", err)
 	}
 
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		return appControllers{}, logger.BLE, errors.New("failed to create BLE controller: " + err.Error())
+		return appControllers{}, logger.BLE, fmt.Errorf("failed to create BLE controller: %v", err)
 	}
 
 	return appControllers{

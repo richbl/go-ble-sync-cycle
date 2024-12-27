@@ -54,7 +54,7 @@ func TestNewSpeedController(t *testing.T) {
 	}
 
 	// Verify smoothedSpeed
-	if got := controller.smoothedSpeed; got != 0 {
+	if got := controller.speedState.smoothedSpeed; got != 0 {
 		t.Errorf("smoothedSpeed = %f, want 0", got)
 	}
 
