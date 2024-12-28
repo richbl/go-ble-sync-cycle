@@ -299,23 +299,23 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 ## FAQ
 
-Q: What is **BLE Sync Cycle**?
-A: In its simplest form, this application makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower. And, when you stop your bike, video playback pauses.
+- What is **BLE Sync Cycle**? 
+> In its simplest form, this application makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower. And, when you stop your bike, video playback pauses.
 
-Q: Do all Bluetooth devices work with **BLE Sync Cycle**?
-A: Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
+- Do all Bluetooth devices work with **BLE Sync Cycle**?
+> Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
 
-Q: Can I disable the log messages in **BLE Sync Cycle**?
-A: While you cannot disable all messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
+- Can I disable the log messages in **BLE Sync Cycle**?
+> While you cannot disable all messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
 
-Q: My BLE sensor takes a long time to connect, and often times out. What can I do?
-A: The easiest solution is to just rerun the application, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
+- My BLE sensor takes a long time to connect, and often times out. What can I do?
+> The easiest solution is to just rerun the application, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
-Q: How do I use **BLE Sync Cycle**?
-A: See the [Basic Usage](#basic-usage) section above
+- How do I use **BLE Sync Cycle**?
+> See the [Basic Usage](#basic-usage) section above
 
-Q: How do I configure **BLE Sync Cycle**?
-A: See the [Editing the TOML File](#editing-the-toml-file) section above
+- How do I configure **BLE Sync Cycle**?
+> See the [Editing the TOML File](#editing-the-toml-file) section above
 
 ## Roadmap
 
