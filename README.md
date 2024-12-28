@@ -89,7 +89,7 @@ While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on
 3. Build the application:
 
     ```console
-    go build -o ble-sync-cycle cmd/main.go
+    go build -o ble-sync-cycle cmd/*
     ```
 
 The resulting `build` command will create the`ble-sync-cycle` executable in the current directory.
@@ -100,31 +100,31 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.6.2
+ # 0.7.0
 
-[app]
-  logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
-                          # where "debug" is the most verbose and "error" is least verbose
+  [app]
+    logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
+                            # where "debug" is the most verbose and "error" is least verbose
 
-[ble]
-  sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
-  scan_timeout_secs = 30            # Seconds to wait for peripheral response before generating error
+  [ble]
+    sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
+    scan_timeout_secs = 30            # Seconds to wait for peripheral response before generating error
 
-[SPD]
-  smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
-  speed_threshold = 1.0         # Minimum speed change to trigger video speed update
-  wheel_circumference_mm = 1932 # Wheel circumference in millimeters
-  speed_units = "mph"           # "km/h" or "mph"
+  [speed]
+    smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
+    speed_threshold = 0.25        # Minimum speed change to trigger video speed update
+    wheel_circumference_mm = 1932 # Wheel circumference in millimeters
+    speed_units = "mph"           # "km/h" or "mph"
 
-[VID]
-  file_path = "cycling_test.mp4" # Path to the video file to play
-  window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
-  update_interval_sec = 0.5     # Seconds (>0.0) to wait between video player updates
-  speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
-                                 # (0.0 = stopped, 1.0 = normal speed)
-  [video.OSD]
-    display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
-    display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
+  [video]
+    file_path = "cycling_test.mp4" # Path to the video file to play
+    window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
+    update_interval_sec = 0.25     # Seconds (>0.0) to wait between video player updates
+    speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
+                                  # (0.0 = stopped, 1.0 = normal speed)
+    [video.OSD]
+      display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
+      display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
 ```
 
 An explanation of the various sections of the `config.toml` file is provided below:
@@ -144,9 +144,9 @@ The `[ble]` section configures your computer (referred to as the BLE central con
 
 > To find the UUID of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device UUIDs are typically in the form of "11:22:33:44:55:66."
 
-#### The `[SPD]` Section
+#### The `[speed]` Section
 
-The `[SPD]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
+The `[speed]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
 
 - `smoothing_window`: The number of look-backs (or buffered speed measurements) to use for generating a moving average for the speed value
 - `speed_threshold`: The minimum speed change to trigger video speed updates
@@ -155,9 +155,9 @@ The `[SPD]` section defines the configuration for the speed controller component
 
 > The smoothing window is a simple ring buffer that stores the last (n) speed measurements, meaning that it will create a moving average for the speed value. This helps to smooth out the speed data and provide a more natural video playback experience.
 
-#### The `[VID]` Section
+#### The `[video]` Section
 
-The `[VID]` section defines the configuration for the MPV video player component. It includes the following parameters:
+The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
 - `file_path`: The path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful (e.g., 0.5 = half screen)
@@ -189,7 +189,7 @@ To run the application, execute the following command:
 Or, if the application hasn't yet been built using the `go build` command, you can execute the following command:
 
 ```console
-go run cmd/main.go
+go run cmd/*
 ```
 
 > Be sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device
@@ -197,7 +197,7 @@ go run cmd/main.go
 At this point, you should see the following output:
 
 ```console
- 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.6.2
+ 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.7.0
   2024/12/16 15:08:56 [INF] [BLE] created new BLE central controller
   2024/12/16 15:08:56 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:08:58 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -206,13 +206,13 @@ At this point, you should see the following output:
   2024/12/16 15:09:00 [DBG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
   2024/12/16 15:09:10 [ERR] [BLE] CSC services discovery failed: timeout on DiscoverServices
   2024/12/16 15:09:10 [ERR] [BLE] BLE peripheral scan failed: timeout on DiscoverServices
-  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!
+  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.7.0 shutdown complete. Goodbye!
 ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
 ```console
- 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.6.2
+ 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.7.0
   2024/12/16 15:09:47 [INF] [BLE] created new BLE central controller
   2024/12/16 15:09:47 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:09:47 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -294,7 +294,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
   2024/12/16 15:13:33 [INF] [SPD] BLE sensor speed: 0.00 mph
   2024/12/16 15:13:33 [INF] [VID] user-generated interrupt, stopping video player...
   2024/12/16 15:13:33 [ERR] [APP] context canceled
-  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.6.2 shutdown complete. Goodbye!
+  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.7.0 shutdown complete. Goodbye!
 ```
 
 ## FAQ
@@ -306,7 +306,10 @@ Q: Do all Bluetooth devices work with **BLE Sync Cycle**?
 A: Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
 
 Q: Can I disable the log messages in **BLE Sync Cycle**?
-A: While you cannot disable all log messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
+A: While you cannot disable all messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
+
+Q: My BLE sensor takes a long time to connect, and often times out. What can I do?
+A: The easiest solution is to just rerun the application, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 Q: How do I use **BLE Sync Cycle**?
 A: See the [Basic Usage](#basic-usage) section above
@@ -316,15 +319,7 @@ A: See the [Editing the TOML File](#editing-the-toml-file) section above
 
 ## Roadmap
 
-Future enhancements include (in no particular order):
-
-- Add support for other video players (e.g., VLC)
-- Add optional check for battery status of BLE peripheral device
-- Create a desktop application (GUI) for **BLE Sync Cycle**
-- Add support for non-BLE peripheral devices
-- Automatically quit the application after a period of inactivity
-- Restart the application at some specific point in the video file
-- As an exercise, refactor using [the Rust language](https://www.rust-lang.org/)
+Future enhancements and feature requests are now available via the [Github Project page for this repository](https://github.com/users/richbl/projects/4).
 
 ## Acknowledgments
 

@@ -1,3 +1,3 @@
 *.webm
 *.mp4
-internal/configuration/config.toml
+# internal/configuration/config.toml

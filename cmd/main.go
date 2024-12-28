@@ -18,7 +18,7 @@ import (
 const (
 	appPrefix       = "----- -----"
 	appName         = "BLE Sync Cycle"
-	appVersion      = "0.6.2"
+	appVersion      = "0.7.0"
 	shutdownTimeout = 30 * time.Second
 )
 
