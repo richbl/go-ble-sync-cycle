@@ -178,8 +178,14 @@ func scanForBLECharacteristic(ctx context.Context, controllers appControllers) e
 			return
 		}
 
+		serviceResult, err := controllers.bleController.GetBLEServices(connectResult)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
 		// Get the BLE characteristic from the connected device
-		err = controllers.bleController.GetBLECharacteristic(connectResult)
+		err = controllers.bleController.GetBLECharacteristics(serviceResult)
 		errChan <- err
 	}()
 
