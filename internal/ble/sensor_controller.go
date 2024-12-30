@@ -110,9 +110,8 @@ func (m *BLEController) ConnectToBLEPeripheral(device bluetooth.ScanResult) (blu
 	return connectedDevice, nil
 }
 
-// GetBLECharacteristic scans a connected BLE peripheral for CSC services/characteristics
-// returning the speed characteristic
-func (m *BLEController) GetBLECharacteristic(device bluetooth.Device) error {
+// GetBLEServices discovers services on a connected BLE peripheral
+func (m *BLEController) GetBLEServices(device bluetooth.Device) ([]bluetooth.DeviceService, error) {
 
 	logger.Debug(logger.BLE, "discovering CSC services", bluetooth.New16BitUUID(0x1816).String())
 
@@ -120,16 +119,23 @@ func (m *BLEController) GetBLECharacteristic(device bluetooth.Device) error {
 	svc, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x1816)})
 	if err != nil {
 		logger.Error(logger.BLE, "CSC services discovery failed:", err.Error())
-		return err
+		return nil, err
 	}
 
 	logger.Debug(logger.BLE, "found CSC service", svc[0].UUID().String())
+	return svc, nil
+}
+
+// GetBLECharacteristics scans a connected BLE peripheral for CSC services/characteristics
+// returning the speed characteristic
+func (m *BLEController) GetBLECharacteristics(device []bluetooth.DeviceService) error {
+
 	logger.Debug(logger.BLE, "discovering CSC characteristics", bluetooth.New16BitUUID(0x2A5B).String())
 
 	// Discover CSC characteristics
-	char, err := svc[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
+	char, err := device[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
 	if err != nil {
-		logger.Warn(logger.BLE, "CSC characteristics discovery failed:", err.Error())
+		logger.Error(logger.BLE, "CSC characteristics discovery failed:", err.Error())
 		return err
 	}
 
