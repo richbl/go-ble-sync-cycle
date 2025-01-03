@@ -56,7 +56,7 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 // Start configures and starts the MPV media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.SpeedController) error {
 
-	logger.Info(logger.VIDEO, "starting MPV video player...")
+	logger.Debug(logger.VIDEO, "starting MPV video player...")
 	defer p.player.TerminateDestroy()
 
 	if err := p.setup(); err != nil {

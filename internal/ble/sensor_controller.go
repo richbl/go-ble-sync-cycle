@@ -63,84 +63,147 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 	}, nil
 }
 
-// ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
-func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
+// performBLEAction performs the provided BLE setup action
+func (m *BLEController) performBLEAction(ctx context.Context, action func(found chan<- interface{}, errChan chan<- error), logMessage string, stopAction func() error) (interface{}, error) {
 
-	// Create a context with a timeout
+	// Create a context with a timeout for the scan
 	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.bleDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 
-	found := make(chan bluetooth.ScanResult, 1)
+	found := make(chan interface{}, 1)
 	errChan := make(chan error, 1)
 
+	// Run the action in a goroutine and handle the results
 	go func() {
-		logger.Info(logger.BLE, "now scanning the ether for BLE peripheral UUID of", m.bleDetails.bleConfig.SensorUUID+"...")
-		if err := m.startScanning(found); err != nil {
-			errChan <- err
-		}
+		logger.Debug(logger.BLE, logMessage)
+		action(found, errChan)
 	}()
 
 	select {
 	case result := <-found:
-		logger.Debug(logger.BLE, "found BLE peripheral", result.Address.String())
 		return result, nil
 	case err := <-errChan:
-		return bluetooth.ScanResult{}, err
+		return nil, err
 	case <-scanCtx.Done():
-		if err := m.bleDetails.bleAdapter.StopScan(); err != nil {
-			logger.Error(logger.BLE, "failed to stop scan:", err.Error())
+
+		if stopAction != nil {
+
+			if err := stopAction(); err != nil {
+				fmt.Print("\r") // Clear the ^C character from the terminal line
+				logger.Error(logger.BLE, "failed to stop action:", err.Error())
+			}
+
 		}
 
-		return bluetooth.ScanResult{}, fmt.Errorf("scanning time limit reached")
+		if scanCtx.Err() == context.DeadlineExceeded {
+			return nil, fmt.Errorf("scanning time limit reached")
+		}
+
+		fmt.Print("\r") // Clear the ^C character from the terminal line
+		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE device setup...")
+		return nil, scanCtx.Err()
 	}
+
 }
 
-// ConnectToBLEPeripheral connects to a BLE peripheral
-func (m *BLEController) ConnectToBLEPeripheral(device bluetooth.ScanResult) (bluetooth.Device, error) {
+// ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
+func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
-	logger.Debug(logger.BLE, "connecting to BLE peripheral device", device.Address.String())
+	// Pass anonymous function into performBLEAction to scan for BLE peripheral
+	result, err := m.performBLEAction(ctx, func(found chan<- interface{}, errChan chan<- error) {
 
-	// Connect to the BLE peripheral
-	connectedDevice, err := m.bleDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
+		foundChan := make(chan bluetooth.ScanResult, 1)
+
+		// Start scanning for BLE peripherals
+		if err := m.startScanning(foundChan); err != nil {
+			errChan <- err
+			return
+		}
+
+		found <- <-foundChan
+	}, fmt.Sprintf("scanning for BLE peripheral UUID %s", m.bleDetails.bleConfig.SensorUUID), m.bleDetails.bleAdapter.StopScan)
+	if err != nil {
+		return bluetooth.ScanResult{}, err
+	}
+
+	typedResult := result.(bluetooth.ScanResult)
+	logger.Info(logger.BLE, "found BLE peripheral", typedResult.Address.String())
+	return typedResult, nil
+}
+
+// ConnectToBLEPeripheral connects to the specified BLE peripheral
+func (m *BLEController) ConnectToBLEPeripheral(ctx context.Context, device bluetooth.ScanResult) (bluetooth.Device, error) {
+
+	// Pass anonymous function into performBLEAction to connect to BLE peripheral
+	result, err := m.performBLEAction(ctx, func(found chan<- interface{}, errChan chan<- error) {
+
+		// Connect to the BLE peripheral
+		dev, err := m.bleDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
+
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		found <- dev
+	}, fmt.Sprintf("connecting to BLE peripheral %s", device.Address.String()), nil)
 	if err != nil {
 		return bluetooth.Device{}, err
 	}
 
+	typedResult := result.(bluetooth.Device)
 	logger.Info(logger.BLE, "BLE peripheral device connected")
-	return connectedDevice, nil
+	return typedResult, nil
 }
 
-// GetBLEServices discovers services on a connected BLE peripheral
-func (m *BLEController) GetBLEServices(device bluetooth.Device) ([]bluetooth.DeviceService, error) {
+// GetBLEServiceCharacteristic retrieves CSC services from the BLE peripheral
+func (m *BLEController) GetBLEServices(ctx context.Context, device bluetooth.Device) ([]bluetooth.DeviceService, error) {
 
-	logger.Debug(logger.BLE, "discovering CSC services", bluetooth.New16BitUUID(0x1816).String())
+	// Pass anonymous function into performBLEAction to discover CSC services
+	result, err := m.performBLEAction(ctx, func(found chan<- interface{}, errChan chan<- error) {
 
-	// Discover CSC services
-	svc, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x1816)})
+		// Discover CSC services
+		services, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x1816)})
+
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		found <- services
+	}, "discovering CSC service "+bluetooth.New16BitUUID(0x1816).String(), nil)
 	if err != nil {
-		logger.Error(logger.BLE, "CSC services discovery failed:", err.Error())
 		return nil, err
 	}
 
-	logger.Debug(logger.BLE, "found CSC service", svc[0].UUID().String())
-	return svc, nil
+	typedResult := result.([]bluetooth.DeviceService)
+	logger.Info(logger.BLE, "found CSC service", typedResult[0].UUID().String())
+	return typedResult, nil
 }
 
-// GetBLECharacteristics scans a connected BLE peripheral for CSC services/characteristics
-// returning the speed characteristic
-func (m *BLEController) GetBLECharacteristics(device []bluetooth.DeviceService) error {
+// GetBLECharacteristics retrieves CSC characteristics from the BLE peripheral
+func (m *BLEController) GetBLECharacteristics(ctx context.Context, services []bluetooth.DeviceService) error {
 
-	logger.Debug(logger.BLE, "discovering CSC characteristics", bluetooth.New16BitUUID(0x2A5B).String())
+	// Pass anonymous function into performBLEAction to discover CSC characteristics
+	_, err := m.performBLEAction(ctx, func(found chan<- interface{}, errChan chan<- error) {
 
-	// Discover CSC characteristics
-	char, err := device[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
+		// Discover CSC characteristics
+		characteristics, err := services[0].DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A5B)})
+
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		m.bleDetails.bleCharacteristic = &characteristics[0]
+		found <- characteristics
+	}, "discovering CSC characteristic "+bluetooth.New16BitUUID(0x2A5B).String(), nil)
 	if err != nil {
 		logger.Error(logger.BLE, "CSC characteristics discovery failed:", err.Error())
 		return err
 	}
 
-	logger.Debug(logger.BLE, "found CSC characteristic", char[0].UUID().String())
-	m.bleDetails.bleCharacteristic = &char[0]
+	logger.Info(logger.BLE, "found CSC characteristic", m.bleDetails.bleCharacteristic.UUID().String())
 	return nil
 }
 
@@ -148,7 +211,7 @@ func (m *BLEController) GetBLECharacteristics(device []bluetooth.DeviceService) 
 // setup/teardown, and updates the speed controller with new readings
 func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *speed.SpeedController) error {
 
-	logger.Debug(logger.BLE, "starting real-time monitoring of BLE sensor notifications...")
+	logger.Info(logger.BLE, "starting real-time monitoring of BLE sensor notifications...")
 	errChan := make(chan error, 1)
 
 	if err := m.bleDetails.bleCharacteristic.EnableNotifications(func(buf []byte) {
@@ -168,7 +231,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 	go func() {
 		<-ctx.Done()
 		fmt.Print("\r") // Clear the ^C character from the terminal line
-		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE component reporting...")
+		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE peripheral reporting...")
 		errChan <- nil
 	}()
 
@@ -197,6 +260,7 @@ func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
 
 		if result.Address.String() == m.bleDetails.bleConfig.SensorUUID {
 
+			// Found the BLE peripheral, stop scanning
 			if err := m.bleDetails.bleAdapter.StopScan(); err != nil {
 				logger.Error(logger.BLE, "failed to stop scan:", err.Error())
 			}
