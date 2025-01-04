@@ -100,7 +100,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
- # 0.7.0
+ # 0.7.1
 
   [app]
     logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -197,7 +197,7 @@ go run cmd/*
 At this point, you should see the following output:
 
 ```console
- 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.7.0
+ 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.7.1
   2024/12/16 15:08:56 [INF] [BLE] created new BLE central controller
   2024/12/16 15:08:56 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:08:58 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -206,13 +206,13 @@ At this point, you should see the following output:
   2024/12/16 15:09:00 [DBG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
   2024/12/16 15:09:10 [ERR] [BLE] CSC services discovery failed: timeout on DiscoverServices
   2024/12/16 15:09:10 [ERR] [BLE] BLE peripheral scan failed: timeout on DiscoverServices
-  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.7.0 shutdown complete. Goodbye!
+  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.7.1 shutdown complete. Goodbye!
 ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
 ```console
- 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.7.0
+ 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.7.1
   2024/12/16 15:09:47 [INF] [BLE] created new BLE central controller
   2024/12/16 15:09:47 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:09:47 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -294,7 +294,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
   2024/12/16 15:13:33 [INF] [SPD] BLE sensor speed: 0.00 mph
   2024/12/16 15:13:33 [INF] [VID] user-generated interrupt, stopping video player...
   2024/12/16 15:13:33 [ERR] [APP] context canceled
-  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.7.0 shutdown complete. Goodbye!
+  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.7.1 shutdown complete. Goodbye!
 ```
 
 ## FAQ

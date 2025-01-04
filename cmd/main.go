@@ -10,17 +10,18 @@ import (
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	shutdown_manager "github.com/richbl/go-ble-sync-cycle/internal/services"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 	video "github.com/richbl/go-ble-sync-cycle/internal/video-player"
+
 	"tinygo.org/x/bluetooth"
 )
 
 // Application constants
 const (
-	appPrefix       = "----- -----"
-	appName         = "BLE Sync Cycle"
-	appVersion      = "0.7.0"
-	shutdownTimeout = 30 * time.Second
+	appPrefix  = "----- -----"
+	appName    = "BLE Sync Cycle"
+	appVersion = "0.7.1"
 )
 
 // appControllers holds the application component controllers for managing speed, video playback,
@@ -33,27 +34,27 @@ type appControllers struct {
 
 func main() {
 
-	// Hello world!
-	log.Println(appPrefix, "Starting", appName, appVersion)
+	// Hello computer...
+	waveHello()
 
 	// Load configuration
 	cfg := loadConfig("config.toml")
 
-	// Initialize utility services
-	sm, exitHandler := initializeUtilityServices(cfg)
+	// Initialize services
+	mgr := initializeUtilityServices(cfg)
 
-	// Initialize application controllers
+	// Initialize controllers
 	controllers := initializeControllers(cfg)
 
 	// BLE peripheral discovery and CSC scanning
-	bleDevice := controllers.bleScanAndConnect(sm.shutdownCtx.ctx, exitHandler)
-	controllers.bleGetServicesAndCharacteristics(sm.shutdownCtx.ctx, bleDevice, exitHandler)
+	bleDevice := controllers.bleScanAndConnect(mgr.Context(), mgr)
+	controllers.bleGetServicesAndCharacteristics(mgr.Context(), bleDevice, mgr)
 
-	// Start and monitor services for BLE and video components
-	monitorServiceRunners(controllers.startServiceRunners(sm))
+	// Start services
+	controllers.startServiceRunners(mgr)
 
-	// Wait for final shutdown sequences to complete and wave goodbye!
-	sm.Wait()
+	// Wait patiently for shutdown and then wave goodbye
+	mgr.Wait()
 	waveGoodbye()
 }
 
@@ -69,35 +70,39 @@ func loadConfig(file string) *config.Config {
 	return cfg
 }
 
+// waveHello outputs a welcome message
+func waveHello() {
+	log.Println(appPrefix, "Starting", appName, appVersion)
+}
+
 // waveGoodbye outputs a goodbye message and exits the program
 func waveGoodbye() {
 	log.Println(appPrefix, appName, appVersion, "shutdown complete. Goodbye!")
 	os.Exit(0)
 }
 
-// initializeUtilityServices initializes the core components of the application, including the shutdown manager,
-// exit handler, and logger
-func initializeUtilityServices(cfg *config.Config) (*ShutdownManager, *ExitHandler) {
+// initializeUtilityServices initializes the core components of the application, including the
+// service manager, exit handler, and logger
+func initializeUtilityServices(cfg *config.Config) *shutdown_manager.ShutdownManager {
 
-	// Initialize the shutdown manager and exit handler
-	sm := NewShutdownManager(shutdownTimeout)
-	exitHandler := NewExitHandler(sm)
-	sm.Start()
+	// Initialize the service manager with a timeout
+	mgr := shutdown_manager.NewShutdownManager(30 * time.Second)
+	mgr.Start()
 
 	// Initialize the logger
 	logger.Initialize(cfg.App.LogLevel)
 
-	// Set the exit handler for the shutdown manager
+	// Set the exit handler for fatal log events
 	logger.SetExitHandler(func() {
-		sm.initiateShutdown()
-		exitHandler.HandleExit()
+		mgr.Shutdown()
+		waveGoodbye()
 	})
 
-	return sm, exitHandler
+	return mgr
 }
 
 // initializeControllers initializes the application controllers, including the speed controller,
-// video player, and BLE controller. It returns the initialized controllers
+// video player, and BLE controller
 func initializeControllers(cfg *config.Config) *appControllers {
 
 	controllers, componentType, err := setupAppControllers(*cfg)
@@ -130,76 +135,61 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 }
 
 // logBLESetupError displays BLE setup errors and exits the application
-func logBLESetupError(err error, msg string, exitHandler *ExitHandler) {
+func logBLESetupError(err error, msg string, mgr *shutdown_manager.ShutdownManager) {
 
 	if err != context.Canceled {
 		logger.Fatal(logger.BLE, msg, err.Error())
 	}
 
-	exitHandler.HandleExit()
+	// Time to go... so say goodbye
+	mgr.HandleExit()
+	waveGoodbye()
 }
 
 // bleScanAndConnect scans for a BLE peripheral and connects to it
-func (controllers *appControllers) bleScanAndConnect(ctx context.Context, exitHandler *ExitHandler) bluetooth.Device {
+func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *shutdown_manager.ShutdownManager) bluetooth.Device {
 
 	var scanResult bluetooth.ScanResult
 	var connectResult bluetooth.Device
 	var err error
 
 	if scanResult, err = controllers.bleController.ScanForBLEPeripheral(ctx); err != nil {
-		logBLESetupError(err, "failed to scan for BLE peripheral", exitHandler)
+		logBLESetupError(err, "failed to scan for BLE peripheral", mgr)
 	}
 
 	if connectResult, err = controllers.bleController.ConnectToBLEPeripheral(ctx, scanResult); err != nil {
-		logBLESetupError(err, "failed to connect to BLE peripheral", exitHandler)
+		logBLESetupError(err, "failed to connect to BLE peripheral", mgr)
 	}
 
 	return connectResult
 }
 
 // bleGetServicesAndCharacteristics retrieves BLE services and characteristics
-func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, exitHandler *ExitHandler) {
+func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *shutdown_manager.ShutdownManager) {
 
 	var serviceResult []bluetooth.DeviceService
 	var err error
 
 	if serviceResult, err = controllers.bleController.GetBLEServices(ctx, connectResult); err != nil {
-		logBLESetupError(err, "failed to acquire BLE services", exitHandler)
+		logBLESetupError(err, "failed to acquire BLE services", mgr)
 	}
 
 	if err = controllers.bleController.GetBLECharacteristics(ctx, serviceResult); err != nil {
-		logBLESetupError(err, "failed to acquire BLE characteristics", exitHandler)
+		logBLESetupError(err, "failed to acquire BLE characteristics", mgr)
 	}
 
 }
 
 // startServiceRunners starts the BLE and video service runners and returns a slice of service runners
-func (controllers *appControllers) startServiceRunners(sm *ShutdownManager) []*ServiceRunner {
+func (controllers *appControllers) startServiceRunners(mgr *shutdown_manager.ShutdownManager) {
 
-	// Create and run the BLE service runner
-	bleRunner := NewServiceRunner(sm, "BLE")
-	bleRunner.Run(func(ctx context.Context) error {
+	// Run the BLE service
+	mgr.Run("BLE", func(ctx context.Context) error {
 		return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController)
 	})
 
-	// Create and run the video service runner
-	videoRunner := NewServiceRunner(sm, "Video")
-	videoRunner.Run(func(ctx context.Context) error {
+	// Run the video service
+	mgr.Run("Video", func(ctx context.Context) error {
 		return controllers.videoPlayer.Start(ctx, controllers.speedController)
 	})
-
-	return []*ServiceRunner{bleRunner, videoRunner}
-}
-
-// monitorServiceRunners monitors the services and logs any errors encountered
-func monitorServiceRunners(runners []*ServiceRunner) {
-
-	for _, runner := range runners {
-
-		if err := runner.Error(); err != nil {
-			logger.Fatal(logger.APP, "service error:", err.Error())
-			return
-		}
-
-	}
 }
