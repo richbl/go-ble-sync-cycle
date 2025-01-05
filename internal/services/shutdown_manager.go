@@ -11,10 +11,15 @@ import (
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 )
 
+// smContext represents the cancellation context for ShutdownManager
+type smContext struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
 // ShutdownManager represents a shutdown manager that manages a component lifecycle
 type ShutdownManager struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
+	context smContext
 	wg      sync.WaitGroup
 	timeout time.Duration
 	errChan chan error
@@ -28,8 +33,10 @@ func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &ShutdownManager{
-		ctx:     ctx,
-		cancel:  cancel,
+		context: smContext{
+			ctx:    ctx,
+			cancel: cancel,
+		},
 		timeout: timeout,
 		errChan: make(chan error, 1),
 	}
@@ -45,11 +52,11 @@ func (sm *ShutdownManager) Run(name string, fn func(context.Context) error) {
 		defer sm.wg.Done()
 
 		// if the context is canceled, signal the error channel and return
-		if err := fn(sm.ctx); err != nil && err != context.Canceled {
+		if err := fn(sm.context.ctx); err != nil && err != context.Canceled {
 
 			select {
 			case sm.errChan <- err:
-				sm.cancel()
+				sm.context.cancel()
 			default:
 			}
 
@@ -81,7 +88,7 @@ func (sm *ShutdownManager) Start() {
 // Shutdown shuts down the shutdown manager
 func (sm *ShutdownManager) Shutdown() {
 
-	sm.cancel()
+	sm.context.cancel()
 	done := make(chan struct{})
 
 	go func() {
@@ -104,14 +111,14 @@ func (sm *ShutdownManager) Shutdown() {
 
 // Context returns the shutdown manager's context
 func (sm *ShutdownManager) Context() context.Context {
-	return sm.ctx
+	return sm.context.ctx
 }
 
 // Wait waits for the shutdown manager to finish
 func (sm *ShutdownManager) Wait() {
 
 	select {
-	case <-sm.ctx.Done():
+	case <-sm.context.ctx.Done():
 		sm.Shutdown()
 	case err := <-sm.errChan:
 		if err != nil {

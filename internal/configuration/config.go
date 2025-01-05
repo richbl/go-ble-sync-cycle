@@ -62,8 +62,10 @@ type VideoConfig struct {
 
 // VideoOSDConfig defines on-screen display settings for video playback
 type VideoOSDConfig struct {
+	FontSize             int  `toml:"font_size"`
 	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
 	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
+	DisplayTimeRemaining bool `toml:"display_time_remaining"`
 	ShowOSD              bool // Computed field based on display settings
 }
 
@@ -178,9 +180,9 @@ func (vc *VideoConfig) validate() error {
 		return fmt.Errorf("update_interval_sec must be greater than 0.0")
 	}
 
-	// Set computed field based on display settings
+	// Set ShowOSD flag based on display settings
 	vc.OnScreenDisplay.ShowOSD = vc.OnScreenDisplay.DisplayCycleSpeed ||
-		vc.OnScreenDisplay.DisplayPlaybackSpeed
+		vc.OnScreenDisplay.DisplayPlaybackSpeed || vc.OnScreenDisplay.DisplayTimeRemaining
 
 	return nil
 }
