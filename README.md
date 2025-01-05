@@ -100,7 +100,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
- # 0.7.1
+ # 0.8.0
 
   [app]
     logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -123,8 +123,11 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
     speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
                                   # (0.0 = stopped, 1.0 = normal speed)
     [video.OSD]
+      font_size = 40                # Font size for on-screen display (OSD)
       display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
       display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
+      display_time_remaining = true # Display time remaining on the on-screen display (true/false)
+
 ```
 
 An explanation of the various sections of the `config.toml` file is provided below:
@@ -167,8 +170,10 @@ The `[video]` section defines the configuration for the MPV video player compone
 
 #### The `[video.OSD]` Section
 
+- `font_size`: The font size for the on-screen display (OSD)
 - `display_cycle_speed`: A boolean value that indicates whether to display the cycle sensor speed on the on-screen display (OSD)
 - `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
+- `display_time_remaining`: A boolean value that indicates whether to display the time remaining (using the format HH:MM:SS) on the on-screen display (OSD)
 
 ## Basic Usage
 
@@ -197,7 +202,7 @@ go run cmd/*
 At this point, you should see the following output:
 
 ```console
- 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.7.1
+ 2024/12/16 15:08:56 ----- ----- Starting BLE Sync Cycle 0.8.0
   2024/12/16 15:08:56 [INF] [BLE] created new BLE central controller
   2024/12/16 15:08:56 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:08:58 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -206,13 +211,13 @@ At this point, you should see the following output:
   2024/12/16 15:09:00 [DBG] [BLE] discovering CSC services 00001816-0000-1000-8000-00805f9b34fb
   2024/12/16 15:09:10 [ERR] [BLE] CSC services discovery failed: timeout on DiscoverServices
   2024/12/16 15:09:10 [ERR] [BLE] BLE peripheral scan failed: timeout on DiscoverServices
-  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.7.1 shutdown complete. Goodbye!
+  2024/12/16 15:09:10 ----- ----- BLE Sync Cycle 0.8.0 shutdown complete. Goodbye!
 ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file.
 
 ```console
- 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.7.1
+ 2024/12/16 15:09:47 ----- ----- Starting BLE Sync Cycle 0.8.0
   2024/12/16 15:09:47 [INF] [BLE] created new BLE central controller
   2024/12/16 15:09:47 [INF] [BLE] now scanning the ether for BLE peripheral UUID of F1:42:D8:DE:35:16...
   2024/12/16 15:09:47 [DBG] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -294,27 +299,33 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
   2024/12/16 15:13:33 [INF] [SPD] BLE sensor speed: 0.00 mph
   2024/12/16 15:13:33 [INF] [VID] user-generated interrupt, stopping video player...
   2024/12/16 15:13:33 [ERR] [APP] context canceled
-  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.7.1 shutdown complete. Goodbye!
+  2024/12/16 15:13:33 ----- ----- BLE Sync Cycle 0.8.0 shutdown complete. Goodbye!
 ```
 
 ## FAQ
 
-- What is **BLE Sync Cycle**? 
+- What is **BLE Sync Cycle**?
+
 > In its simplest form, this application makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower. And, when you stop your bike, video playback pauses.
 
 - Do all Bluetooth devices work with **BLE Sync Cycle**?
+
 > Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
 
 - Can I disable the log messages in **BLE Sync Cycle**?
-> While you cannot disable all messages, check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
+
+> Check out the `logging_level` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose (all log messages displayed), and "error" is least verbose.
 
 - My BLE sensor takes a long time to connect, and often times out. What can I do?
+
 > The easiest solution is to just rerun the application, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 - How do I use **BLE Sync Cycle**?
+
 > See the [Basic Usage](#basic-usage) section above
 
 - How do I configure **BLE Sync Cycle**?
+
 > See the [Editing the TOML File](#editing-the-toml-file) section above
 
 ## Roadmap

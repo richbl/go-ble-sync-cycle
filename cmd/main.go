@@ -21,7 +21,7 @@ import (
 const (
 	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.7.1"
+	appVersion = "0.8.0"
 )
 
 // appControllers holds the application component controllers for managing speed, video playback,

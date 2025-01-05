@@ -84,7 +84,12 @@ func (p *PlaybackController) setup() error {
 // configureMPVPlayer sets up the player window based on configuration
 func (p *PlaybackController) configureMPVPlayer() error {
 
+	// keep open to allow for EOF check
 	if err := p.player.SetOptionString("keep-open", "yes"); err != nil {
+		return err
+	}
+
+	if err := p.player.SetOption("osd-font-size", mpv.FormatInt64, p.config.OnScreenDisplay.FontSize); err != nil {
 		return err
 	}
 
@@ -211,12 +216,18 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 	}
 
 	var osdText strings.Builder
-	if p.config.OnScreenDisplay.DisplayCycleSpeed {
-		fmt.Fprintf(&osdText, " Cycle Speed: %.2f %s\n", cycleSpeed, p.speedConfig.SpeedUnits)
-	}
 
-	if p.config.OnScreenDisplay.DisplayPlaybackSpeed {
+	// Build the text string to display in OSD
+	switch {
+	case p.config.OnScreenDisplay.DisplayCycleSpeed:
+		fmt.Fprintf(&osdText, " Cycle Speed: %.2f %s\n", cycleSpeed, p.speedConfig.SpeedUnits)
+		fallthrough
+	case p.config.OnScreenDisplay.DisplayPlaybackSpeed:
 		fmt.Fprintf(&osdText, " Playback Speed: %.2fx\n", playbackSpeed)
+		fallthrough
+	case p.config.OnScreenDisplay.DisplayTimeRemaining:
+		timeRemaining, _ := p.player.GetProperty("time-remaining", mpv.FormatInt64)
+		fmt.Fprintf(&osdText, " Time Remaining: %s\n", formatSeconds(timeRemaining.(int64)))
 	}
 
 	return p.player.SetOptionString("osd-msg1", osdText.String())
@@ -233,4 +244,13 @@ func (p *PlaybackController) logDebugInfo(speedController *speed.SpeedController
 		strconv.FormatFloat(math.Abs(state.current-state.last), 'f', 2, 64), p.speedConfig.SpeedUnits)
 	logger.Debug(logger.VIDEO, logger.Magenta+"playback speed update threshold:",
 		strconv.FormatFloat(p.speedConfig.SpeedThreshold, 'f', 2, 64), p.speedConfig.SpeedUnits)
+}
+
+// FormatSeconds converts seconds into HH:MM:SS format
+func formatSeconds(seconds int64) string {
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	remainingSeconds := seconds % 60
+
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, remainingSeconds)
 }
