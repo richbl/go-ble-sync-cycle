@@ -3,9 +3,9 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
@@ -69,37 +69,34 @@ type VideoOSDConfig struct {
 	ShowOSD              bool // Computed field based on display settings
 }
 
-// LoadFile attempts to load and validate a TOML configuration file, trying multiple paths and
-// returns the first valid configuration found
-func LoadFile(filename string) (*Config, error) {
+// LoadFile loads the configuration from a TOML file, checking first for the "-config" or "-c"
+// command-line flag, falling back to the current working directory if flag not provided
+func LoadFile(configFile string) (*Config, error) {
 
-	paths := []string{
-		filename,
-		filepath.Join("internal", "configuration", filepath.Base(filename)),
+	// Parse command-line arguments
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "Path to the configuration file")
+	flag.StringVar(&configPath, "c", "", "Path to the configuration file")
+	flag.Parse()
+
+	// Use the command-line config path if provided, otherwise use the default
+	if configPath != "" {
+		configFile = configPath
 	}
 
-	var lastErr error
-
-	for _, path := range paths {
-		cfg := &Config{}
-
-		if _, err := toml.DecodeFile(path, cfg); err != nil {
-
-			if !os.IsNotExist(err) || path == paths[len(paths)-1] {
-				lastErr = fmt.Errorf("failed to load config from %s: %w", path, err)
-			}
-
-			continue
-		}
-
-		if err := cfg.validate(); err != nil {
-			return nil, err
-		}
-
-		return cfg, nil
+	// Read the configuration file
+	cfg := &Config{}
+	_, err := toml.DecodeFile(configFile, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	return nil, lastErr
+	// Validate the configuration
+	if err := cfg.validate(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 // validate performs validation across all configuration sections

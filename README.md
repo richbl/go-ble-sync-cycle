@@ -1,7 +1,8 @@
 # BLE Sync Cycle
 
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/richbl/go-ble-sync-cycle?include_prereleases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle) [![codebeat badge](https://codebeat.co/badges/c19c847e-396d-4f7d-bad7-799f57db8ed8)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419)](https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle) [![codebeat badge](https://codebeat.co/badges/81f6e14f-0cf7-450a-a4cf-054dff80a2d5)](https://codebeat.co/projects/github-com-richbl-go-ble-sync-cycle-dev) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419)](https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=richbl_go-ble-sync-cycle&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=richbl_go-ble-sync-cycle)
+
 
 ## Overview
 
@@ -23,8 +24,9 @@
     - Speed smoothing option for natural and seamless video playback
     - Choice of video file for playback
     - Various display options for video playback, including:
-        - The display of sensor speed and/or video playback speed via on-screen display (OSD)
+        - The display of sensor speed, video playback speed and playback time remaining via on-screen display (OSD)
         - Video window scaling (full screen, half screen, etc.)
+        - OSD font size
 - Simple command-line interface provides real-time component feedback
 - Configurable logging levels (debug, info, warn, error) to manage the information displayed during application execution
 - Graceful handling of connection interrupts and system signals ensures all components shut down cleanly
@@ -71,6 +73,17 @@ While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on
 
 ## Installation
 
+### Install Application Dependencies
+
+**BLE Sync Cycle** currently relies on the mpv media player for video playback (support for additional media players will be implemented in a future release). In order for the application to function, the mpv media player library must first be installed.
+
+
+1. Install the `libmpv2` library:
+
+    ```console
+    sudo apt-get install libmpv2
+    ```
+
 ### Building the Application
 
 1. Clone the repository:
@@ -80,7 +93,7 @@ While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 (LTS) on
     cd go-ble-sync-cycle
     ```
 
-2. Install dependencies:
+2. Install Go package dependencies:
 
     ```console
     go mod download
@@ -185,19 +198,33 @@ At a high level, **BLE Sync Cycle** will perform the following:
 4. Automatically adjust video speed based on your cycling speed
 5. Gracefully shutdown on interrupt (Ctrl+C)
 
-To run the application, execute the following command:
+To run the application, you need to first make sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device (i.e., spinning the bicycle wheel).
+
+To run **BLE Sync Cycle**, execute the following command:
 
 ```console
 ./ble-sync-cycle
 ```
 
-Or, if the application hasn't yet been built using the `go build` command, you can execute the following command:
+If the application hasn't yet been built using the `go build` command, please refer to the [Building the Application](#building-the-application) section above.
+
+> Be sure the `config.toml` is located in the current working directory (where you ran the `ble-sync-cycle` command), or see the section below on how to override where the application looks for the `config.toml` file.
+
+### Overriding the Configuration File
+
+When **BLE Sync Cycle** is first started, it looks for a configuration file called `config.toml` in the current working directory. If you want  **BLE Sync Cycle** to look in a different location--you could use different configuration files for different cycling sessions, different bicycle configurations, different sensors, etc.--you can specify the path to the file on the command line using the `--config` command line option:
 
 ```console
-go run cmd/*
+./ble-sync-cycle --config /path/to/config.toml
 ```
 
-> Be sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device
+Or, you can also use the `-c` command line option for the same behavior:
+
+```console
+./ble-sync-cycle -c /path/to/config.toml
+```
+
+### Running the Application
 
 At this point, you should see the following output:
 
@@ -308,6 +335,14 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 > In its simplest form, this application makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower. And, when you stop your bike, video playback pauses.
 
+- How do I use **BLE Sync Cycle**?
+
+> See the [Basic Usage](#basic-usage) section above
+
+- How do I configure **BLE Sync Cycle**?
+
+> See the [Editing the TOML File](#editing-the-toml-file) section above
+
 - Do all Bluetooth devices work with **BLE Sync Cycle**?
 
 > Not necessarily. The Bluetooth package used by **BLE Sync Cycle**, [called Go Bluetooth by TinyGo.org](https://github.com/tinygo-org/bluetooth), is based on the [Bluetooth Low Energy (BLE) standard](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy). Some Bluetooth devices may not be compatible with this protocol.
@@ -318,15 +353,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 
 - My BLE sensor takes a long time to connect, and often times out. What can I do?
 
-> The easiest solution is to just rerun the application, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
-
-- How do I use **BLE Sync Cycle**?
-
-> See the [Basic Usage](#basic-usage) section above
-
-- How do I configure **BLE Sync Cycle**?
-
-> See the [Editing the TOML File](#editing-the-toml-file) section above
+> The easiest solution is to just rerun **BLE Sync Cycle**, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Editing the TOML File](#editing-the-toml-file) section above). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 ## Roadmap
 
