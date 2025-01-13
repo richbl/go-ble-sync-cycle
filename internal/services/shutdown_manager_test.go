@@ -1,12 +1,17 @@
-package shutdown_manager_test
+package shutdownmanager_test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	sm "github.com/richbl/go-ble-sync-cycle/internal/services"
+)
+
+// Error messages
+var (
+	errServiceError = fmt.Errorf("service error")
 )
 
 // TestNewShutdownManager tests the creation of a new shutdown manager
@@ -31,7 +36,7 @@ func TestRunService(t *testing.T) {
 	manager := sm.NewShutdownManager(time.Second)
 	serviceDone := make(chan struct{})
 
-	manager.Run("test-service", func(ctx context.Context) error {
+	manager.Run(func(ctx context.Context) error {
 		defer close(serviceDone)
 
 		select {
@@ -56,9 +61,9 @@ func TestRunService(t *testing.T) {
 func TestRunServiceError(t *testing.T) {
 
 	manager := sm.NewShutdownManager(time.Second)
-	expectedErr := errors.New("service error")
+	expectedErr := errServiceError
 
-	manager.Run("error-service", func(ctx context.Context) error {
+	manager.Run(func(_ context.Context) error {
 		return expectedErr
 	})
 
@@ -130,7 +135,7 @@ func TestShutdownTimeout(t *testing.T) {
 	manager := sm.NewShutdownManager(timeout)
 	started := make(chan struct{})
 
-	manager.Run("hanging-service", func(ctx context.Context) error {
+	manager.Run(func(ctx context.Context) error {
 		close(started)
 
 		select {
@@ -159,9 +164,10 @@ func TestContextCancellation(t *testing.T) {
 	manager := sm.NewShutdownManager(time.Second)
 	serviceCanceled := make(chan struct{})
 
-	manager.Run("cancellable-service", func(ctx context.Context) error {
+	manager.Run(func(ctx context.Context) error {
 		<-ctx.Done()
 		close(serviceCanceled)
+
 		return ctx.Err()
 	})
 

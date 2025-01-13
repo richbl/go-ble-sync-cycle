@@ -2,6 +2,7 @@ package ble
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,19 +12,19 @@ import (
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 )
 
-// bleDetails holds details about the BLE peripheral
-type bleDetails struct {
+// blePeripheralDetails holds details about the BLE peripheral
+type blePeripheralDetails struct {
 	bleConfig         config.BLEConfig
 	bleAdapter        bluetooth.Adapter
 	bleCharacteristic *bluetooth.DeviceCharacteristic
 }
 
-// BLEController is a central controller for managing the BLE peripheral
-type BLEController struct {
-	bleDetails    bleDetails
-	speedConfig   config.SpeedConfig
-	lastWheelRevs uint32
-	lastWheelTime uint16
+// Controller is a central controller for managing the BLE peripheral
+type Controller struct {
+	blePeripheralDetails blePeripheralDetails
+	speedConfig          config.SpeedConfig
+	lastWheelRevs        uint32
+	lastWheelTime        uint16
 }
 
 // actionParams encapsulates parameters for BLE actions
@@ -34,34 +35,44 @@ type actionParams struct {
 	stopAction func() error
 }
 
+// Error definitions
+var (
+	errScanTimeout          = fmt.Errorf("scanning time limit reached")
+	errInvalidTypeAssertion = fmt.Errorf("invalid type assertion")
+)
+
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
-func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig) (*BLEController, error) {
+func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig) (*Controller, error) {
 
 	bleAdapter := bluetooth.DefaultAdapter
 
 	if err := bleAdapter.Enable(); err != nil {
+		logger.Error(logger.BLE, "failed to enable BLE adapter:", err)
 		return nil, err
 	}
 
 	logger.Info(logger.BLE, "created new BLE central controller")
 
-	return &BLEController{
-		bleDetails: bleDetails{
-			bleConfig:  bleConfig,
-			bleAdapter: *bleAdapter,
+	return &Controller{
+		blePeripheralDetails: blePeripheralDetails{
+			bleConfig:         bleConfig,
+			bleAdapter:        *bleAdapter,
+			bleCharacteristic: &bluetooth.DeviceCharacteristic{},
 		},
-		speedConfig: speedConfig,
+		lastWheelRevs: 0,
+		lastWheelTime: 0,
+		speedConfig:   speedConfig,
 	}, nil
 }
 
 // ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
-func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
+func (m *Controller) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
 	params := actionParams{
 		ctx:        ctx,
 		action:     m.scanAction,
-		logMessage: fmt.Sprintf("scanning for BLE peripheral UUID %s", m.bleDetails.bleConfig.SensorUUID),
-		stopAction: m.bleDetails.bleAdapter.StopScan,
+		logMessage: fmt.Sprintf("scanning for BLE peripheral UUID %s", m.blePeripheralDetails.bleConfig.SensorUUID),
+		stopAction: m.blePeripheralDetails.bleAdapter.StopScan,
 	}
 
 	// Perform the BLE scan
@@ -70,13 +81,21 @@ func (m *BLEController) ScanForBLEPeripheral(ctx context.Context) (bluetooth.Sca
 		return bluetooth.ScanResult{}, err
 	}
 
-	typedResult := result.(bluetooth.ScanResult)
+	// Check the result type
+	var typedResult bluetooth.ScanResult
+
+	typedResult, err = assertBLEType(result, bluetooth.ScanResult{})
+	if err != nil {
+		return bluetooth.ScanResult{}, err
+	}
+
 	logger.Info(logger.BLE, "found BLE peripheral", typedResult.Address.String())
+
 	return typedResult, nil
 }
 
 // ConnectToBLEPeripheral connects to the specified BLE peripheral
-func (m *BLEController) ConnectToBLEPeripheral(ctx context.Context, device bluetooth.ScanResult) (bluetooth.Device, error) {
+func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetooth.ScanResult) (bluetooth.Device, error) {
 
 	params := actionParams{
 		ctx:        ctx,
@@ -90,16 +109,36 @@ func (m *BLEController) ConnectToBLEPeripheral(ctx context.Context, device bluet
 		return bluetooth.Device{}, err
 	}
 
-	typedResult := result.(bluetooth.Device)
+	// Check the result type
+	var typedResult bluetooth.Device
+
+	typedResult, err = assertBLEType(result, bluetooth.Device{})
+	if err != nil {
+		return bluetooth.Device{}, err
+	}
+
 	logger.Info(logger.BLE, "BLE peripheral device connected")
+
+	return typedResult, nil
+}
+
+// assertBLEType casts the result to the specified type
+func assertBLEType[T any](result interface{}, target T) (T, error) {
+
+	typedResult, ok := result.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("%w: expected %T", errInvalidTypeAssertion, target)
+	}
+
 	return typedResult, nil
 }
 
 // performBLEAction is a wrapper for performing BLE discovery actions
-func (m *BLEController) performBLEAction(params actionParams) (interface{}, error) {
+func (m *Controller) performBLEAction(params actionParams) (interface{}, error) {
 
 	// Create a context with a timeout
-	scanCtx, cancel := context.WithTimeout(params.ctx, time.Duration(m.bleDetails.bleConfig.ScanTimeoutSecs)*time.Second)
+	scanCtx, cancel := context.WithTimeout(params.ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 
 	// Create channels for signaling action completion
@@ -111,25 +150,18 @@ func (m *BLEController) performBLEAction(params actionParams) (interface{}, erro
 		params.action(found, errChan)
 	}()
 
-	return m.handleActionCompletion(scanCtx, found, errChan, params.stopAction)
-}
-
-// handleActionCompletion handles the completion of the BLE action
-func (m *BLEController) handleActionCompletion(ctx context.Context, found <-chan interface{}, errChan <-chan error, stopAction func() error) (interface{}, error) {
-
 	select {
 	case result := <-found:
 		return result, nil
 	case err := <-errChan:
 		return nil, err
-	case <-ctx.Done():
-		return m.handleActionTimeout(ctx, stopAction)
+	case <-scanCtx.Done():
+		return m.handleActionTimeout(scanCtx, params.stopAction)
 	}
-
 }
 
 // handleActionTimeout handles the timeout or cancellation of the BLE action
-func (m *BLEController) handleActionTimeout(ctx context.Context, stopAction func() error) (interface{}, error) {
+func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() error) (interface{}, error) {
 
 	if stopAction != nil {
 
@@ -140,17 +172,18 @@ func (m *BLEController) handleActionTimeout(ctx context.Context, stopAction func
 
 	}
 
-	if ctx.Err() == context.DeadlineExceeded {
-		return nil, fmt.Errorf("scanning time limit reached")
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return nil, errScanTimeout
 	}
 
 	fmt.Print("\r") // Clear the ^C character from the terminal line
 	logger.Info(logger.BLE, "user-generated interrupt, stopping BLE device setup...")
+
 	return nil, ctx.Err()
 }
 
 // scanAction performs the BLE peripheral scan
-func (m *BLEController) scanAction(found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) scanAction(found chan<- interface{}, errChan chan<- error) {
 
 	foundChan := make(chan bluetooth.ScanResult, 1)
 
@@ -163,9 +196,9 @@ func (m *BLEController) scanAction(found chan<- interface{}, errChan chan<- erro
 }
 
 // connectAction performs the connection to the BLE peripheral
-func (m *BLEController) connectAction(device bluetooth.ScanResult, found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- interface{}, errChan chan<- error) {
 
-	dev, err := m.bleDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
+	dev, err := m.blePeripheralDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
 
 	if err != nil {
 		errChan <- err
@@ -175,15 +208,21 @@ func (m *BLEController) connectAction(device bluetooth.ScanResult, found chan<- 
 	found <- dev
 }
 
-func (m *BLEController) startScanning(found chan<- bluetooth.ScanResult) error {
+// startScanning starts the BLE peripheral scan
+func (m *Controller) startScanning(found chan<- bluetooth.ScanResult) error {
 
-	err := m.bleDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
-		if result.Address.String() == m.bleDetails.bleConfig.SensorUUID {
-			if err := m.bleDetails.bleAdapter.StopScan(); err != nil {
+	//nolint:revive // bleAdapter.Scan requires adapter struct (though it's not used)
+	err := m.blePeripheralDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+
+		// Stop scanning when the target peripheral is found
+		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorUUID {
+
+			if err := m.blePeripheralDetails.bleAdapter.StopScan(); err != nil {
 				logger.Error(logger.BLE, "failed to stop scan:", err.Error())
 			}
 			found <- result
 		}
+
 	})
 
 	if err != nil {

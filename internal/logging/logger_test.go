@@ -61,7 +61,7 @@ func validateLogOutput(t *testing.T, output, expectedLevel string) {
 
 }
 
-// TestNewCustomTextHandler tests the NewCustomTextHandler function
+// TestInitialize tests the initialization of the logger
 func TestInitialize(t *testing.T) {
 
 	// Define test cases
@@ -100,45 +100,60 @@ func TestInitialize(t *testing.T) {
 
 }
 
-// TestCustomTextHandler tests the CustomTextHandler struct
+// TestCustomTextHandler tests the custom text handler
 func TestCustomTextHandler(t *testing.T) {
 
 	// Define test cases
-	tests := []testCase{
-		{"debug", slog.LevelDebug, Blue + "[DBG]", 0},
-		{"info", slog.LevelInfo, Green + "[INF]", 0},
-		{"warn", slog.LevelWarn, Yellow + "[WRN]", 0},
-		{"error", slog.LevelError, Magenta + "[ERR]", 0},
+	tests := []struct {
+		name     string
+		level    slog.Level
+		expected string
+	}{
+		{"debug", slog.LevelDebug, Blue + "[DBG]"},
+		{"info", slog.LevelInfo, Green + "[INF]"},
+		{"warn", slog.LevelWarn, Yellow + "[WRN]"},
+		{"error", slog.LevelError, Magenta + "[ERR]"},
 	}
 
 	// Run tests
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
+
 			buf := &bytes.Buffer{}
-			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: td.defaultOpts})
-			r := slog.NewRecord(time.Now(), tt.level, td.message, 0)
+			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+			r := slog.NewRecord(time.Now(), tt.level, "test message", 0)
 
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			output := buf.String()
-			expectedLevel := tt.want.(string)
-
-			timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `
-			if !regexp.MustCompile(timestampRegex).MatchString(output) {
-				t.Errorf("output does not start with a valid timestamp")
-			}
-
-			if !strings.Contains(output, expectedLevel) {
-				t.Errorf("output %q does not contain expected level %q", output, expectedLevel)
-			}
-
-			if !strings.Contains(output, td.message) {
-				t.Errorf("output %q does not contain message %q", output, td.message)
-			}
-
+			assertOutput(t, buf.String(), tt.expected, "test message")
 		})
+
+	}
+
+}
+
+// assertOutput checks if the output contains the expected timestamp, level, and message
+func assertOutput(t *testing.T, output, expectedLevel, expectedMessage string) {
+
+	t.Helper()
+
+	// Check timestamp
+	timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `
+	if !regexp.MustCompile(timestampRegex).MatchString(output) {
+		t.Errorf("output does not start with a valid timestamp")
+	}
+
+	// Check level
+	if !strings.Contains(output, expectedLevel) {
+		t.Errorf("output %q does not contain expected level %q", output, expectedLevel)
+	}
+
+	// Check message
+	if !strings.Contains(output, expectedMessage) {
+		t.Errorf("output %q does not contain message %q", output, expectedMessage)
 	}
 
 }
@@ -204,10 +219,12 @@ func TestEnabled(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
+
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
 
-			if got := h.Enabled(context.Background(), tt.level); got != tt.want.(bool) {
+			if got := h.Enabled(context.Background(), tt.level); got != tt.want {
 				t.Errorf("Enabled() = %v, want %v", got, tt.want)
 			}
 

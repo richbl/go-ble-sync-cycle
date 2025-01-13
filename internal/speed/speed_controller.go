@@ -5,26 +5,28 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 )
 
-// SpeedState holds the current speed measurement, smoothed speed, and timestamp
-type SpeedState struct {
+// state holds the current speed measurement, smoothed speed, and timestamp
+type state struct {
 	currentSpeed  float64
 	smoothedSpeed float64
 	timestamp     time.Time
 }
 
-// SpeedController manages speed measurements with smoothing over a specified time window
-type SpeedController struct {
-	mu         sync.RWMutex // protects all fields
-	speeds     *ring.Ring
-	window     int
-	speedState SpeedState
+// Controller manages speed measurements with smoothing over a specified time window
+type Controller struct {
+	mu     sync.RWMutex // protects all fields
+	speeds *ring.Ring
+	window int
+	state  state
 }
 
 // NewSpeedController creates a new speed controller with a specified window size, which
 // determines the number of speed measurements used for smoothing
-func NewSpeedController(window int) *SpeedController {
+func NewSpeedController(window int) *Controller {
 
 	r := ring.New(window)
 
@@ -33,49 +35,52 @@ func NewSpeedController(window int) *SpeedController {
 		r = r.Next()
 	}
 
-	return &SpeedController{
+	return &Controller{
 		speeds: r,
 		window: window,
 	}
 }
 
 // UpdateSpeed updates the current speed measurement and calculates a smoothed average
-func (sc *SpeedController) UpdateSpeed(speed float64) {
+func (sc *Controller) UpdateSpeed(speed float64) {
 
 	// Lock the mutex to protect the fields
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
-	sc.speedState.currentSpeed = speed
+	sc.state.currentSpeed = speed
 	sc.speeds.Value = speed
 	sc.speeds = sc.speeds.Next()
 
 	var sum float64
 	sc.speeds.Do(func(x interface{}) {
 
-		if x != nil {
-			sum += x.(float64)
+		value, ok := x.(float64)
+		if !ok {
+			logger.Warn(logger.BLE, fmt.Sprintf("cannot convert %v to float64", x))
+			return
 		}
 
+		sum += value
 	})
 
 	// Ahh... smoothness
-	sc.speedState.smoothedSpeed = sum / float64(sc.window)
-	sc.speedState.timestamp = time.Now()
+	sc.state.smoothedSpeed = sum / float64(sc.window)
+	sc.state.timestamp = time.Now()
 }
 
 // GetSmoothedSpeed returns the current smoothed speed measurement
-func (sc *SpeedController) GetSmoothedSpeed() float64 {
+func (sc *Controller) GetSmoothedSpeed() float64 {
 
 	// Lock the mutex to protect the fields
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
-	return sc.speedState.smoothedSpeed
+	return sc.state.smoothedSpeed
 }
 
-// GetSpeedBuffer returns the speed buffer as an array of formatted strings
-func (sc *SpeedController) GetSpeedBuffer() []string {
+// GetSpeedBuffer returns the current speed buffer
+func (sc *Controller) GetSpeedBuffer() []string {
 
 	// Lock the mutex to protect the fields
 	sc.mu.RLock()
@@ -85,7 +90,12 @@ func (sc *SpeedController) GetSpeedBuffer() []string {
 	sc.speeds.Do(func(x interface{}) {
 
 		if x != nil {
-			speeds = append(speeds, fmt.Sprintf("%.2f", x.(float64)))
+			value, ok := x.(float64)
+			if !ok {
+				logger.Warn(logger.SPEED, fmt.Sprintf("cannot convert %v to float64", x))
+				return
+			}
+			speeds = append(speeds, fmt.Sprintf("%.2f", value))
 		}
 
 	})

@@ -16,6 +16,7 @@ const (
 	wheelRevFlag  = uint8(0x01)
 	kphConversion = 3.6     // Conversion factor for kilometers per hour
 	mphConversion = 2.23694 // Conversion factor for miles per hour
+	zeroValue     = 0.0     // Zero value for speed
 )
 
 // SpeedMeasurement represents the values needed to calculate the speed
@@ -24,13 +25,19 @@ type SpeedMeasurement struct {
 	wheelTime uint16
 }
 
+// Error definitions
+var (
+	errNoSpeedData      = fmt.Errorf("no speed data reported")
+	errInvalidSpeedData = fmt.Errorf("invalid data format or length")
+)
+
 // GetBLEUpdates starts the real-time monitoring of BLE sensor notifications
-func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *speed.SpeedController) error {
+func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.Controller) error {
 
 	logger.Info(logger.BLE, "starting real-time monitoring of BLE sensor notifications...")
 	errChan := make(chan error, 1)
 
-	if err := m.bleDetails.bleCharacteristic.EnableNotifications(func(buf []byte) {
+	if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(func(buf []byte) {
 		speed := m.ProcessBLESpeed(buf)
 		speedController.UpdateSpeed(speed)
 	}); err != nil {
@@ -40,7 +47,7 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 	// Disable notifications after the context is canceled
 	defer func() {
 
-		if err := m.bleDetails.bleCharacteristic.EnableNotifications(nil); err != nil {
+		if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(nil); err != nil {
 			logger.Error(logger.BLE, "failed to disable notifications:", err.Error())
 		}
 
@@ -57,12 +64,12 @@ func (m *BLEController) GetBLEUpdates(ctx context.Context, speedController *spee
 }
 
 // ProcessBLESpeed processes raw BLE speed data into human-readable speed values
-func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
+func (m *Controller) ProcessBLESpeed(data []byte) float64 {
 
 	newSpeedData, err := m.parseSpeedData(data)
 	if err != nil {
 		logger.Error(logger.SPEED, "invalid BLE data:", err.Error())
-		return 0.0
+		return zeroValue
 	}
 
 	//
@@ -73,23 +80,24 @@ func (m *BLEController) ProcessBLESpeed(data []byte) float64 {
 }
 
 // calculateSpeed calculates the speed from the raw BLE data
-func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
+func (m *Controller) calculateSpeed(sm SpeedMeasurement) float64 {
 
 	// Initialize the last wheel revs and time
 	if m.lastWheelTime == 0 {
 		m.lastWheelRevs = sm.wheelRevs
 		m.lastWheelTime = sm.wheelTime
-		return 0.0
+
+		return zeroValue
 	}
 
 	// Get the time difference between the current and last wheel revs
 	timeDiff := sm.wheelTime - m.lastWheelTime
 	if timeDiff == 0 {
-		return 0.0
+		return zeroValue
 	}
 
 	// Get the rev difference between the current and last wheel revs
-	revDiff := int32(sm.wheelRevs - m.lastWheelRevs)
+	revDiff := int64(sm.wheelRevs - m.lastWheelRevs)
 	speedConversion := kphConversion
 
 	if m.speedConfig.SpeedUnits == config.SpeedUnitsMPH {
@@ -105,14 +113,14 @@ func (m *BLEController) calculateSpeed(sm SpeedMeasurement) float64 {
 }
 
 // parseSpeedData parses the raw BLE speed data
-func (m *BLEController) parseSpeedData(data []byte) (SpeedMeasurement, error) {
+func (m *Controller) parseSpeedData(data []byte) (SpeedMeasurement, error) {
 
 	if len(data) < 1 {
-		return SpeedMeasurement{}, fmt.Errorf("no speed data reported")
+		return SpeedMeasurement{}, errNoSpeedData
 	}
 
 	if data[0]&wheelRevFlag == 0 || len(data) < minDataLength {
-		return SpeedMeasurement{}, fmt.Errorf("invalid data format or length")
+		return SpeedMeasurement{}, errInvalidSpeedData
 	}
 
 	return SpeedMeasurement{

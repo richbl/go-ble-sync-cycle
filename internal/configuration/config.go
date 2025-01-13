@@ -1,5 +1,3 @@
-// Package config provides configuration management for the application,
-// including loading and validation of TOML configuration files
 package config
 
 import (
@@ -22,6 +20,8 @@ const (
 	// Speed units
 	SpeedUnitsKMH = "km/h" // Kilometers per hour
 	SpeedUnitsMPH = "mph"  // Miles per hour
+
+	errFormat = "%w: %v"
 )
 
 // Config represents the complete application configuration structure
@@ -68,6 +68,15 @@ type VideoOSDConfig struct {
 	DisplayTimeRemaining bool `toml:"display_time_remaining"`
 	ShowOSD              bool // Computed field based on display settings
 }
+
+// Error messages
+var (
+	errInvalidLogLevel   = fmt.Errorf("invalid log level")
+	errNoSensorUUID      = fmt.Errorf("sensor UUID must be specified in configuration")
+	errInvalidSpeedUnits = fmt.Errorf("invalid speed units")
+	errVideoFile         = fmt.Errorf("video file error")
+	errInvalidInterval   = fmt.Errorf("update_interval_sec must be greater than 0.0")
+)
 
 // LoadFile loads the configuration from a TOML file, checking first for the "-config" or "-c"
 // command-line flag, falling back to the current working directory if flag not provided
@@ -135,7 +144,7 @@ func (ac *AppConfig) validate() error {
 	}
 
 	if !validLogLevels[ac.LogLevel] {
-		return fmt.Errorf("invalid log level: %v", ac.LogLevel)
+		return fmt.Errorf(errFormat, errInvalidLogLevel, ac.LogLevel)
 	}
 
 	return nil
@@ -145,7 +154,7 @@ func (ac *AppConfig) validate() error {
 func (bc *BLEConfig) validate() error {
 
 	if bc.SensorUUID == "" {
-		return fmt.Errorf("sensor UUID must be specified in configuration")
+		return fmt.Errorf(errFormat, errNoSensorUUID, bc.SensorUUID)
 	}
 
 	return nil
@@ -160,7 +169,7 @@ func (sc *SpeedConfig) validate() error {
 	}
 
 	if !validSpeedUnits[sc.SpeedUnits] {
-		return fmt.Errorf("invalid speed units: %v", sc.SpeedUnits)
+		return fmt.Errorf(errFormat, errInvalidSpeedUnits, sc.SpeedUnits)
 	}
 
 	return nil
@@ -170,11 +179,11 @@ func (sc *SpeedConfig) validate() error {
 func (vc *VideoConfig) validate() error {
 
 	if _, err := os.Stat(vc.FilePath); err != nil {
-		return fmt.Errorf("video file error: %v", err)
+		return fmt.Errorf(errFormat, errVideoFile, err)
 	}
 
 	if vc.UpdateIntervalSec <= 0.0 {
-		return fmt.Errorf("update_interval_sec must be greater than 0.0")
+		return fmt.Errorf(errFormat, errInvalidInterval, vc.UpdateIntervalSec)
 	}
 
 	// Set ShowOSD flag based on display settings
