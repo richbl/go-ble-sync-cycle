@@ -18,9 +18,13 @@ import (
 
 // Common errors
 var (
-	errOSDUpdate     = fmt.Errorf("failed to update OSD")
-	errPlaybackSpeed = fmt.Errorf("failed to set playback speed")
-	errVideoComplete = fmt.Errorf("playback completed: normal exit")
+	errOSDUpdate            = fmt.Errorf("failed to update OSD")
+	errPlaybackSpeed        = fmt.Errorf("failed to set playback speed")
+	errVideoComplete        = fmt.Errorf("playback completed: normal exit")
+	errGetVideoState        = fmt.Errorf("failed get media player state")
+	errInvalidEOFValue      = fmt.Errorf("expected boolean value for 'eof-reached' property")
+	errInvalidTimeRemaining = fmt.Errorf("expected int64 value for 'eof-reached' property")
+	errInvalidVideoPaused   = fmt.Errorf("expected boolean value for 'pause' property")
 )
 
 const errFormat = "%w: %v"
@@ -54,7 +58,7 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 }
 
 // Start configures and starts the MPV media player
-func (p *PlaybackController) Start(ctx context.Context, speedController *speed.SpeedController) error {
+func (p *PlaybackController) Start(ctx context.Context, speedController *speed.Controller) error {
 
 	logger.Debug(logger.VIDEO, "starting MPV video player...")
 	defer p.player.TerminateDestroy()
@@ -89,21 +93,21 @@ func (p *PlaybackController) configureMPVPlayer() error {
 		return err
 	}
 
-	if err := p.player.SetOption("osd-font-size", mpv.FormatInt64, p.config.OnScreenDisplay.FontSize); err != nil {
+	if err := p.player.SetOption("osd-font-size", mpv.FormatInt64, int64(p.config.OnScreenDisplay.FontSize)); err != nil {
 		return err
 	}
 
 	if p.config.WindowScaleFactor == 1.0 {
-		logger.Debug(logger.VIDEO, "maximizing video window")
 		return p.player.SetOptionString("window-maximized", "yes")
 	}
 
 	scalePercent := strconv.Itoa(int(p.config.WindowScaleFactor * 100))
+
 	return p.player.SetOptionString("autofit", scalePercent+"%")
 }
 
 // run handles the main playback loop
-func (p *PlaybackController) run(ctx context.Context, speedController *speed.SpeedController) error {
+func (p *PlaybackController) run(ctx context.Context, speedController *speed.Controller) error {
 
 	// Set an interval to check for updates
 	ticker := time.NewTicker(time.Millisecond * time.Duration(p.config.UpdateIntervalSec*1000))
@@ -113,10 +117,12 @@ func (p *PlaybackController) run(ctx context.Context, speedController *speed.Spe
 	logger.Info(logger.VIDEO, "MPV video playback started")
 
 	for {
+
 		select {
 		case <-ctx.Done():
 			fmt.Print("\r")
 			logger.Info(logger.VIDEO, "user-generated interrupt, stopping MPV video player...")
+
 			return nil
 		case <-ticker.C:
 
@@ -130,11 +136,13 @@ func (p *PlaybackController) run(ctx context.Context, speedController *speed.Spe
 			}
 
 		}
+
 	}
+
 }
 
 // tick handles a single update cycle
-func (p *PlaybackController) tick(speedController *speed.SpeedController, state *speedState) error {
+func (p *PlaybackController) tick(speedController *speed.Controller, state *speedState) error {
 
 	// First, check if playback is complete
 	if complete, err := p.isPlaybackComplete(); err != nil || complete {
@@ -161,10 +169,16 @@ func (p *PlaybackController) isPlaybackComplete() (bool, error) {
 
 	reachedEOF, err := p.player.GetProperty("eof-reached", mpv.FormatFlag)
 	if err != nil {
-		return false, nil
+		return false, fmt.Errorf(errFormat, errGetVideoState, err)
 	}
 
-	return reachedEOF.(bool), nil
+	// Check if reachedEOF is a boolean
+	reachedEOFBool, ok := reachedEOF.(bool)
+	if !ok {
+		return false, fmt.Errorf("%w: got %T", errInvalidEOFValue, reachedEOF)
+	}
+
+	return reachedEOFBool, nil
 }
 
 // shouldUpdateSpeed determines if the playback speed needs updating
@@ -201,6 +215,7 @@ func (p *PlaybackController) updateSpeed(state *speedState) error {
 	}
 
 	state.last = state.current
+
 	return p.player.SetProperty("pause", mpv.FormatFlag, false)
 }
 
@@ -226,15 +241,26 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 		fmt.Fprintf(&osdText, " Playback Speed: %.2fx\n", playbackSpeed)
 		fallthrough
 	case p.config.OnScreenDisplay.DisplayTimeRemaining:
-		timeRemaining, _ := p.player.GetProperty("time-remaining", mpv.FormatInt64)
-		fmt.Fprintf(&osdText, " Time Remaining: %s\n", formatSeconds(timeRemaining.(int64)))
+		timeRemaining, err := p.player.GetProperty("time-remaining", mpv.FormatInt64)
+		if err != nil {
+			return fmt.Errorf(errFormat, errGetVideoState, err)
+		}
+
+		// Check if timeRemaining is an int
+		timeRemainingInt, ok := timeRemaining.(int64)
+		if !ok {
+			return fmt.Errorf("%w: got %T", errInvalidTimeRemaining, timeRemainingInt)
+		}
+
+		fmt.Fprintf(&osdText, " Time Remaining: %s\n", formatSeconds(timeRemainingInt))
 	}
 
 	return p.player.SetOptionString("osd-msg1", osdText.String())
 }
 
 // logDebugInfo logs debug information about current speeds
-func (p *PlaybackController) logDebugInfo(speedController *speed.SpeedController, state *speedState) {
+func (p *PlaybackController) logDebugInfo(speedController *speed.Controller, state *speedState) {
+
 	logger.Debug(logger.VIDEO, "sensor speed buffer: ["+strings.Join(speedController.GetSpeedBuffer(), " ")+"]")
 	logger.Debug(logger.VIDEO, logger.Magenta+"smoothed sensor speed:",
 		strconv.FormatFloat(state.current, 'f', 2, 64), p.speedConfig.SpeedUnits)
@@ -248,6 +274,7 @@ func (p *PlaybackController) logDebugInfo(speedController *speed.SpeedController
 
 // FormatSeconds converts seconds into HH:MM:SS format
 func formatSeconds(seconds int64) string {
+
 	hours := seconds / 3600
 	minutes := (seconds % 3600) / 60
 	remainingSeconds := seconds % 60

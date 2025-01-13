@@ -38,7 +38,7 @@ func calculateAverage(data []float64) float64 {
 	return sum / float64(len(data))
 }
 
-// TestNewSpeedController tests the initialization of a new SpeedController
+// TestNewSpeedController tests the initialization of a new Controller
 func TestNewSpeedController(t *testing.T) {
 
 	controller := NewSpeedController(td.window)
@@ -54,13 +54,13 @@ func TestNewSpeedController(t *testing.T) {
 	}
 
 	// Verify smoothedSpeed
-	if got := controller.speedState.smoothedSpeed; got != 0 {
+	if got := controller.state.smoothedSpeed; got != 0 {
 		t.Errorf("smoothedSpeed = %f, want 0", got)
 	}
 
 }
 
-// TestUpdateSpeed tests the UpdateSpeed method of SpeedController
+// TestUpdateSpeed tests the UpdateSpeed method of Controller
 func TestUpdateSpeed(t *testing.T) {
 
 	controller := NewSpeedController(td.window)
@@ -79,7 +79,7 @@ func TestUpdateSpeed(t *testing.T) {
 
 }
 
-// TestGetSmoothedSpeed tests the GetSmoothedSpeed method of SpeedController
+// TestGetSmoothedSpeed tests the GetSmoothedSpeed method of Controller
 func TestGetSmoothedSpeed(t *testing.T) {
 
 	// Define test cases
@@ -110,6 +110,7 @@ func TestGetSmoothedSpeed(t *testing.T) {
 
 }
 
+// TestGetSpeedBuffer tests the GetSpeedBuffer method of Controller
 func TestGetSpeedBuffer(t *testing.T) {
 
 	// Define test cases
@@ -135,9 +136,10 @@ func TestGetSpeedBuffer(t *testing.T) {
 
 }
 
+// TestConcurrency tests the UpdateSpeed method of Controller
 func TestConcurrency(t *testing.T) {
 
-	// Create SpeedController
+	// Create Controller
 	controller := NewSpeedController(td.window)
 	var wg sync.WaitGroup
 

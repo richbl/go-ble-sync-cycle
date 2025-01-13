@@ -1,7 +1,8 @@
-package shutdown_manager
+package shutdownmanager
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"sync"
@@ -43,7 +44,7 @@ func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 }
 
 // Run starts a service and waits for it to complete
-func (sm *ShutdownManager) Run(name string, fn func(context.Context) error) {
+func (sm *ShutdownManager) Run(fn func(context.Context) error) {
 
 	// Add a new service to the wait group
 	sm.wg.Add(1)
@@ -52,7 +53,7 @@ func (sm *ShutdownManager) Run(name string, fn func(context.Context) error) {
 		defer sm.wg.Done()
 
 		// if the context is canceled, signal the error channel and return
-		if err := fn(sm.context.ctx); err != nil && err != context.Canceled {
+		if err := fn(sm.context.ctx); err != nil && !errors.Is(err, context.Canceled) {
 
 			select {
 			case sm.errChan <- err:
@@ -110,8 +111,8 @@ func (sm *ShutdownManager) Shutdown() {
 }
 
 // Context returns the shutdown manager's context
-func (sm *ShutdownManager) Context() context.Context {
-	return sm.context.ctx
+func (sm *ShutdownManager) Context() *context.Context {
+	return &sm.context.ctx
 }
 
 // Wait waits for the shutdown manager to finish

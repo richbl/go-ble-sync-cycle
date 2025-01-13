@@ -2,6 +2,7 @@ package video
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -10,21 +11,21 @@ import (
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
-	"github.com/richbl/go-ble-sync-cycle/internal/speed"
+	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 // testData holds test constants and configurations
 type testData struct {
 	filename        string
 	windowScale     float64
-	updateInterval  float64 // Keep as float64 to match VideoConfig
+	updateInterval  float64
 	speedMultiplier float64
 	speedThreshold  float64
 	contextTimeout  time.Duration
 }
 
 var td = testData{
-	filename:        "test.mp4",
+	filename:        "cycling_test.mp4",
 	windowScale:     1.0,
 	updateInterval:  1.0,
 	speedMultiplier: 1.0,
@@ -45,7 +46,11 @@ func createTestConfig() (config.VideoConfig, config.SpeedConfig) {
 		UpdateIntervalSec: td.updateInterval,
 		SpeedMultiplier:   td.speedMultiplier,
 		OnScreenDisplay: config.VideoOSDConfig{
+			FontSize:             24,
+			DisplayCycleSpeed:    true,
 			DisplayPlaybackSpeed: true,
+			DisplayTimeRemaining: true,
+			ShowOSD:              true,
 		},
 	}
 
@@ -91,7 +96,7 @@ func TestPlaybackFlow(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), td.contextTimeout)
 		defer cancel()
 
-		speedCtrl := &speed.SpeedController{}
+		speedCtrl := &speed.Controller{}
 		err := controller.Start(ctx, speedCtrl)
 		assert.NoError(t, err, "should start playback")
 	})
@@ -114,14 +119,24 @@ func TestPauseControl(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
+
 			err := controller.player.SetProperty("pause", mpv.FormatFlag, tt.setPause)
 			assert.NoError(t, err, "should set pause state")
 
 			result, err := controller.player.GetProperty("pause", mpv.FormatFlag)
 			assert.NoError(t, err, "should get pause state")
-			assert.Equal(t, tt.setPause, result.(bool), "pause state should match")
+
+			// Check if result is a boolean
+			propertyPause, ok := result.(bool)
+			if !ok {
+				t.Error(fmt.Errorf("%w: got %T", errInvalidVideoPaused, result))
+			}
+
+			assert.Equal(t, tt.setPause, propertyPause, "pause state should match")
 		})
+
 	}
 
 }

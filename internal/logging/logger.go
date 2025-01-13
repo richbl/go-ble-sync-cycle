@@ -1,5 +1,3 @@
-// Package logger provides structured logging capabilities with colored output
-// and component-based logging support.
 package logger
 
 import (
@@ -65,6 +63,7 @@ func Initialize(logLevel string) *slog.Logger {
 
 	level := parseLogLevel(logLevel)
 	logger = slog.New(NewCustomTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
+
 	return logger
 }
 
@@ -124,10 +123,17 @@ func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHan
 		LevelFatal:      "FTL",
 	}
 
+	var level slog.Level
+
+	level, ok := opts.Level.(slog.Level)
+	if !ok {
+		level = slog.LevelDebug
+	}
+
 	return &CustomTextHandler{
 		Handler:    slog.NewTextHandler(w, opts),
 		out:        w,
-		level:      opts.Level.(slog.Level),
+		level:      level,
 		levelNames: levelNames,
 	}
 }
@@ -135,21 +141,25 @@ func NewCustomTextHandler(w io.Writer, opts *slog.HandlerOptions) *CustomTextHan
 // Handle handles the log record and writes it to the output stream
 func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
-	if ctx.Err() != nil {
-		return ctx.Err()
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 
 	timestamp := r.Time.Format("2006/01/02 15:04:05")
 	level := strings.TrimSpace("[" + h.levelNames[r.Level] + "]")
 
-	fmt.Fprintf(h.out, "%s %s%s %s%s%s%s\n",
+	// Write the formatted log record to the output
+	if _, err := fmt.Fprintf(h.out, "%s %s%s %s%s%s%s\n",
 		timestamp,
 		h.getColorForLevel(r.Level),
 		level,
 		Reset,
 		h.getComponentFromAttrs(r),
 		r.Message,
-		Reset)
+		Reset); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -181,6 +191,7 @@ func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
 
 // getColorForLevel returns the ANSI color code for the specified log level
 func (h *CustomTextHandler) getColorForLevel(level slog.Level) string {
+
 	switch level {
 	case slog.LevelDebug:
 		return Blue
@@ -195,6 +206,7 @@ func (h *CustomTextHandler) getColorForLevel(level slog.Level) string {
 	default:
 		return White
 	}
+
 }
 
 // getComponentFromAttrs returns the component name from the log record attributes
@@ -208,7 +220,7 @@ func (h *CustomTextHandler) getComponentFromAttrs(r slog.Record) string {
 			component = a.Value.String()
 
 			if component != "" {
-				component = component + " "
+				component += " "
 			}
 
 			return false
@@ -216,11 +228,13 @@ func (h *CustomTextHandler) getComponentFromAttrs(r slog.Record) string {
 
 		return true
 	})
+
 	return component
 }
 
 // parseLogLevel converts the specified log level string to a slog.Level
 func parseLogLevel(level string) slog.Level {
+
 	switch strings.ToLower(level) {
 	case "debug":
 		return slog.LevelDebug
@@ -233,44 +247,41 @@ func parseLogLevel(level string) slog.Level {
 	default:
 		return slog.LevelInfo
 	}
+
+}
+
+// buildMessage constructs the log message from the given argument
+func buildMessage(first interface{}, args ...interface{}) string {
+
+	var parts []string
+
+	// Handle the first argument if it's not nil
+	if first != nil {
+		parts = append(parts, fmt.Sprintf("%v", first))
+	}
+
+	// Build the rest of the arguments
+	for _, arg := range args {
+		parts = append(parts, fmt.Sprintf("%v", arg))
+	}
+
+	return strings.Join(parts, " ")
 }
 
 // logWithOptionalComponent logs a message with an optional component name
 func logWithOptionalComponent(ctx context.Context, level slog.Level, first interface{}, args ...interface{}) {
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	var msg string
 	var component string
+	var msg string
 
-	switch v := first.(type) {
-	case ComponentType:
-		component = string(v)
-		var sb strings.Builder
-
-		for i, arg := range args {
-			sb.WriteString(fmt.Sprint(arg))
-
-			if i < len(args)-1 {
-				sb.WriteString(" ")
-			}
-
-		}
-		msg = sb.String()
-	default:
-		var sb strings.Builder
-		sb.WriteString(fmt.Sprint(first))
-
-		for _, arg := range args {
-			sb.WriteString(" ")
-			sb.WriteString(fmt.Sprint(arg))
-		}
-
-		msg = sb.String()
+	// Check if the first argument is a ComponentType and extract it
+	if c, ok := first.(ComponentType); ok {
+		component = string(c)
+		msg = buildMessage(nil, args...)
+	} else {
+		msg = buildMessage(first, args...)
 	}
 
-	msg = strings.TrimSpace(msg)
+	// Log the message with attributes
 	logger.LogAttrs(ctx, level, msg, slog.String("component", component))
 }
