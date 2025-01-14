@@ -19,7 +19,7 @@ type testData struct {
 
 // Define test data
 var td = testData{
-	message:     "test message",
+	message:     testMessage,
 	level:       slog.LevelDebug,
 	defaultOpts: slog.LevelDebug,
 }
@@ -31,6 +31,11 @@ type testCase struct {
 	want     interface{}
 	setLevel slog.Level
 }
+
+// Define variables
+var (
+	testMessage = "test message"
+)
 
 // setupTest creates a new test logger with buffer
 func setupTest() (*bytes.Buffer, *slog.Logger) {
@@ -122,13 +127,13 @@ func TestCustomTextHandler(t *testing.T) {
 
 			buf := &bytes.Buffer{}
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-			r := slog.NewRecord(time.Now(), tt.level, "test message", 0)
+			r := slog.NewRecord(time.Now(), tt.level, testMessage, 0)
 
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			assertOutput(t, buf.String(), tt.expected, "test message")
+			assertOutput(t, buf.String(), tt.expected, testMessage)
 		})
 
 	}
