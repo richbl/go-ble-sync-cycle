@@ -1,5 +1,5 @@
 # BLE Sync Cycle TOML configuration
-# 0.8.0
+# 0.8.1
 
 [app]
   logging_level = "info" # Log messages to see during execution: "debug", "info", "warn", "error"

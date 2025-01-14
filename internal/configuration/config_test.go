@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-// TestAppConfig_Validate tests the validation of the AppConfig
-func TestAppConfig_Validate(t *testing.T) {
+// TestAppConfigValidate tests the validation of the AppConfig
+func TestAppConfigValidate(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
@@ -38,8 +38,8 @@ func TestAppConfig_Validate(t *testing.T) {
 
 }
 
-// TestBLEConfig_Validate tests the validation of the BLEConfig
-func TestBLEConfig_Validate(t *testing.T) {
+// TestBLEConfigValidate tests the validation of the BLEConfig
+func TestBLEConfigValidate(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
@@ -68,8 +68,8 @@ func TestBLEConfig_Validate(t *testing.T) {
 
 }
 
-// TestSpeedConfig_Validate tests the validation of the SpeedConfig
-func TestSpeedConfig_Validate(t *testing.T) {
+// TestSpeedConfigValidate tests the validation of the SpeedConfig
+func TestSpeedConfigValidate(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
@@ -99,15 +99,11 @@ func TestSpeedConfig_Validate(t *testing.T) {
 
 }
 
-// TestVideoConfig_Validate tests the validation of the VideoConfig
-func TestVideoConfig_Validate(t *testing.T) {
+// TestVideoConfigValidate tests the validation of the VideoConfig
+func TestVideoConfigValidate(t *testing.T) {
 
 	// Create a temporary file for testing
-	tmpFile, err := os.CreateTemp("", "testfile")
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	tmpFile := createTempFile(t)
 	defer os.Remove(tmpFile.Name())
 
 	// Define test cases
@@ -142,15 +138,11 @@ func TestVideoConfig_Validate(t *testing.T) {
 
 }
 
-// TestConfig_Validate tests the validation of the Config
-func TestConfig_Validate(t *testing.T) {
+// TestConfigValidate tests the validation of the Config
+func TestConfigValidate(t *testing.T) {
 
 	// Create a temporary file for testing
-	tmpFile, err := os.CreateTemp("", "testfile")
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	tmpFile := createTempFile(t)
 	defer os.Remove(tmpFile.Name())
 
 	// Define test cases
@@ -189,4 +181,15 @@ func TestConfig_Validate(t *testing.T) {
 
 	}
 
+}
+
+// createTempFile creates a temporary file for testing
+func createTempFile(t *testing.T) os.File {
+
+	tmpFile, err := os.CreateTemp("", "testfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return *tmpFile
 }
