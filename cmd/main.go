@@ -10,6 +10,7 @@ import (
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	flags "github.com/richbl/go-ble-sync-cycle/internal/flags"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
 	shutdownmanager "github.com/richbl/go-ble-sync-cycle/internal/services"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
@@ -22,7 +23,8 @@ import (
 const (
 	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.8.1"
+	appVersion = "0.9.0"
+	configFile = "config.toml"
 )
 
 // appControllers holds the application component controllers for managing speed, video playback,
@@ -44,8 +46,14 @@ func main() {
 	// Hello computer...
 	waveHello()
 
+	// Parse for command-line flags
+	parseCmdLine()
+
+	// Check for help flag
+	checkForHelpFlag()
+
 	// Load configuration
-	cfg := loadConfig("config.toml")
+	cfg := loadConfig(configFile)
 
 	// Initialize services
 	mgr := initializeUtilityServices(cfg)
@@ -65,10 +73,31 @@ func main() {
 	waveGoodbye()
 }
 
+// parseCmdLine parses and validates command-line flags
+func parseCmdLine() {
+
+	if err := flags.ParseArgs(); err != nil {
+		log.Println(logger.Red+"[FTL] "+logger.Reset+"[APP] failed to parse command-line flags:", err.Error())
+		waveGoodbye()
+	}
+
+}
+
+// checkForHelpFlag checks for the help flag passed on the command-line
+func checkForHelpFlag() {
+
+	clFlags := flags.GetFlags()
+	if clFlags.Help {
+		flags.ShowHelp()
+		waveGoodbye()
+	}
+
+}
+
 // loadConfig loads and validates the TOML configuration file
 func loadConfig(file string) *config.Config {
 
-	cfg, err := config.LoadFile(file)
+	cfg, err := config.Load(file)
 	if err != nil {
 		log.Println(logger.Red+"[FTL] "+logger.Reset+"[APP] failed to load TOML configuration:", err.Error())
 		waveGoodbye()
@@ -192,11 +221,24 @@ func (controllers *appControllers) startServiceRunners(mgr *shutdownmanager.Shut
 
 	// Run the BLE service
 	mgr.Run(func(ctx context.Context) error {
-		return controllers.bleController.GetBLEUpdates(ctx, controllers.speedController)
+
+		if err := controllers.bleController.GetBLEUpdates(ctx, controllers.speedController); err != nil {
+			logger.Info(logger.BLE, err.Error())
+			return err
+		}
+
+		return nil
 	})
 
 	// Run the video service
 	mgr.Run(func(ctx context.Context) error {
-		return controllers.videoPlayer.Start(ctx, controllers.speedController)
+
+		if err := controllers.videoPlayer.Start(ctx, controllers.speedController); err != nil {
+			logger.Info(logger.VIDEO, err.Error())
+			return err
+		}
+
+		return nil
 	})
+
 }

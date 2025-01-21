@@ -111,11 +111,13 @@ func TestVideoConfigValidate(t *testing.T) {
 		name              string
 		filePath          string
 		updateIntervalSec float64
+		SeekToPosition    string
 		wantErr           bool
 	}{
-		{"Valid File and Interval", tmpFile.Name(), 1.0, false},
-		{"Invalid File", "nonexistentfile", 1.0, true},
-		{"Invalid Interval", tmpFile.Name(), 0.0, true},
+		{"Valid File, Interval and Seek", tmpFile.Name(), 1.0, "1:00", false},
+		{"Invalid File", "whatfile?", 1.0, "1:00", true},
+		{"Invalid Interval", tmpFile.Name(), 0.0, "1:00", true},
+		{"Invalid Seek", tmpFile.Name(), 1.0, "invalid", true},
 	}
 
 	// Run tests
@@ -126,6 +128,7 @@ func TestVideoConfigValidate(t *testing.T) {
 			vc := &VideoConfig{
 				FilePath:          tt.filePath,
 				UpdateIntervalSec: tt.updateIntervalSec,
+				SeekToPosition:    tt.SeekToPosition,
 			}
 
 			if err := vc.validate(); (err != nil) != tt.wantErr {
@@ -152,6 +155,7 @@ func TestConfigValidate(t *testing.T) {
 		Speed: SpeedConfig{SpeedUnits: SpeedUnitsKMH},
 		Video: VideoConfig{
 			FilePath:          tmpFile.Name(), // Use the temporary file path
+			SeekToPosition:    "1:00",
 			UpdateIntervalSec: 1.0,
 		},
 	}

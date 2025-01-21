@@ -18,6 +18,7 @@ import (
 type testData struct {
 	filename        string
 	windowScale     float64
+	SeekToPosition  string
 	updateInterval  float64
 	speedMultiplier float64
 	speedThreshold  float64
@@ -27,6 +28,7 @@ type testData struct {
 var td = testData{
 	filename:        "cycling_test.mp4",
 	windowScale:     1.0,
+	SeekToPosition:  "1",
 	updateInterval:  1.0,
 	speedMultiplier: 1.0,
 	speedThreshold:  0.1,
@@ -43,6 +45,7 @@ func createTestConfig() (config.VideoConfig, config.SpeedConfig) {
 	vc := config.VideoConfig{
 		FilePath:          td.filename,
 		WindowScaleFactor: td.windowScale,
+		SeekToPosition:    td.SeekToPosition,
 		UpdateIntervalSec: td.updateInterval,
 		SpeedMultiplier:   td.speedMultiplier,
 		OnScreenDisplay: config.VideoOSDConfig{

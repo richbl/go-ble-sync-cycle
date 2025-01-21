@@ -125,6 +125,7 @@ func (sm *ShutdownManager) Wait() {
 		if err != nil {
 			sm.Shutdown()
 		}
+
 	}
 
 }

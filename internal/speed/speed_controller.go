@@ -95,6 +95,7 @@ func (sc *Controller) GetSpeedBuffer() []string {
 				logger.Warn(logger.SPEED, fmt.Sprintf("cannot convert %v to float64", x))
 				return
 			}
+
 			speeds = append(speeds, fmt.Sprintf("%.2f", value))
 		}
 
