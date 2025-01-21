@@ -56,7 +56,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 	go func() {
 		<-ctx.Done()
 		fmt.Print("\r") // Clear the ^C character from the terminal line
-		logger.Info(logger.BLE, "user-generated interrupt, stopping BLE peripheral reporting...")
+		logger.Info(logger.BLE, "interrupt detected, stopping BLE peripheral reporting...")
 		errChan <- nil
 	}()
 

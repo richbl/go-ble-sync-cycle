@@ -177,7 +177,7 @@ func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() 
 	}
 
 	fmt.Print("\r") // Clear the ^C character from the terminal line
-	logger.Info(logger.BLE, "user-generated interrupt, stopping BLE device setup...")
+	logger.Info(logger.BLE, "interrupt detected, stopping BLE device setup...")
 
 	return nil, ctx.Err()
 }

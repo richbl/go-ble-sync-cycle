@@ -1,25 +1,26 @@
 package config
 
 import (
-	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/BurntSushi/toml"
+
+	flags "github.com/richbl/go-ble-sync-cycle/internal/flags"
 )
 
 // Configuration constants
 const (
-	// Log levels
 	logLevelDebug = "debug"
 	logLevelInfo  = "info"
 	logLevelWarn  = "warn"
 	logLevelError = "error"
 	logLevelFatal = "fatal"
 
-	// Speed units
-	SpeedUnitsKMH = "km/h" // Kilometers per hour
-	SpeedUnitsMPH = "mph"  // Miles per hour
+	SpeedUnitsKMH = "km/h"
+	SpeedUnitsMPH = "mph"
 
 	errFormat = "%w: %v"
 )
@@ -55,6 +56,7 @@ type SpeedConfig struct {
 type VideoConfig struct {
 	FilePath          string         `toml:"file_path"`
 	WindowScaleFactor float64        `toml:"window_scale_factor"`
+	SeekToPosition    string         `toml:"seek_to_position"`
 	UpdateIntervalSec float64        `toml:"update_interval_sec"`
 	SpeedMultiplier   float64        `toml:"speed_multiplier"`
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
@@ -76,21 +78,16 @@ var (
 	errInvalidSpeedUnits = fmt.Errorf("invalid speed units")
 	errVideoFile         = fmt.Errorf("video file error")
 	errInvalidInterval   = fmt.Errorf("update_interval_sec must be greater than 0.0")
+	errInvalidSeek       = fmt.Errorf("seek_to_position must be in MM:SS or SS format")
 )
 
-// LoadFile loads the configuration from a TOML file, checking first for the "-config" or "-c"
-// command-line flag, falling back to the current working directory if flag not provided
-func LoadFile(configFile string) (*Config, error) {
-
-	// Parse command-line arguments
-	var configPath string
-	flag.StringVar(&configPath, "config", "", "Path to the configuration file")
-	flag.StringVar(&configPath, "c", "", "Path to the configuration file")
-	flag.Parse()
+// Load loads the configuration from a TOML file using the provided flags
+func Load(configFile string) (*Config, error) {
 
 	// Use the command-line config path if provided, otherwise use the default
-	if configPath != "" {
-		configFile = configPath
+	clFlags := flags.GetFlags()
+	if clFlags.Config != "" {
+		configFile = clFlags.Config
 	}
 
 	// Read the configuration file
@@ -100,9 +97,19 @@ func LoadFile(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	// Validate the configuration
+	// Validate configuration settings imported from the TOML file
 	if err := cfg.validate(); err != nil {
 		return nil, err
+	}
+
+	// Use the command-line seek position if provided, otherwise use what's in the TOML file
+	if clFlags.Seek != "" {
+
+		if !validateTimeFormat(clFlags.Seek) {
+			return nil, fmt.Errorf(errFormat, errInvalidSeek, clFlags.Seek)
+		}
+
+		cfg.Video.SeekToPosition = clFlags.Seek
 	}
 
 	return cfg, nil
@@ -186,9 +193,64 @@ func (vc *VideoConfig) validate() error {
 		return fmt.Errorf(errFormat, errInvalidInterval, vc.UpdateIntervalSec)
 	}
 
+	if !validateTimeFormat(vc.SeekToPosition) {
+		return fmt.Errorf(errFormat, errInvalidSeek, vc.SeekToPosition)
+	}
+
 	// Set ShowOSD flag based on display settings
 	vc.OnScreenDisplay.ShowOSD = vc.OnScreenDisplay.DisplayCycleSpeed ||
 		vc.OnScreenDisplay.DisplayPlaybackSpeed || vc.OnScreenDisplay.DisplayTimeRemaining
 
 	return nil
+}
+
+// validateTimeFormat checks if the provided string is valid time in MM:SS or SS format
+func validateTimeFormat(input string) bool {
+
+	input = strings.TrimSpace(input)
+
+	if strings.Contains(input, ":") {
+		return validateMMSSFormat(input)
+	}
+
+	return validateSSFormat(input)
+}
+
+// validateMMSSFormat checks if the provided string is a valid time in MM:SS format
+func validateMMSSFormat(input string) bool {
+
+	// Split the input into minutes and seconds
+	parts := strings.SplitN(input, ":", 2)
+	if len(parts) != 2 {
+		return false
+	}
+
+	minutesStr := parts[0]
+	secondsStr := parts[1]
+
+	// Validate for minutes... as long as they aren't negative
+	minutes, err := strconv.Atoi(minutesStr)
+	if err != nil || minutes < 0 {
+		return false
+	}
+
+	// Validate for seconds (0-59)
+	seconds, err := strconv.Atoi(secondsStr)
+	if err != nil || seconds < 0 || seconds > 59 {
+		return false
+	}
+
+	return true
+}
+
+// validateSSFormat checks if the provided string is a valid time in SS format
+func validateSSFormat(input string) bool {
+
+	// Validate for seconds... as long as they aren't negative
+	seconds, err := strconv.Atoi(input)
+	if err != nil || seconds < 0 {
+		return false
+	}
+
+	return true
 }

@@ -1,8 +1,8 @@
 # BLE Sync Cycle TOML configuration
-# 0.8.1
+# 0.9.0
 
 [app]
-  logging_level = "info" # Log messages to see during execution: "debug", "info", "warn", "error"
+  logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
                          # where "debug" is the most verbose and "error" is least verbose
 
 [ble]
@@ -11,18 +11,19 @@
 
 [speed]
   smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
-  speed_threshold = 0.25        # Minimum speed change to trigger video speed update
-  wheel_circumference_mm = 1932 # Wheel circumference in millimeters
+  speed_threshold = 0.2         # Minimum speed change to trigger video speed update
+  wheel_circumference_mm = 2155 # Wheel circumference in millimeters
   speed_units = "mph"           # "km/h" or "mph"
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
   window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
+  seek_to_position = "00:00"     # Seek minutes:seconds ("MM:SS") into the video playback
   update_interval_sec = 0.25     # Seconds (>0.0) to wait between video player updates
-  speed_multiplier = 0.6         # Multiplier that translates sensor speed to video playback speed
+  speed_multiplier = 0.8         # Multiplier that adjusts sensor speed to video playback speed
                                  # (0.0 = stopped, 1.0 = normal speed)
   [video.OSD]
-    font_size = 20                # Font size for on-screen display (OSD)
+    font_size = 25                # Font size for on-screen display (OSD)
     display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
     display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
     display_time_remaining = true # Display time remaining on the on-screen display (true/false)
