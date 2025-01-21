@@ -6,6 +6,11 @@ import (
 	"testing"
 )
 
+const (
+	TestConfigFile   = "test.toml"
+	TestSeekPosition = "01:30"
+)
+
 // TestParseArgs tests the ParseArgs function
 func TestParseArgs(t *testing.T) {
 
@@ -40,21 +45,21 @@ func getTestCases() []struct {
 		},
 		{
 			name:     "all flags with long names",
-			args:     []string{"--config", "test.toml", "--seek", "01:30", "--help"},
+			args:     []string{"--config", TestConfigFile, "--seek", TestSeekPosition, "--help"},
 			wantErr:  false,
-			expected: Flags{Config: "test.toml", Seek: "01:30", Help: true},
+			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:     "all flags with short names",
-			args:     []string{"-c", "test.toml", "-s", "01:30", "-h"},
+			args:     []string{"-c", TestConfigFile, "-s", TestSeekPosition, "-h"},
 			wantErr:  false,
-			expected: Flags{Config: "test.toml", Seek: "01:30", Help: true},
+			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:     "mixed short and long names",
-			args:     []string{"-c", "test.toml", "--seek", "01:30", "-h"},
+			args:     []string{"-c", TestConfigFile, "--seek", TestSeekPosition, "-h"},
 			wantErr:  false,
-			expected: Flags{Config: "test.toml", Seek: "01:30", Help: true},
+			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:    "invalid flag",
@@ -97,8 +102,8 @@ func TestGetFlags(t *testing.T) {
 
 	// Set up test flags
 	testFlags := Flags{
-		Config: "test.toml",
-		Seek:   "01:30",
+		Config: TestConfigFile,
+		Seek:   TestSeekPosition,
 		Help:   true,
 	}
 
