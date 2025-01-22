@@ -65,13 +65,13 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 	}, nil
 }
 
-// ScanForBLEPeripheral scans for a BLE peripheral with the specified UUID
+// ScanForBLEPeripheral scans for a BLE peripheral with the specified BD_ADDR
 func (m *Controller) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
 	params := actionParams{
 		ctx:        ctx,
 		action:     m.scanAction,
-		logMessage: fmt.Sprintf("scanning for BLE peripheral UUID %s", m.blePeripheralDetails.bleConfig.SensorUUID),
+		logMessage: fmt.Sprintf("scanning for BLE peripheral BD_ADDR %s", m.blePeripheralDetails.bleConfig.SensorBDAddr),
 		stopAction: m.blePeripheralDetails.bleAdapter.StopScan,
 	}
 
@@ -215,7 +215,7 @@ func (m *Controller) startScanning(found chan<- bluetooth.ScanResult) error {
 	err := m.blePeripheralDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
 
 		// Stop scanning when the target peripheral is found
-		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorUUID {
+		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorBDAddr {
 
 			if err := m.blePeripheralDetails.bleAdapter.StopScan(); err != nil {
 				logger.Error(logger.BLE, "failed to stop scan:", err.Error())
