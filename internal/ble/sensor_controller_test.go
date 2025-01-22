@@ -19,7 +19,7 @@ const (
 	speedUnitsMPH = "mph"
 
 	// Test identifiers and parameters
-	sensorTestUUID       = "test-uuid"
+	SensorTestBDAddr     = "test-bd-addr"
 	testTimeout          = 2 * time.Second
 	initialScanDelay     = 2 * time.Second
 	wheelCircumferenceMM = 2000
@@ -53,7 +53,7 @@ func createTestController(speedUnits string) (*ble.Controller, error) {
 
 	// Create test BLE controller
 	bleConfig := config.BLEConfig{
-		SensorUUID:      sensorTestUUID,
+		SensorBDAddr:    SensorTestBDAddr,
 		ScanTimeoutSecs: 10,
 	}
 
@@ -118,7 +118,7 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 	controller := setupTestBLEController(t)
 	ctx, _ := createTestContextWithTimeout(t)
 
-	// Expect error since test UUID won't be found
+	// Expect error since test BD_ADDR won't be found
 	_, err := controller.ScanForBLEPeripheral(*ctx)
 
 	assert.Error(t, err)

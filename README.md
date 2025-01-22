@@ -16,7 +16,7 @@
 - Real-time synchronization between cycling speed and video playback
 - Support for compliant Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensors
 - TOML-based configuration for easy application customization that includes:
-    - BLE sensor identification (UUID)
+    - BLE sensor identification (BD_ADDR)
     - Bluetooth device scanning timeout
     - Wheel circumference, for accurate speed conversion
     - Support for different speed units: miles per hour (mph) and kilometers per hour (kph)
@@ -111,35 +111,35 @@ The resulting `build` command will create the`ble-sync-cycle` executable in the 
 
 ### Editing the TOML File
 
-Edit the `config.toml` file found in the `internal/configuration` directory. The default file (with a different sensor UUID) is shown below:
+Edit the `config.toml` file found in the `internal/configuration` directory. The default file is shown below:
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.9.0
+# 0.9.1
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
-                         # where "debug" is the most verbose and "error" is least verbose
+                          # where "debug" is the most verbose and "error" is least verbose
 
 [ble]
-  sensor_uuid = "F1:42:D8:DE:35:16" # UUID of BLE peripheral device
-  scan_timeout_secs = 30            # Seconds to wait for peripheral response before generating error
+  sensor_bd_addr = "F1:42:D8:DE:35:16" # Address of BLE peripheral device (e.g. "11:22:33:44:55:66")
+  scan_timeout_secs = 30               # Seconds (1-100) to wait for peripheral response before generating error
 
 [speed]
-  smoothing_window = 5          # Number of speed look-backs to use for generating a moving average
-  speed_threshold = 0.2         # Minimum speed change to trigger video speed update
-  wheel_circumference_mm = 2155 # Wheel circumference in millimeters
+  speed_threshold = 0.25        # Minimum speed change (0.00-10.00) to trigger video speed update
   speed_units = "mph"           # "km/h" or "mph"
+  smoothing_window = 5          # Number of recent speeds (1-25) to generate a moving average
+  wheel_circumference_mm = 2155 # Wheel circumference in millimeters (50-3000) 
 
 [video]
   file_path = "cycling_test.mp4" # Path to the video file to play
-  window_scale_factor = 1.0      # Scale factor for the video window (1.0 = full screen)
+  window_scale_factor = 1.0      # Scale factor (0.1-1.0) for the video window (1.0 = full screen)
   seek_to_position = "00:00"     # Seek minutes:seconds ("MM:SS") into the video playback
-  update_interval_sec = 0.25     # Seconds (>0.0) to wait between video player updates
-  speed_multiplier = 0.8         # Multiplier that adjusts sensor speed to video playback speed
-                                 # (0.0 = stopped, 1.0 = normal speed)
+  update_interval_sec = 0.25     # Seconds (0.1-3.0) to wait between video player updates
+  speed_multiplier = 0.8         # Multiplier (0.1-1.0) that adjusts sensor speed to video playback speed
+                                 # (0.1 = slow, 1.0 = normal speed)
   [video.OSD]
-    font_size = 25                # Font size for on-screen display (OSD)
+    font_size = 40                # Font size (10-200) for on-screen display (OSD)
     display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
     display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
     display_time_remaining = true # Display time remaining on the on-screen display (true/false)
@@ -157,19 +157,19 @@ The `[app]` section is used for configuration of the **BLE Sync Cycle** applicat
 
 The `[ble]` section configures your computer (referred to as the BLE central controller) to scan for and query the BLE speed sensor (referred to as the BLE peripheral). It includes the following parameters:
 
-- `sensor_uuid`: The UUID of the BLE peripheral device (e.g., sensor) to connect with and monitor for speed data
+- `sensor_bd_addr`: The address of the BLE peripheral device (e.g., sensor) to connect with and monitor for speed data
 - `scan_timeout_secs`: The number of seconds to wait for a BLE peripheral response before generating an error. Some BLE devices can take a while to respond (called "advertising"), so adjust this value accordingly.
 
-> To find the UUID of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device UUIDs are typically in the form of "11:22:33:44:55:66."
+> To find the address (BD_ADDR) of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device BD_ADDRs are typically in the form of "11:22:33:44:55:66."
 
 #### The `[speed]` Section
 
 The `[speed]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
 
-- `smoothing_window`: The number of look-backs (or buffered speed measurements) to use for generating a moving average for the speed value
 - `speed_threshold`: The minimum speed change to trigger video speed updates
-- `wheel_circumference_mm`: The wheel circumference in millimeters, important in order to accurately convert raw sensor values to actual speed (distance traveled per unit time)
 - `speed_units`: The speed units to use (either "km/h" or "mph")
+- `smoothing_window`: The number of look-backs (most recent speed measurements) to use for generating a moving average for the speed value
+- `wheel_circumference_mm`: The wheel circumference in millimeters, important in order to accurately convert raw sensor values to actual speed (distance traveled per unit time)
 
 > The smoothing window is a simple ring buffer that stores the last (n) speed measurements, meaning that it will create a moving average for the speed value. This helps to smooth out the speed data and provide a more natural video playback experience.
 
@@ -177,12 +177,12 @@ The `[speed]` section defines the configuration for the speed controller compone
 
 The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
-- `file_path`: The path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
-- `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful (e.g., 0.5 = half screen)
-- `seek_to_position`: The minutes:seconds ("MM:SS") to seek to in video playback. This can be useful with long videos that may take multiple "rides" to complete.
-- `update_interval_sec`: The number of seconds (>0.0) to wait between video player updates.
+- `file_path`: The full path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
+- `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is useful
+- `seek_to_position`: The minutes:seconds ("MM:SS") to seek to in video playback. This can be useful with longer videos that may take multiple training sessions to complete
+- `update_interval_sec`: The number of seconds to wait between video player updates
 
-> The `speed_multiplier` parameter is used to control the relative playback speed of the video. Usually, a value of 1.0 is used, as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the cyclist in the video is during "normal speed" playback, it's recommended to experiment with different values to find a good balance between  video playback speed and real-world cycling experience.
+> The `speed_multiplier` parameter is used to control the relative playback speed of the video. Usually, a value of 1.0 is used (<1.0 will slow playback), as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the cyclist in the video is during "normal speed" playback, it's recommended to experiment with different values to find a good balance between  video playback speed and real-world cycling experience.
 
 #### The `[video.OSD]` Section
 
@@ -260,23 +260,23 @@ Or, you can also use the `-h` command line option for the same behavior.
 After starting `ble-sync-cycle`, you should see the following output:
 
 ```console
-2025/01/20 13:57:24 ----- ----- Starting BLE Sync Cycle 0.9.0
+2025/01/20 13:57:24 ----- ----- Starting BLE Sync Cycle 0.9.1
 2025/01/20 13:57:24 [INF] [BLE] created new BLE central controller
-2025/01/20 13:57:24 [DBG] [BLE] scanning for BLE peripheral UUID F1:42:D8:DE:35:16
+2025/01/20 13:57:24 [DBG] [BLE] scanning for BLE peripheral BD_ADDR F1:42:D8:DE:35:16
 2025/01/20 13:57:24 [INF] [BLE] found BLE peripheral F1:42:D8:DE:35:16
 2025/01/20 13:57:24 [DBG] [BLE] connecting to BLE peripheral F1:42:D8:DE:35:16
 2025/01/20 13:57:29 [INF] [BLE] BLE peripheral device connected
 2025/01/20 13:57:29 [DBG] [BLE] discovering CSC service 00001816-0000-1000-8000-00805f9b34fb
 2025/01/20 13:57:39 [FTL] [BLE] failed to acquire BLE services: timeout on DiscoverServices
-2025/01/20 13:57:39 ----- ----- BLE Sync Cycle 0.9.0 shutdown complete. Goodbye!
+2025/01/20 13:57:39 ----- ----- BLE Sync Cycle 0.9.1 shutdown complete. Goodbye!
 ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral "advertises" both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file. In most cases, however, rerunning the application will resolve the issue, as the BLE peripheral will eventually advertise its services and characteristics.
 
 ```console
-2025/01/20 14:02:29 ----- ----- Starting BLE Sync Cycle 0.9.0
+2025/01/20 14:02:29 ----- ----- Starting BLE Sync Cycle 0.9.1
 2025/01/20 14:02:29 [INF] [BLE] created new BLE central controller
-2025/01/20 14:02:29 [DBG] [BLE] scanning for BLE peripheral UUID F1:42:D8:DE:35:16
+2025/01/20 14:02:29 [DBG] [BLE] scanning for BLE peripheral BD_ADDR F1:42:D8:DE:35:16
 2025/01/20 14:02:29 [INF] [BLE] found BLE peripheral F1:42:D8:DE:35:16
 2025/01/20 14:02:29 [DBG] [BLE] connecting to BLE peripheral F1:42:D8:DE:35:16
 2025/01/20 14:02:29 [INF] [BLE] BLE peripheral device connected
@@ -365,7 +365,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2025/01/20 14:06:03 [DBG] [VID] playback speed update threshold: 0.20 mph
 2025/01/20 14:06:03 [INF] [VID] interrupt detected, stopping MPV video player...
 2025/01/20 14:06:03 [INF] [BLE] interrupt detected, stopping BLE peripheral reporting...
-2025/01/20 14:06:03 ----- ----- BLE Sync Cycle 0.9.0 shutdown complete. Goodbye!~~
+2025/01/20 14:06:03 ----- ----- BLE Sync Cycle 0.9.1 shutdown complete. Goodbye!~~
 ```
 
 ## FAQ

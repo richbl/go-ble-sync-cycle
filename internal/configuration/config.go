@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -40,7 +41,7 @@ type AppConfig struct {
 
 // BLEConfig defines Bluetooth Low Energy settings
 type BLEConfig struct {
-	SensorUUID      string `toml:"sensor_uuid"`
+	SensorBDAddr    string `toml:"sensor_bd_addr"`
 	ScanTimeoutSecs int    `toml:"scan_timeout_secs"`
 }
 
@@ -73,12 +74,20 @@ type VideoOSDConfig struct {
 
 // Error messages
 var (
-	errInvalidLogLevel   = fmt.Errorf("invalid log level")
-	errNoSensorUUID      = fmt.Errorf("sensor UUID must be specified in configuration")
-	errInvalidSpeedUnits = fmt.Errorf("invalid speed units")
-	errVideoFile         = fmt.Errorf("video file error")
-	errInvalidInterval   = fmt.Errorf("update_interval_sec must be greater than 0.0")
-	errInvalidSeek       = fmt.Errorf("seek_to_position must be in MM:SS or SS format")
+	errInvalidLogLevel    = fmt.Errorf("invalid log level")
+	errInvalidSpeedUnits  = fmt.Errorf("invalid speed units")
+	errVideoFile          = fmt.Errorf("video file error")
+	errInvalidInterval    = fmt.Errorf("update_interval_sec must be 0.1-3.0")
+	errInvalidSeek        = fmt.Errorf("seek_to_position must be in MM:SS or SS format")
+	errSmoothingWindow    = fmt.Errorf("smoothing window must be 1-25")
+	errWheelCircumference = fmt.Errorf("wheel_circumference_mm must be 50-3000")
+	errSpeedThreshold     = fmt.Errorf("speed_threshold must be 0.00-10.00")
+	errSpeedMultiplier    = fmt.Errorf("speed_multiplier must be 0.1-1.0")
+	errInvalidBDAddr      = fmt.Errorf("invalid sensor BD_ADDR in configuration")
+	errInvalidScanTimeout = fmt.Errorf("scan_timeout_secs must be 1-100")
+	errFontSize           = fmt.Errorf("font_size must be 10-200")
+	errWindowScale        = fmt.Errorf("window_scale_factor must be 0.1-1.0")
+	errUnsupportedType    = fmt.Errorf("unsupported type")
 )
 
 // Load loads the configuration from a TOML file using the provided flags
@@ -160,8 +169,18 @@ func (ac *AppConfig) validate() error {
 // validate checks BLEConfig for valid settings
 func (bc *BLEConfig) validate() error {
 
-	if bc.SensorUUID == "" {
-		return fmt.Errorf(errFormat, errNoSensorUUID, bc.SensorUUID)
+	// Validate the scan timeout
+	if err := validateField(bc.ScanTimeoutSecs, 1, 100, errInvalidScanTimeout); err != nil {
+		return err
+	}
+
+	// Define and compile the regex for BD_ADDR
+	pattern := `^([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})$`
+	re := regexp.MustCompile(pattern)
+
+	// Check if the test string matches the pattern
+	if !re.MatchString(strings.TrimSpace(bc.SensorBDAddr)) {
+		return fmt.Errorf(errFormat, errInvalidBDAddr, bc.SensorBDAddr)
 	}
 
 	return nil
@@ -170,6 +189,7 @@ func (bc *BLEConfig) validate() error {
 // validate checks SpeedConfig for valid settings
 func (sc *SpeedConfig) validate() error {
 
+	// Validate the speed units
 	validSpeedUnits := map[string]bool{
 		SpeedUnitsKMH: true,
 		SpeedUnitsMPH: true,
@@ -179,18 +199,58 @@ func (sc *SpeedConfig) validate() error {
 		return fmt.Errorf(errFormat, errInvalidSpeedUnits, sc.SpeedUnits)
 	}
 
+	// Create a slice of validations to check
+	validations := []struct {
+		value  any
+		min    any
+		max    any
+		errMsg error
+	}{
+		{sc.SmoothingWindow, 1, 25, errSmoothingWindow},
+		{sc.SpeedThreshold, 0.0, 10.0, errSpeedThreshold},
+		{sc.WheelCircumferenceMM, 50, 3000, errWheelCircumference},
+	}
+
+	for _, v := range validations {
+
+		// Validate each field
+		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
+			return err
+		}
+
+	}
+
 	return nil
 }
 
 // validate checks VideoConfig for valid settings
 func (vc *VideoConfig) validate() error {
 
+	// Check if the file exists
 	if _, err := os.Stat(vc.FilePath); err != nil {
 		return fmt.Errorf(errFormat, errVideoFile, err)
 	}
 
-	if vc.UpdateIntervalSec <= 0.0 {
-		return fmt.Errorf(errFormat, errInvalidInterval, vc.UpdateIntervalSec)
+	// Create a slice of validations to check
+	validations := []struct {
+		value  any
+		min    any
+		max    any
+		errMsg error
+	}{
+		{vc.WindowScaleFactor, 0.1, 1.0, errWindowScale},
+		{vc.UpdateIntervalSec, 0.1, 3.0, errInvalidInterval},
+		{vc.SpeedMultiplier, 0.1, 1.0, errSpeedMultiplier},
+		{vc.OnScreenDisplay.FontSize, 10, 200, errFontSize},
+	}
+
+	for _, v := range validations {
+
+		// Validate each field
+		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
+			return err
+		}
+
 	}
 
 	if !validateTimeFormat(vc.SeekToPosition) {
@@ -253,4 +313,46 @@ func validateSSFormat(input string) bool {
 	}
 
 	return true
+}
+
+// validateField checks if the provided value is within the specified range
+func validateField(value, minVal, maxVal any, errMsg error) error {
+
+	// Validate the field based on its type
+	switch val := value.(type) {
+	case int:
+		valueMin, ok := minVal.(int)
+		if !ok {
+			return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+		}
+
+		valueMax, ok := maxVal.(int)
+		if !ok {
+			return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+		}
+
+		if !(val >= valueMin && val <= valueMax) {
+			return fmt.Errorf(errFormat, errMsg, val)
+		}
+
+	case float64:
+		valueMin, ok := minVal.(float64)
+		if !ok {
+			return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+		}
+
+		valueMax, ok := maxVal.(float64)
+		if !ok {
+			return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+		}
+
+		if !(val >= valueMin && val <= valueMax) {
+			return fmt.Errorf(errFormat, errMsg, val)
+		}
+
+	default:
+		return fmt.Errorf(errFormat, errUnsupportedType, val)
+	}
+
+	return nil
 }

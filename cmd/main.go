@@ -23,7 +23,7 @@ import (
 const (
 	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.9.0"
+	appVersion = "0.9.1"
 	configFile = "config.toml"
 )
 
