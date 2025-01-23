@@ -72,6 +72,11 @@ type VideoOSDConfig struct {
 	ShowOSD              bool // Computed field based on display settings
 }
 
+// ValidationType, used for config validation, is a type that can be either an int or a float64
+type ValidationType interface {
+	int | float64
+}
+
 // Error messages
 var (
 	errInvalidLogLevel    = fmt.Errorf("invalid log level")
@@ -186,9 +191,27 @@ func (bc *BLEConfig) validate() error {
 	return nil
 }
 
+// validateConfigFields validates multiple fields against their min/max values
+func validateConfigFields(validations []struct {
+	value  any
+	min    any
+	max    any
+	errMsg error
+}) error {
+
+	for _, v := range validations {
+
+		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
 // validate checks SpeedConfig for valid settings
 func (sc *SpeedConfig) validate() error {
-
 	// Validate the speed units
 	validSpeedUnits := map[string]bool{
 		SpeedUnitsKMH: true,
@@ -211,21 +234,11 @@ func (sc *SpeedConfig) validate() error {
 		{sc.WheelCircumferenceMM, 50, 3000, errWheelCircumference},
 	}
 
-	for _, v := range validations {
-
-		// Validate each field
-		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
-			return err
-		}
-
-	}
-
-	return nil
+	return validateConfigFields(validations)
 }
 
 // validate checks VideoConfig for valid settings
 func (vc *VideoConfig) validate() error {
-
 	// Check if the file exists
 	if _, err := os.Stat(vc.FilePath); err != nil {
 		return fmt.Errorf(errFormat, errVideoFile, err)
@@ -244,13 +257,8 @@ func (vc *VideoConfig) validate() error {
 		{vc.OnScreenDisplay.FontSize, 10, 200, errFontSize},
 	}
 
-	for _, v := range validations {
-
-		// Validate each field
-		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
-			return err
-		}
-
+	if err := validateConfigFields(validations); err != nil {
+		return err
 	}
 
 	if !validateTimeFormat(vc.SeekToPosition) {
@@ -318,40 +326,54 @@ func validateSSFormat(input string) bool {
 // validateField checks if the provided value is within the specified range
 func validateField(value, minVal, maxVal any, errMsg error) error {
 
-	// Validate the field based on its type
-	switch val := value.(type) {
+	switch v := value.(type) {
 	case int:
-		valueMin, ok := minVal.(int)
-		if !ok {
-			return fmt.Errorf(errFormat, errUnsupportedType, minVal)
-		}
-
-		valueMax, ok := maxVal.(int)
-		if !ok {
-			return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
-		}
-
-		if !(val >= valueMin && val <= valueMax) {
-			return fmt.Errorf(errFormat, errMsg, val)
-		}
-
+		return validateInteger(v, minVal, maxVal, errMsg)
 	case float64:
-		valueMin, ok := minVal.(float64)
-		if !ok {
-			return fmt.Errorf(errFormat, errUnsupportedType, minVal)
-		}
-
-		valueMax, ok := maxVal.(float64)
-		if !ok {
-			return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
-		}
-
-		if !(val >= valueMin && val <= valueMax) {
-			return fmt.Errorf(errFormat, errMsg, val)
-		}
-
+		return validateFloat(v, minVal, maxVal, errMsg)
 	default:
-		return fmt.Errorf(errFormat, errUnsupportedType, val)
+		return fmt.Errorf(errFormat, errUnsupportedType, v)
+	}
+
+}
+
+// validateInteger checks if an integer value is within the specified range
+func validateInteger(value int, minVal, maxVal any, errMsg error) error {
+
+	valueMin, ok := minVal.(int)
+	if !ok {
+		return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+	}
+
+	valueMax, ok := maxVal.(int)
+	if !ok {
+		return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+	}
+
+	return validateRange(value, valueMin, valueMax, errMsg)
+}
+
+// validateFloat checks if a float value is within the specified range
+func validateFloat(value float64, minVal, maxVal any, errMsg error) error {
+
+	valueMin, ok := minVal.(float64)
+	if !ok {
+		return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+	}
+
+	valueMax, ok := maxVal.(float64)
+	if !ok {
+		return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+	}
+
+	return validateRange(value, valueMin, valueMax, errMsg)
+}
+
+// validateRange checks if a numeric value is within the specified range
+func validateRange[T ValidationType](value, minVal, maxVal T, errMsg error) error {
+
+	if value < minVal || value > maxVal {
+		return fmt.Errorf(errFormat, errMsg, value)
 	}
 
 	return nil

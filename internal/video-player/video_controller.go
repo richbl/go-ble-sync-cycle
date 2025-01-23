@@ -208,7 +208,11 @@ func (p *PlaybackController) isPlaybackComplete() (bool, error) {
 
 // shouldUpdateSpeed determines if the playback speed needs updating
 func (p *PlaybackController) shouldUpdateSpeed(state *speedState) bool {
-	return math.Abs(state.current-state.last) > p.speedConfig.SpeedThreshold
+
+	// If the display time remaining is enabled, always update the speed
+	// Otherwise, only update if the speed delta is greater than the threshold
+	return (p.config.OnScreenDisplay.DisplayTimeRemaining) ||
+		(math.Abs(state.current-state.last) > p.speedConfig.SpeedThreshold)
 }
 
 // handleZeroSpeed handles the case when no speed is detected

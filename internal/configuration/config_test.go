@@ -4,6 +4,10 @@ import (
 	"testing"
 )
 
+const (
+	testVideo = "test_video.mp4"
+)
+
 // TestLoad tests the Load function
 func TestLoad(t *testing.T) {
 
@@ -20,12 +24,12 @@ func TestLoad(t *testing.T) {
 		},
 		{
 			name:        "invalid config file",
-			configFile:  "testdata/invalid_config.toml",
+			configFile:  "invalid_config.toml",
 			expectError: true,
 		},
 		{
 			name:        "non-existent config file",
-			configFile:  "testdata/non_existent.toml",
+			configFile:  "non_existent.toml",
 			expectError: true,
 		},
 	}
@@ -164,13 +168,13 @@ func TestVideoConfigValidate(t *testing.T) {
 		fontSize          int
 		expectError       bool
 	}{
-		{"valid config", "test_video.mp4", 0.5, "00:30", 1.0, 0.5, 20, false},
+		{"valid config", testVideo, 0.5, "00:30", 1.0, 0.5, 20, false},
 		{"invalid file path", "invalid_path.mp4", 0.5, "00:30", 1.0, 0.5, 20, true},
-		{"invalid window scale factor", "testdata/test_video.mp4", 1.1, "00:30", 1.0, 0.5, 20, true},
-		{"invalid seek position", "testdata/test_video.mp4", 0.5, "invalid", 1.0, 0.5, 20, true},
-		{"invalid update interval", "testdata/test_video.mp4", 0.5, "00:30", 3.1, 0.5, 20, true},
-		{"invalid speed multiplier", "testdata/test_video.mp4", 0.5, "00:30", 1.0, 1.1, 20, true},
-		{"invalid font size", "testdata/test_video.mp4", 0.5, "00:30", 1.0, 0.5, 201, true},
+		{"invalid window scale factor", testVideo, 1.1, "00:30", 1.0, 0.5, 20, true},
+		{"invalid seek position", testVideo, 0.5, "invalid", 1.0, 0.5, 20, true},
+		{"invalid update interval", testVideo, 0.5, "00:30", 3.1, 0.5, 20, true},
+		{"invalid speed multiplier", testVideo, 0.5, "00:30", 1.0, 1.1, 20, true},
+		{"invalid font size", testVideo, 0.5, "00:30", 1.0, 0.5, 201, true},
 	}
 
 	// Run tests
