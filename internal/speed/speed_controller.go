@@ -24,6 +24,15 @@ type Controller struct {
 	state  state
 }
 
+// Common errors
+var (
+	errUnsupportedType = fmt.Errorf("unsupported type")
+)
+
+const (
+	errTypeFormat = "%w: got %T"
+)
+
 // NewSpeedController creates a new speed controller with a specified window size, which
 // determines the number of speed measurements used for smoothing
 func NewSpeedController(window int) *Controller {
@@ -57,7 +66,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 
 		value, ok := x.(float64)
 		if !ok {
-			logger.Warn(logger.BLE, fmt.Sprintf("cannot convert %v to float64", x))
+			logger.Error(logger.BLE, fmt.Errorf(errTypeFormat, errUnsupportedType, value))
 			return
 		}
 
@@ -92,7 +101,7 @@ func (sc *Controller) GetSpeedBuffer() []string {
 		if x != nil {
 			value, ok := x.(float64)
 			if !ok {
-				logger.Warn(logger.SPEED, fmt.Sprintf("cannot convert %v to float64", x))
+				logger.Error(logger.SPEED, fmt.Errorf(errTypeFormat, errUnsupportedType, value))
 				return
 			}
 

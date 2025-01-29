@@ -134,7 +134,7 @@ func TestPauseControl(t *testing.T) {
 			// Check if result is a boolean
 			propertyPause, ok := result.(bool)
 			if !ok {
-				t.Error(fmt.Errorf("%w: got %T", errInvalidVideoPaused, result))
+				t.Error(fmt.Errorf(errTypeFormat, errUnsupportedType, propertyPause))
 			}
 
 			assert.Equal(t, tt.setPause, propertyPause, "pause state should match")
