@@ -28,7 +28,7 @@ type testData struct {
 var td = testData{
 	filename:        "cycling_test.mp4",
 	windowScale:     1.0,
-	SeekToPosition:  "1",
+	SeekToPosition:  "0.25",
 	updateInterval:  1.0,
 	speedMultiplier: 1.0,
 	speedThreshold:  0.1,
@@ -90,7 +90,7 @@ func TestPlaybackFlow(t *testing.T) {
 	// Test video loading
 	t.Run("load video", func(t *testing.T) {
 
-		err := controller.player.Command([]string{"loadfile", controller.config.FilePath})
+		err := controller.mpvPlayer.Command([]string{"loadfile", controller.config.FilePath})
 		assert.NoError(t, err, "should load video")
 	})
 
@@ -125,10 +125,10 @@ func TestPauseControl(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := controller.player.SetProperty("pause", mpv.FormatFlag, tt.setPause)
+			err := controller.mpvPlayer.SetProperty("pause", mpv.FormatFlag, tt.setPause)
 			assert.NoError(t, err, "should set pause state")
 
-			result, err := controller.player.GetProperty("pause", mpv.FormatFlag)
+			result, err := controller.mpvPlayer.GetProperty("pause", mpv.FormatFlag)
 			assert.NoError(t, err, "should get pause state")
 
 			// Check if result is a boolean
