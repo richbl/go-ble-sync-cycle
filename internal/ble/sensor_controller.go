@@ -37,8 +37,12 @@ type actionParams struct {
 
 // Error definitions
 var (
-	errScanTimeout          = fmt.Errorf("scanning time limit reached")
-	errInvalidTypeAssertion = fmt.Errorf("invalid type assertion")
+	errScanTimeout     = fmt.Errorf("scanning time limit reached")
+	errUnsupportedType = fmt.Errorf("unsupported type")
+)
+
+const (
+	errTypeFormat = "%w: got %T"
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -128,7 +132,7 @@ func assertBLEType[T any](result interface{}, target T) (T, error) {
 	typedResult, ok := result.(T)
 	if !ok {
 		var zero T
-		return zero, fmt.Errorf("%w: expected %T", errInvalidTypeAssertion, target)
+		return zero, fmt.Errorf(errTypeFormat, errUnsupportedType, target)
 	}
 
 	return typedResult, nil

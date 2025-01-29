@@ -115,7 +115,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.9.1
+# 0.9.2
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
@@ -135,7 +135,7 @@ Edit the `config.toml` file found in the `internal/configuration` directory. The
   file_path = "cycling_test.mp4" # Path to the video file to play
   window_scale_factor = 1.0      # Scale factor (0.1-1.0) for the video window (1.0 = full screen)
   seek_to_position = "00:00"     # Seek minutes:seconds ("MM:SS") into the video playback
-  update_interval_sec = 0.25     # Seconds (0.1-3.0) to wait between video player updates
+  update_interval_sec = 0.25     # Seconds (0.10-3.00) to wait between video player updates
   speed_multiplier = 0.8         # Multiplier (0.1-1.0) that adjusts sensor speed to video playback speed
                                  # (0.1 = slow, 1.0 = normal speed)
   [video.OSD]
@@ -260,7 +260,7 @@ Or, you can also use the `-h` command line option for the same behavior.
 After starting `ble-sync-cycle`, you should see the following output:
 
 ```console
-2025/01/20 13:57:24 ----- ----- Starting BLE Sync Cycle 0.9.1
+2025/01/20 13:57:24 ----- ----- Starting BLE Sync Cycle 0.9.2
 2025/01/20 13:57:24 [INF] [BLE] created new BLE central controller
 2025/01/20 13:57:24 [DBG] [BLE] scanning for BLE peripheral BD_ADDR F1:42:D8:DE:35:16
 2025/01/20 13:57:24 [INF] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -268,13 +268,13 @@ After starting `ble-sync-cycle`, you should see the following output:
 2025/01/20 13:57:29 [INF] [BLE] BLE peripheral device connected
 2025/01/20 13:57:29 [DBG] [BLE] discovering CSC service 00001816-0000-1000-8000-00805f9b34fb
 2025/01/20 13:57:39 [FTL] [BLE] failed to acquire BLE services: timeout on DiscoverServices
-2025/01/20 13:57:39 ----- ----- BLE Sync Cycle 0.9.1 shutdown complete. Goodbye!
+2025/01/20 13:57:39 ----- ----- BLE Sync Cycle 0.9.2 shutdown complete. Goodbye!
 ```
 
 In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral "advertises" both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file. In most cases, however, rerunning the application will resolve the issue, as the BLE peripheral will eventually advertise its services and characteristics.
 
 ```console
-2025/01/20 14:02:29 ----- ----- Starting BLE Sync Cycle 0.9.1
+2025/01/20 14:02:29 ----- ----- Starting BLE Sync Cycle 0.9.2
 2025/01/20 14:02:29 [INF] [BLE] created new BLE central controller
 2025/01/20 14:02:29 [DBG] [BLE] scanning for BLE peripheral BD_ADDR F1:42:D8:DE:35:16
 2025/01/20 14:02:29 [INF] [BLE] found BLE peripheral F1:42:D8:DE:35:16
@@ -365,7 +365,7 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2025/01/20 14:06:03 [DBG] [VID] playback speed update threshold: 0.20 mph
 2025/01/20 14:06:03 [INF] [VID] interrupt detected, stopping MPV video player...
 2025/01/20 14:06:03 [INF] [BLE] interrupt detected, stopping BLE peripheral reporting...
-2025/01/20 14:06:03 ----- ----- BLE Sync Cycle 0.9.1 shutdown complete. Goodbye!~~
+2025/01/20 14:06:03 ----- ----- BLE Sync Cycle 0.9.2 shutdown complete. Goodbye!~~
 ```
 
 ## FAQ

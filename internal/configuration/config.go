@@ -23,7 +23,8 @@ const (
 	SpeedUnitsKMH = "km/h"
 	SpeedUnitsMPH = "mph"
 
-	errFormat = "%w: %v"
+	errTypeFormat = "%w: got %T"
+	errFormat     = "%w: %v"
 )
 
 // Config represents the complete application configuration structure
@@ -332,7 +333,7 @@ func validateField(value, minVal, maxVal any, errMsg error) error {
 	case float64:
 		return validateFloat(v, minVal, maxVal, errMsg)
 	default:
-		return fmt.Errorf(errFormat, errUnsupportedType, v)
+		return fmt.Errorf(errTypeFormat, errUnsupportedType, v)
 	}
 
 }
@@ -342,12 +343,12 @@ func validateInteger(value int, minVal, maxVal any, errMsg error) error {
 
 	valueMin, ok := minVal.(int)
 	if !ok {
-		return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+		return fmt.Errorf(errTypeFormat, errUnsupportedType, minVal)
 	}
 
 	valueMax, ok := maxVal.(int)
 	if !ok {
-		return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+		return fmt.Errorf(errTypeFormat, errUnsupportedType, maxVal)
 	}
 
 	return validateRange(value, valueMin, valueMax, errMsg)
@@ -358,12 +359,12 @@ func validateFloat(value float64, minVal, maxVal any, errMsg error) error {
 
 	valueMin, ok := minVal.(float64)
 	if !ok {
-		return fmt.Errorf(errFormat, errUnsupportedType, minVal)
+		return fmt.Errorf(errTypeFormat, errUnsupportedType, minVal)
 	}
 
 	valueMax, ok := maxVal.(float64)
 	if !ok {
-		return fmt.Errorf(errFormat, errUnsupportedType, maxVal)
+		return fmt.Errorf(errTypeFormat, errUnsupportedType, maxVal)
 	}
 
 	return validateRange(value, valueMin, valueMax, errMsg)

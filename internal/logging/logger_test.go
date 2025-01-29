@@ -3,6 +3,7 @@ package logger
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -34,7 +35,13 @@ type testCase struct {
 
 // Define variables
 var (
-	testMessage = "test message"
+	testMessage        = "test message"
+	errUnsupportedType = fmt.Errorf("unsupported type")
+)
+
+// Error formats
+const (
+	errTypeFormat = "%w: got %T"
 )
 
 // setupTest creates a new test logger with buffer
@@ -97,7 +104,7 @@ func TestInitialize(t *testing.T) {
 			}
 
 			if h.level != tt.wantLevel {
-				t.Errorf("got level %v, want %v", h.level, tt.wantLevel)
+				t.Error(fmt.Errorf(errTypeFormat, errUnsupportedType, h))
 			}
 
 		})
