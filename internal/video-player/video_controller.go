@@ -35,7 +35,7 @@ const (
 type PlaybackController struct {
 	config      config.VideoConfig
 	speedConfig config.SpeedConfig
-	player      *mpv.Mpv
+	mpvPlayer   *mpv.Mpv
 }
 
 // speedState maintains the current state of playback speed
@@ -47,24 +47,24 @@ type speedState struct {
 // NewPlaybackController creates a new video player with the given config
 func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.SpeedConfig) (*PlaybackController, error) {
 
-	player := mpv.New()
+	mpvPlayer := mpv.New()
 
-	if err := player.Initialize(); err != nil {
+	if err := mpvPlayer.Initialize(); err != nil {
 		return nil, fmt.Errorf("failed to initialize MPV player: %w", err)
 	}
 
 	return &PlaybackController{
 		config:      videoConfig,
 		speedConfig: speedConfig,
-		player:      player,
+		mpvPlayer:   mpvPlayer,
 	}, nil
 }
 
 // Start configures and starts the MPV media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Debug(logger.VIDEO, "starting MPV video player...")
-	defer p.player.TerminateDestroy()
+	logger.Debug(logger.VIDEO, "starting MPV video mpvPlayer...")
+	defer p.mpvPlayer.TerminateDestroy()
 
 	if err := p.setup(); err != nil {
 		return fmt.Errorf("failed to setup player: %w", err)
@@ -85,13 +85,13 @@ func (p *PlaybackController) setup() error {
 	}
 
 	logger.Debug(logger.VIDEO, "loading video file:", p.config.FilePath)
-	if err := p.player.Command([]string{"loadfile", p.config.FilePath}); err != nil {
+	if err := p.mpvPlayer.Command([]string{"loadfile", p.config.FilePath}); err != nil {
 		return fmt.Errorf("failed to load video file: %w", err)
 	}
 
 	// Seek into the video playback
 	logger.Debug(logger.VIDEO, "seeking to playback position", p.config.SeekToPosition)
-	if err := p.player.SetOptionString("start", p.config.SeekToPosition); err != nil {
+	if err := p.mpvPlayer.SetOptionString("start", p.config.SeekToPosition); err != nil {
 		return err
 	}
 
@@ -102,18 +102,18 @@ func (p *PlaybackController) setup() error {
 func (p *PlaybackController) configureMPVPlayer() error {
 
 	// keep open to allow for EOF check
-	if err := p.player.SetOptionString("keep-open", "yes"); err != nil {
+	if err := p.mpvPlayer.SetOptionString("keep-open", "yes"); err != nil {
 		return err
 	}
 
 	// Configure the OSD (if enabled)
 	if p.config.OnScreenDisplay.ShowOSD {
 
-		if err := p.player.SetOption("osd-font-size", mpv.FormatInt64, int64(p.config.OnScreenDisplay.FontSize)); err != nil {
+		if err := p.mpvPlayer.SetOption("osd-font-size", mpv.FormatInt64, int64(p.config.OnScreenDisplay.FontSize)); err != nil {
 			return err
 		}
 
-		if err := p.player.SetOption("osd-margin-x", mpv.FormatInt64, osdMargin); err != nil {
+		if err := p.mpvPlayer.SetOption("osd-margin-x", mpv.FormatInt64, osdMargin); err != nil {
 			return err
 		}
 
@@ -121,19 +121,19 @@ func (p *PlaybackController) configureMPVPlayer() error {
 
 	// For testing purposes only: enables all logging is so slow that video playback times out
 	// So... good for stress testing, but not for normal use
-	// if err := p.player.SetOptionString("msg-level", "all=trace"); err != nil {
+	// if err := p.mpvPlayer.SetOptionString("msg-level", "all=trace"); err != nil {
 	// 	return fmt.Errorf(errFormat, errGetVideoState, err)
 	// }
 
 	// Set the playback window maximized
 	if p.config.WindowScaleFactor == 1.0 {
-		return p.player.SetOptionString("window-maximized", "yes")
+		return p.mpvPlayer.SetOptionString("window-maximized", "yes")
 	}
 
 	// Set the window scale (when not maximized)
 	scalePercent := strconv.Itoa(int(p.config.WindowScaleFactor * 100))
 
-	return p.player.SetOptionString("autofit", scalePercent+"%")
+	return p.mpvPlayer.SetOptionString("autofit", scalePercent+"%")
 }
 
 // run handles the main playback loop
@@ -155,7 +155,7 @@ func (p *PlaybackController) run(ctx context.Context, speedController *speed.Con
 		select {
 		case <-ctx.Done():
 			fmt.Print("\r")
-			logger.Info(logger.VIDEO, "interrupt detected, stopping MPV video player...")
+			logger.Info(logger.VIDEO, "interrupt detected, stopping MPV video mpvPlayer...")
 
 			return nil
 		case <-ticker.C:
@@ -201,7 +201,7 @@ func (p *PlaybackController) tick(speedController *speed.Controller, state *spee
 // isPlaybackComplete checks if the video has finished playing
 func (p *PlaybackController) isPlaybackComplete() (bool, error) {
 
-	reachedEOF, err := p.player.GetProperty("eof-reached", mpv.FormatFlag)
+	reachedEOF, err := p.mpvPlayer.GetProperty("eof-reached", mpv.FormatFlag)
 	if err != nil {
 		return false, fmt.Errorf(errFormat, errGetVideoState, err)
 	}
@@ -233,7 +233,7 @@ func (p *PlaybackController) handleZeroSpeed() error {
 		return fmt.Errorf(errFormat, errOSDUpdate, err)
 	}
 
-	return p.player.SetProperty("pause", mpv.FormatFlag, true)
+	return p.mpvPlayer.SetProperty("pause", mpv.FormatFlag, true)
 }
 
 // updateSpeed adjusts the playback speed based on current speed
@@ -244,7 +244,7 @@ func (p *PlaybackController) updateSpeed(state *speedState) error {
 	logger.Debug(logger.VIDEO, logger.Cyan+"updating video playback speed to",
 		strconv.FormatFloat(playbackSpeed, 'f', 2, 64)+"x")
 
-	if err := p.player.SetProperty("speed", mpv.FormatDouble, playbackSpeed); err != nil {
+	if err := p.mpvPlayer.SetProperty("speed", mpv.FormatDouble, playbackSpeed); err != nil {
 		return fmt.Errorf(errFormat, errPlaybackSpeed, err)
 	}
 
@@ -254,7 +254,7 @@ func (p *PlaybackController) updateSpeed(state *speedState) error {
 
 	state.last = state.current
 
-	return p.player.SetProperty("pause", mpv.FormatFlag, false)
+	return p.mpvPlayer.SetProperty("pause", mpv.FormatFlag, false)
 }
 
 // updateDisplay updates the on-screen display
@@ -265,7 +265,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 	}
 
 	if cycleSpeed == 0 {
-		return p.player.SetOptionString("osd-msg1", "Paused")
+		return p.mpvPlayer.SetOptionString("osd-msg1", "Paused")
 	}
 
 	var osdText strings.Builder
@@ -279,7 +279,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 	}
 
 	if p.config.OnScreenDisplay.DisplayTimeRemaining {
-		timeRemaining, err := p.player.GetProperty("time-remaining", mpv.FormatInt64)
+		timeRemaining, err := p.mpvPlayer.GetProperty("time-remaining", mpv.FormatInt64)
 		if err != nil {
 			return fmt.Errorf(errFormat, errGetVideoState, err)
 		}
@@ -293,7 +293,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 		fmt.Fprintf(&osdText, "Time Remaining: %s\n", formatSeconds(timeRemainingInt))
 	}
 
-	return p.player.SetOptionString("osd-msg1", osdText.String())
+	return p.mpvPlayer.SetOptionString("osd-msg1", osdText.String())
 }
 
 // logDebugInfo logs debug information about current speeds
