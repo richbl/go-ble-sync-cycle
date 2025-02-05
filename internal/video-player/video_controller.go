@@ -120,17 +120,18 @@ func (p *PlaybackController) configureMPVPlayer() error {
 	}
 
 	// For testing purposes only: enables all logging is so slow that video playback times out
-	// So... good for stress testing, but not for normal use
+	// So... good for stress testing, but not for normal use:
+	//
 	// if err := p.mpvPlayer.SetOptionString("msg-level", "all=trace"); err != nil {
 	// 	return fmt.Errorf(errFormat, errGetVideoState, err)
 	// }
 
-	// Set the playback window maximized
+	// Set the playback window to full screen
 	if p.config.WindowScaleFactor == 1.0 {
-		return p.mpvPlayer.SetOptionString("window-maximized", "yes")
+		return p.mpvPlayer.SetOptionString("fullscreen", "yes")
 	}
 
-	// Set the window scale (when not maximized)
+	// Set the window scale (when not full screen)
 	scalePercent := strconv.Itoa(int(p.config.WindowScaleFactor * 100))
 
 	return p.mpvPlayer.SetOptionString("autofit", scalePercent+"%")
