@@ -83,7 +83,7 @@ func TestPlaybackFlow(t *testing.T) {
 
 	// Test configuration
 	t.Run("configure player", func(t *testing.T) {
-		err := controller.configureMPVPlayer()
+		err := controller.configMPVPlayback()
 		assert.NoError(t, err, "should configure player")
 	})
 
