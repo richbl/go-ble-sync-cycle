@@ -34,7 +34,7 @@ var (
 // GetBLEUpdates starts the real-time monitoring of BLE sensor notifications
 func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(logger.BLE, "starting real-time monitoring of BLE sensor notifications...")
+	logger.Info(logger.BLE, "starting monitoring of BLE sensor notifications...")
 	errChan := make(chan error, 1)
 
 	if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(func(buf []byte) {
@@ -56,7 +56,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 	go func() {
 		<-ctx.Done()
 		fmt.Print("\r") // Clear the ^C character from the terminal line
-		logger.Info(logger.BLE, "interrupt detected, stopping BLE peripheral reporting...")
+		logger.Info(logger.BLE, "interrupt detected, stopping monitoring of BLE sensor notifications...")
 		errChan <- nil
 	}()
 
