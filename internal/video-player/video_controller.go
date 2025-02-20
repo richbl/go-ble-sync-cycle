@@ -12,7 +12,7 @@ import (
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
-	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 // Common errors
@@ -30,18 +30,28 @@ const (
 	osdMargin     = 40
 )
 
-// PlaybackController manages video playback using MPV media player
+// PlaybackController manages video playback using the MPV media player
 type PlaybackController struct {
-	config      config.VideoConfig
+	videoConfig config.VideoConfig
 	speedConfig config.SpeedConfig
-	speedState  *speedState
+	osdConfig   OSDConfig
 	mpvPlayer   *mpv.Mpv
+	speedState  *speedState
 }
 
-// speedState maintains the current state of the speedController speed
+// speedState holds the current state of the speedController speed
 type speedState struct {
 	current float64
 	last    float64
+}
+
+// OSDConfig manages the configuration for the On-Screen Display (OSD)
+type OSDConfig struct {
+	ShowOSD              bool
+	FontSize             int
+	DisplayCycleSpeed    bool
+	DisplayPlaybackSpeed bool
+	DisplayTimeRemaining bool
 }
 
 // NewPlaybackController creates a new mpv video player instance with the given config
@@ -53,11 +63,21 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 		return nil, fmt.Errorf("failed to initialize MPV player: %w", err)
 	}
 
+	// Create and populate the OSDConfig struct
+	osdConfig := OSDConfig{
+		ShowOSD:              videoConfig.OnScreenDisplay.ShowOSD,
+		FontSize:             videoConfig.OnScreenDisplay.FontSize,
+		DisplayCycleSpeed:    videoConfig.OnScreenDisplay.DisplayCycleSpeed,
+		DisplayPlaybackSpeed: videoConfig.OnScreenDisplay.DisplayPlaybackSpeed,
+		DisplayTimeRemaining: videoConfig.OnScreenDisplay.DisplayTimeRemaining,
+	}
+
 	return &PlaybackController{
-		config:      videoConfig,
+		videoConfig: videoConfig,
 		speedConfig: speedConfig,
-		speedState:  &speedState{},
+		osdConfig:   osdConfig,
 		mpvPlayer:   mpvPlayer,
+		speedState:  &speedState{},
 	}, nil
 }
 
@@ -68,49 +88,42 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.C
 	defer p.mpvPlayer.TerminateDestroy()
 
 	// Configure the MPV media player
-	if err := p.configMPVPlayback(); err != nil {
+	if err := p.configurePlayback(); err != nil {
 		return fmt.Errorf("failed to configure MPV video playback: %w", err)
 	}
 
 	// Start the event callback loop for the mpv media player
-	if err := p.mpvEventLoop(ctx, speedController); err != nil {
+	if err := p.eventLoop(ctx, speedController); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// configMPVPlayback sets up the player window based on configuration
-func (p *PlaybackController) configMPVPlayback() error {
+// configurePlayback sets up the player window based on configuration
+func (p *PlaybackController) configurePlayback() error {
 
-	// Load the video file for playback
 	if err := p.loadVideoFile(); err != nil {
 		return err
 	}
 
-	// Set observer properties for mpv player callbacks
-	if err := p.mpvPlayer.ObserveProperty(0, "eof-reached", mpv.FormatFlag); err != nil {
-		return fmt.Errorf("failed to set observer for eof-reached property: %w", err)
+	if err := p.setMPVCallbackObservers(); err != nil {
+		return err
 	}
 
-	// Configure the playback window
 	if err := p.configurePlaybackWindow(); err != nil {
 		return err
 	}
 
-	// Configure player to stay open (provides consistent EOF check)
-	if err := p.mpvPlayer.SetOptionString("keep-open", "yes"); err != nil {
+	if err := p.configureKeepOpen(); err != nil {
 		return err
 	}
 
-	// Configure the on-screen display (OSD)
 	if err := p.configureOSD(); err != nil {
 		return err
 	}
 
-	logger.Debug(logger.VIDEO, "seeking to playback position", p.config.SeekToPosition)
-
-	if err := p.mpvPlayer.SetOptionString("start", p.config.SeekToPosition); err != nil {
+	if err := p.seekToStartPosition(); err != nil {
 		return err
 	}
 
@@ -120,100 +133,127 @@ func (p *PlaybackController) configMPVPlayback() error {
 // loadVideoFile loads the video file into the mpv media player
 func (p *PlaybackController) loadVideoFile() error {
 
-	logger.Debug(logger.VIDEO, "loading video file:", p.config.FilePath)
+	logger.Debug(logger.VIDEO, "loading video file:", p.videoConfig.FilePath)
 
-	if err := p.mpvPlayer.Command([]string{"loadfile", p.config.FilePath}); err != nil {
+	if err := p.mpvPlayer.Command([]string{"loadfile", p.videoConfig.FilePath}); err != nil {
 		return fmt.Errorf("failed to load video file: %w", err)
 	}
 
 	return nil
 }
 
+// setMPVCallbackObservers sets mpv callback observers
+func (p *PlaybackController) setMPVCallbackObservers() error {
+	return p.mpvPlayer.ObserveProperty(0, "eof-reached", mpv.FormatFlag)
+}
+
 // configurePlaybackWindow sets up the playback window based on configuration
 func (p *PlaybackController) configurePlaybackWindow() error {
 
-	if p.config.WindowScaleFactor == 1.0 {
-
+	if p.videoConfig.WindowScaleFactor == 1.0 {
 		if err := p.mpvPlayer.SetOptionString("fullscreen", "yes"); err != nil {
 			return err
 		}
-
 	} else {
-		scalePercent := strconv.Itoa(int(p.config.WindowScaleFactor * 100))
-
+		scalePercent := strconv.Itoa(int(p.videoConfig.WindowScaleFactor * 100))
 		if err := p.mpvPlayer.SetOptionString("autofit", scalePercent+"%"); err != nil {
 			return err
 		}
-
 	}
 
 	return nil
 }
 
-// configureOSD sets up the OSD based on configuration
+// configureKeepOpen ensures MPV keeps running after playback
+func (p *PlaybackController) configureKeepOpen() error {
+
+	if err := p.mpvPlayer.SetOptionString("keep-open", "yes"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// configureOSD sets up the OSD based on osdConfig struct
 func (p *PlaybackController) configureOSD() error {
 
-	if p.config.OnScreenDisplay.ShowOSD {
+	if !p.osdConfig.ShowOSD {
+		return nil
+	}
 
-		if err := p.mpvPlayer.SetOption("osd-font-size", mpv.FormatInt64, int64(p.config.OnScreenDisplay.FontSize)); err != nil {
-			return err
-		}
+	if err := p.mpvPlayer.SetOption("osd-font-size", mpv.FormatInt64, int64(p.osdConfig.FontSize)); err != nil {
+		return err
+	}
 
-		if err := p.mpvPlayer.SetOption("osd-margin-x", mpv.FormatInt64, osdMargin); err != nil {
-			return err
-		}
-
+	if err := p.mpvPlayer.SetOption("osd-margin-x", mpv.FormatInt64, osdMargin); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// mpvEventLoop handles mpv callback and speed controller events
-func (p *PlaybackController) mpvEventLoop(ctx context.Context, speedController *speed.Controller) error {
+// seekToStartPosition seeks to the configured start position
+func (p *PlaybackController) seekToStartPosition() error {
 
-	// Set an interval to check for updates
-	ticker := time.NewTicker(time.Millisecond * time.Duration(p.config.UpdateIntervalSec*1000))
+	logger.Debug(logger.VIDEO, "seeking to playback position", p.videoConfig.SeekToPosition)
+
+	if err := p.mpvPlayer.SetOptionString("start", p.videoConfig.SeekToPosition); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// eventLoop is the main event loop for the mpv media player
+func (p *PlaybackController) eventLoop(ctx context.Context, speedController *speed.Controller) error {
+
+	// Start a ticker to check updates from SpeedController
+	ticker := time.NewTicker(time.Millisecond * time.Duration(p.videoConfig.UpdateIntervalSec*1000))
 	defer ticker.Stop()
 
 	for {
-
 		select {
 
-		// Speed controller updates
+		// Check for updates from speedController
 		case <-ticker.C:
-
 			if err := p.updateSpeedFromController(speedController); err != nil {
 				logger.Warn(logger.VIDEO, "speed update error:", err)
 			}
 
-		// Context cancellation (user interrupt)
+		// Check for context cancellation
 		case <-ctx.Done():
-			fmt.Print("\r")
+			fmt.Print("\r") // Clear the ^C character from the terminal line
 			logger.Info(logger.VIDEO, "interrupt detected, stopping MPV video playback...")
 
 			return nil
+		}
 
-		// MPV callback event(s)
-		default:
-			event := p.mpvPlayer.WaitEvent(0)
+		// Check for MPV events
+		if err := p.handleMPVEvents(); err != nil {
+			return err
+		}
+	}
+}
 
-			if event.EventID == mpv.EventPropertyChange {
-				prop := event.Property()
+// handleMPVEvents handles callback events from the mpv media player
+func (p *PlaybackController) handleMPVEvents() error {
 
-				if prop.Name == "eof-reached" {
-					reached, ok := prop.Data.(int)
+	event := p.mpvPlayer.WaitEvent(0)
 
-					if ok && reached == 1 {
-						return errVideoComplete
-					}
+	if event.EventID == mpv.EventPropertyChange {
+		prop := event.Property()
 
-				}
+		if prop.Name == "eof-reached" {
+			reached, ok := prop.Data.(int)
+
+			if ok && reached == 1 {
+				return errVideoComplete
 			}
 
 		}
-
 	}
 
+	return nil
 }
 
 // updateSpeedFromController manages updates from the speedController component
@@ -250,14 +290,14 @@ func (p *PlaybackController) shouldUpdateSpeed() bool {
 
 	// Always update the speed if "display time remaining" option is enabled
 	// Else update only if the speed delta is greater than the configured speed threshold
-	return (p.config.OnScreenDisplay.DisplayTimeRemaining) ||
+	return p.osdConfig.DisplayTimeRemaining ||
 		(math.Abs(p.speedState.current-p.speedState.last) > p.speedConfig.SpeedThreshold)
 }
 
 // updateSpeed adjusts the playback speed based on current speed
 func (p *PlaybackController) updateSpeed() error {
 
-	playbackSpeed := (p.speedState.current * p.config.SpeedMultiplier) / 10.0
+	playbackSpeed := (p.speedState.current * p.videoConfig.SpeedMultiplier) / 10.0
 
 	logger.Debug(logger.VIDEO, logger.Cyan+"updating video playback speed to",
 		strconv.FormatFloat(playbackSpeed, 'f', 2, 64)+"x")
@@ -266,7 +306,7 @@ func (p *PlaybackController) updateSpeed() error {
 		return fmt.Errorf(errFormat, errPlaybackSpeed, err)
 	}
 
-	if p.config.OnScreenDisplay.ShowOSD {
+	if p.osdConfig.ShowOSD {
 		if err := p.updateDisplay(p.speedState.current, playbackSpeed); err != nil {
 			return fmt.Errorf(errFormat, errOSDUpdate, err)
 		}
@@ -286,16 +326,16 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 
 	var osdText strings.Builder
 
-	if p.config.OnScreenDisplay.DisplayCycleSpeed {
+	if p.osdConfig.DisplayCycleSpeed {
 		fmt.Fprintf(&osdText, "Cycle Speed: %.1f %s\n", cycleSpeed, p.speedConfig.SpeedUnits)
 	}
 
-	if p.config.OnScreenDisplay.DisplayPlaybackSpeed {
+	if p.osdConfig.DisplayPlaybackSpeed {
 		fmt.Fprintf(&osdText, "Playback Speed: %.2fx\n", playbackSpeed)
 	}
 
 	// Add time remaining if enabled
-	if p.config.OnScreenDisplay.DisplayTimeRemaining {
+	if p.osdConfig.DisplayTimeRemaining {
 
 		if timeRemaining, err := p.getTimeRemaining(); err == nil {
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", formatSeconds(timeRemaining))
