@@ -78,6 +78,14 @@ type ValidationType interface {
 	int | float64
 }
 
+// validationRange is a struct used for validating config field ranges
+type validationRange struct {
+	value  any
+	min    any
+	max    any
+	errMsg error
+}
+
 // Error messages
 var (
 	errInvalidLogLevel    = fmt.Errorf("invalid log level")
@@ -99,17 +107,18 @@ var (
 // Load loads the configuration from a TOML file using the provided flags
 func Load(configFile string) (*Config, error) {
 
-	// Use the command-line config path if provided, otherwise use the default
+	// Note that command line flags will override values in the TOML file
 	clFlags := flags.GetFlags()
+
+	// Use the command-line config path if provided, otherwise use the default
 	if clFlags.Config != "" {
 		configFile = clFlags.Config
 	}
 
 	// Read the configuration file
-	cfg := &Config{}
-	_, err := toml.DecodeFile(configFile, cfg)
+	cfg, err := readConfigFile(configFile, &Config{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode config file: %w", err)
+		return nil, err
 	}
 
 	// Validate configuration settings imported from the TOML file
@@ -117,17 +126,38 @@ func Load(configFile string) (*Config, error) {
 		return nil, err
 	}
 
-	// Use the command-line seek position if provided, otherwise use what's in the TOML file
+	// Use the command-line seek position if provided (overriding any value in the TOML file)
+	if err := setSeekToPosition(cfg, clFlags); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// readConfigFile reads the configuration file
+func readConfigFile(path string, cfg *Config) (*Config, error) {
+
+	_, err := toml.DecodeFile(path, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode config file: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// setSeekToPosition validates and then sets the seek position based on the command-line flag
+func setSeekToPosition(cfg *Config, clFlags flags.Flags) error {
+
 	if clFlags.Seek != "" {
 
 		if !validateTimeFormat(clFlags.Seek) {
-			return nil, fmt.Errorf(errFormat, errInvalidSeek, clFlags.Seek)
+			return fmt.Errorf(errFormat, errInvalidSeek, clFlags.Seek)
 		}
 
 		cfg.Video.SeekToPosition = clFlags.Seek
 	}
 
-	return cfg, nil
+	return nil
 }
 
 // validate performs validation across all configuration sections
@@ -193,14 +223,9 @@ func (bc *BLEConfig) validate() error {
 }
 
 // validateConfigFields validates multiple fields against their min/max values
-func validateConfigFields(validations []struct {
-	value  any
-	min    any
-	max    any
-	errMsg error
-}) error {
+func validateConfigFields(validations *[]validationRange) error {
 
-	for _, v := range validations {
+	for _, v := range *validations {
 
 		if err := validateField(v.value, v.min, v.max, v.errMsg); err != nil {
 			return err
@@ -213,6 +238,7 @@ func validateConfigFields(validations []struct {
 
 // validate checks SpeedConfig for valid settings
 func (sc *SpeedConfig) validate() error {
+
 	// Validate the speed units
 	validSpeedUnits := map[string]bool{
 		SpeedUnitsKMH: true,
@@ -223,13 +249,8 @@ func (sc *SpeedConfig) validate() error {
 		return fmt.Errorf(errFormat, errInvalidSpeedUnits, sc.SpeedUnits)
 	}
 
-	// Create a slice of validations to check
-	validations := []struct {
-		value  any
-		min    any
-		max    any
-		errMsg error
-	}{
+	// Create a slice of validations for range checks
+	validations := &[]validationRange{
 		{sc.SmoothingWindow, 1, 25, errSmoothingWindow},
 		{sc.SpeedThreshold, 0.0, 10.0, errSpeedThreshold},
 		{sc.WheelCircumferenceMM, 50, 3000, errWheelCircumference},
@@ -240,18 +261,14 @@ func (sc *SpeedConfig) validate() error {
 
 // validate checks VideoConfig for valid settings
 func (vc *VideoConfig) validate() error {
+
 	// Check if the file exists
 	if _, err := os.Stat(vc.FilePath); err != nil {
 		return fmt.Errorf(errFormat, errVideoFile, err)
 	}
 
-	// Create a slice of validations to check
-	validations := []struct {
-		value  any
-		min    any
-		max    any
-		errMsg error
-	}{
+	// Create a slice of validations for range checks
+	validations := &[]validationRange{
 		{vc.WindowScaleFactor, 0.1, 1.0, errWindowScale},
 		{vc.UpdateIntervalSec, 0.1, 3.0, errInvalidInterval},
 		{vc.SpeedMultiplier, 0.1, 1.0, errSpeedMultiplier},
