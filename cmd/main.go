@@ -113,7 +113,7 @@ func waveHello() {
 
 // waveGoodbye outputs a goodbye message and exits the program
 func waveGoodbye() {
-	log.Println(appPrefix, appName, appVersion, "shutdown complete. Goodbye!")
+	log.Println(appPrefix, appName, appVersion, "shutdown complete. Goodbye")
 	os.Exit(0)
 }
 
