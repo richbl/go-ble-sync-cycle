@@ -23,14 +23,12 @@ type blePeripheralDetails struct {
 type Controller struct {
 	blePeripheralDetails blePeripheralDetails
 	speedConfig          config.SpeedConfig
-	lastWheelRevs        uint32
-	lastWheelTime        uint16
 }
 
 // actionParams encapsulates parameters for BLE actions
 type actionParams struct {
 	ctx        context.Context
-	action     func(chan<- interface{}, chan<- error)
+	action     func(chan<- any, chan<- error)
 	logMessage string
 	stopAction func() error
 }
@@ -63,9 +61,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 			bleAdapter:        *bleAdapter,
 			bleCharacteristic: &bluetooth.DeviceCharacteristic{},
 		},
-		lastWheelRevs: 0,
-		lastWheelTime: 0,
-		speedConfig:   speedConfig,
+		speedConfig: speedConfig,
 	}, nil
 }
 
@@ -103,7 +99,7 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 
 	params := actionParams{
 		ctx:        ctx,
-		action:     func(found chan<- interface{}, errChan chan<- error) { m.connectAction(device, found, errChan) },
+		action:     func(found chan<- any, errChan chan<- error) { m.connectAction(device, found, errChan) },
 		logMessage: fmt.Sprintf("connecting to BLE peripheral %s", device.Address.String()),
 		stopAction: nil,
 	}
@@ -127,7 +123,7 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 }
 
 // assertBLEType casts the result to the specified type
-func assertBLEType[T any](result interface{}, target T) (T, error) {
+func assertBLEType[T any](result any, target T) (T, error) {
 
 	typedResult, ok := result.(T)
 	if !ok {
@@ -139,14 +135,14 @@ func assertBLEType[T any](result interface{}, target T) (T, error) {
 }
 
 // performBLEAction is a wrapper for performing BLE discovery actions
-func (m *Controller) performBLEAction(params actionParams) (interface{}, error) {
+func (m *Controller) performBLEAction(params actionParams) (any, error) {
 
 	// Create a context with a timeout
 	scanCtx, cancel := context.WithTimeout(params.ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 
 	// Create channels for signaling action completion
-	found := make(chan interface{}, 1)
+	found := make(chan any, 1)
 	errChan := make(chan error, 1)
 
 	go func() {
@@ -165,7 +161,7 @@ func (m *Controller) performBLEAction(params actionParams) (interface{}, error) 
 }
 
 // handleActionTimeout handles the timeout or cancellation of the BLE action
-func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() error) (interface{}, error) {
+func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() error) (any, error) {
 
 	if stopAction != nil {
 
@@ -187,7 +183,7 @@ func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() 
 }
 
 // scanAction performs the BLE peripheral scan
-func (m *Controller) scanAction(found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) scanAction(found chan<- any, errChan chan<- error) {
 
 	foundChan := make(chan bluetooth.ScanResult, 1)
 
@@ -200,7 +196,7 @@ func (m *Controller) scanAction(found chan<- interface{}, errChan chan<- error) 
 }
 
 // connectAction performs the connection to the BLE peripheral
-func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- any, errChan chan<- error) {
 
 	dev, err := m.blePeripheralDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
 

@@ -12,7 +12,7 @@ import (
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
-	"github.com/richbl/go-ble-sync-cycle/internal/speed"
+	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 // Common errors
@@ -32,14 +32,15 @@ const (
 
 // PlaybackController manages video playback using the MPV media player
 type PlaybackController struct {
-	videoConfig config.VideoConfig
-	speedConfig config.SpeedConfig
-	osdConfig   OSDConfig
-	mpvPlayer   *mpv.Mpv
-	speedState  *speedState
+	videoConfig         config.VideoConfig
+	speedConfig         config.SpeedConfig
+	osdConfig           OSDConfig
+	mpvPlayer           *mpv.Mpv
+	speedState          *speedState
+	speedUnitMultiplier float64
 }
 
-// speedState holds the current state of the speedController speed
+// speedState holds the state of the speedController speed
 type speedState struct {
 	current float64
 	last    float64
@@ -52,6 +53,12 @@ type OSDConfig struct {
 	DisplayCycleSpeed    bool
 	DisplayPlaybackSpeed bool
 	DisplayTimeRemaining bool
+}
+
+// speedUnitConversion maps units of speed (mph, km/h) to their multiplier for consistent playback speed
+var speedUnitConversion = map[string]float64{
+	config.SpeedUnitsKMH: 1.60934,
+	config.SpeedUnitsMPH: 1.0,
 }
 
 // NewPlaybackController creates a new mpv video player instance with the given config
@@ -126,6 +133,9 @@ func (p *PlaybackController) configurePlayback() error {
 	if err := p.seekToStartPosition(); err != nil {
 		return err
 	}
+
+	// Precalculate playback speed multiplier based on speed units
+	p.speedUnitMultiplier = p.videoConfig.SpeedMultiplier / (speedUnitConversion[p.speedConfig.SpeedUnits] * 10.0)
 
 	return nil
 }
@@ -297,7 +307,8 @@ func (p *PlaybackController) shouldUpdateSpeed() bool {
 // updateSpeed adjusts the playback speed based on current speed
 func (p *PlaybackController) updateSpeed() error {
 
-	playbackSpeed := (p.speedState.current * p.videoConfig.SpeedMultiplier) / 10.0
+	// Update the playback speed based on current speed and unit multiplier
+	playbackSpeed := p.speedState.current * p.speedUnitMultiplier
 
 	logger.Debug(logger.VIDEO, logger.Cyan+"updating video playback speed to",
 		strconv.FormatFloat(playbackSpeed, 'f', 2, 64)+"x")
@@ -334,7 +345,6 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 		fmt.Fprintf(&osdText, "Playback Speed: %.2fx\n", playbackSpeed)
 	}
 
-	// Add time remaining if enabled
 	if p.osdConfig.DisplayTimeRemaining {
 
 		if timeRemaining, err := p.getTimeRemaining(); err == nil {

@@ -106,7 +106,7 @@ func TestCleanupOrder(t *testing.T) {
 	manager := sm.NewShutdownManager(time.Second)
 	order := make([]int, 0, 3)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		i := i // Capture loop variable
 		manager.AddCleanup(func() {
 			order = append(order, i)

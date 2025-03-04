@@ -39,7 +39,7 @@ func NewSpeedController(window int) *Controller {
 
 	r := ring.New(window)
 
-	for i := 0; i < window; i++ {
+	for range window {
 		r.Value = float64(0)
 		r = r.Next()
 	}
@@ -62,7 +62,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 	sc.speeds = sc.speeds.Next()
 
 	var sum float64
-	sc.speeds.Do(func(x interface{}) {
+	sc.speeds.Do(func(x any) {
 
 		value, ok := x.(float64)
 		if !ok {
@@ -96,7 +96,7 @@ func (sc *Controller) GetSpeedBuffer() []string {
 	defer sc.mu.RUnlock()
 
 	var speeds []string
-	sc.speeds.Do(func(x interface{}) {
+	sc.speeds.Do(func(x any) {
 
 		if x != nil {
 			value, ok := x.(float64)

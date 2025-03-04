@@ -19,7 +19,7 @@ func (m *Controller) GetBLEServices(ctx context.Context, device bluetooth.Device
 
 	params := actionParams{
 		ctx:        ctx,
-		action:     func(found chan<- interface{}, errChan chan<- error) { m.discoverServicesAction(device, found, errChan) },
+		action:     func(found chan<- any, errChan chan<- error) { m.discoverServicesAction(device, found, errChan) },
 		logMessage: fmt.Sprintf("discovering CSC service %s", cscServiceUUID.String()),
 		stopAction: nil,
 	}
@@ -44,7 +44,7 @@ func (m *Controller) GetBLEServices(ctx context.Context, device bluetooth.Device
 }
 
 // discoverServicesAction performs the discovery of CSC services
-func (m *Controller) discoverServicesAction(device bluetooth.Device, found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) discoverServicesAction(device bluetooth.Device, found chan<- any, errChan chan<- error) {
 
 	services, err := device.DiscoverServices([]bluetooth.UUID{cscServiceUUID})
 	if err != nil {
@@ -60,7 +60,7 @@ func (m *Controller) GetBLECharacteristics(ctx context.Context, services []bluet
 
 	params := actionParams{
 		ctx: ctx,
-		action: func(found chan<- interface{}, errChan chan<- error) {
+		action: func(found chan<- any, errChan chan<- error) {
 			m.discoverCharacteristicsAction(services, found, errChan)
 		},
 		logMessage: fmt.Sprintf("discovering CSC characteristic %s", cscCharacteristicUUID.String()),
@@ -81,7 +81,7 @@ func (m *Controller) GetBLECharacteristics(ctx context.Context, services []bluet
 }
 
 // discoverCharacteristicsAction performs the discovery of CSC characteristics
-func (m *Controller) discoverCharacteristicsAction(services []bluetooth.DeviceService, found chan<- interface{}, errChan chan<- error) {
+func (m *Controller) discoverCharacteristicsAction(services []bluetooth.DeviceService, found chan<- any, errChan chan<- error) {
 
 	characteristics, err := services[0].DiscoverCharacteristics([]bluetooth.UUID{cscCharacteristicUUID})
 	if err != nil {

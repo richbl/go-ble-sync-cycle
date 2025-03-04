@@ -29,7 +29,7 @@ var td = testData{
 type testCase struct {
 	name     string
 	level    slog.Level
-	want     interface{}
+	want     any
 	setLevel slog.Level
 }
 
@@ -176,7 +176,7 @@ func TestLogLevels(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name    string
-		logFunc func(interface{}, ...interface{})
+		logFunc func(any, ...any)
 		level   string
 	}{
 		{"Debug", Debug, "DBG"},

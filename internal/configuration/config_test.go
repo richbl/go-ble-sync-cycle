@@ -160,6 +160,7 @@ func TestVideoConfigValidate(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name              string
+		mediaPlayer       string
 		filePath          string
 		windowScaleFactor float64
 		seekToPosition    string
@@ -168,13 +169,14 @@ func TestVideoConfigValidate(t *testing.T) {
 		fontSize          int
 		expectError       bool
 	}{
-		{"valid config", testVideo, 0.5, "00:30", 1.0, 0.5, 20, false},
-		{"invalid file path", "invalid_path.mp4", 0.5, "00:30", 1.0, 0.5, 20, true},
-		{"invalid window scale factor", testVideo, 1.1, "00:30", 1.0, 0.5, 20, true},
-		{"invalid seek position", testVideo, 0.5, "invalid", 1.0, 0.5, 20, true},
-		{"invalid update interval", testVideo, 0.5, "00:30", 3.1, 0.5, 20, true},
-		{"invalid speed multiplier", testVideo, 0.5, "00:30", 1.0, 1.1, 20, true},
-		{"invalid font size", testVideo, 0.5, "00:30", 1.0, 0.5, 201, true},
+		{"valid config", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 0.5, 20, false},
+		{"invalid media player", "xyz", testVideo, 0.5, "00:30", 1.0, 0.5, 20, true},
+		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, "00:30", 1.0, 0.5, 20, true},
+		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, "00:30", 1.0, 0.5, 20, true},
+		{"invalid seek position", MediaPlayerMPV, testVideo, 0.5, "invalid", 1.0, 0.5, 20, true},
+		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, "00:30", 3.1, 0.5, 20, true},
+		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 1.6, 20, true},
+		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 0.5, 201, true},
 	}
 
 	// Run tests
@@ -183,6 +185,7 @@ func TestVideoConfigValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			vc := VideoConfig{
+				MediaPlayer:       tt.mediaPlayer,
 				FilePath:          tt.filePath,
 				WindowScaleFactor: tt.windowScaleFactor,
 				SeekToPosition:    tt.seekToPosition,
@@ -240,9 +243,9 @@ func TestValidateField(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name        string
-		value       interface{}
-		min         interface{}
-		max         interface{}
+		value       any
+		min         any
+		max         any
 		expectError bool
 	}{
 		{"valid int", 10, 1, 20, false},
