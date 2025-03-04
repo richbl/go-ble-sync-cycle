@@ -23,6 +23,9 @@ const (
 	SpeedUnitsKMH = "km/h"
 	SpeedUnitsMPH = "mph"
 
+	MediaPlayerMPV = "mpv"
+	MediaPlayerVLC = "vlc"
+
 	errTypeFormat = "%w: got %T"
 	errFormat     = "%w: %v"
 )
@@ -56,6 +59,7 @@ type SpeedConfig struct {
 
 // VideoConfig defines video playback and display settings
 type VideoConfig struct {
+	MediaPlayer       string         `toml:"media_player"`
 	FilePath          string         `toml:"file_path"`
 	WindowScaleFactor float64        `toml:"window_scale_factor"`
 	SeekToPosition    string         `toml:"seek_to_position"`
@@ -91,12 +95,13 @@ var (
 	errInvalidLogLevel    = fmt.Errorf("invalid log level")
 	errInvalidSpeedUnits  = fmt.Errorf("invalid speed units")
 	errVideoFile          = fmt.Errorf("video file error")
+	errInvalidPlayer      = fmt.Errorf("invalid media player")
 	errInvalidInterval    = fmt.Errorf("update_interval_sec must be 0.1-3.0")
 	errInvalidSeek        = fmt.Errorf("seek_to_position must be in MM:SS or SS format")
 	errSmoothingWindow    = fmt.Errorf("smoothing window must be 1-25")
 	errWheelCircumference = fmt.Errorf("wheel_circumference_mm must be 50-3000")
 	errSpeedThreshold     = fmt.Errorf("speed_threshold must be 0.00-10.00")
-	errSpeedMultiplier    = fmt.Errorf("speed_multiplier must be 0.1-1.0")
+	errSpeedMultiplier    = fmt.Errorf("speed_multiplier must be 0.1-1.5")
 	errInvalidBDAddr      = fmt.Errorf("invalid sensor BD_ADDR in configuration")
 	errInvalidScanTimeout = fmt.Errorf("scan_timeout_secs must be 1-100")
 	errFontSize           = fmt.Errorf("font_size must be 10-200")
@@ -267,11 +272,21 @@ func (vc *VideoConfig) validate() error {
 		return fmt.Errorf(errFormat, errVideoFile, err)
 	}
 
+	// Validate the media player
+	validPlayer := map[string]bool{
+		MediaPlayerMPV: true,
+		// MediaPlayerVLC: true, // temporarily disabled until vlc support is added
+	}
+
+	if !validPlayer[vc.MediaPlayer] {
+		return fmt.Errorf(errFormat, errInvalidPlayer, vc.MediaPlayer)
+	}
+
 	// Create a slice of validations for range checks
 	validations := &[]validationRange{
 		{vc.WindowScaleFactor, 0.1, 1.0, errWindowScale},
 		{vc.UpdateIntervalSec, 0.1, 3.0, errInvalidInterval},
-		{vc.SpeedMultiplier, 0.1, 1.0, errSpeedMultiplier},
+		{vc.SpeedMultiplier, 0.1, 1.5, errSpeedMultiplier},
 		{vc.OnScreenDisplay.FontSize, 10, 200, errFontSize},
 	}
 

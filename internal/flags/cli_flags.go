@@ -9,11 +9,11 @@ import (
 
 // FlagInfo holds structural information about a flag
 type FlagInfo struct {
-	Result    interface{} // Pointer to the resulting value
-	Name      string      // Name of the flag, e.g., "config"
-	ShortName string      // Short name of the flag, e.g., "c"
-	Value     string      // Default value
-	Usage     string      // Usage description (used for help)
+	Result    any    // Pointer to the resulting value
+	Name      string // Name of the flag, e.g., "config"
+	ShortName string // Short name of the flag, e.g., "c"
+	Value     string // Default value
+	Usage     string // Usage description (used for help)
 }
 
 // Flags holds a list of available command-line flags

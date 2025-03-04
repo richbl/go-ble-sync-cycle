@@ -150,7 +150,7 @@ linters-settings:
     match-constant: false
     # Search also for duplicated numbers.
     # Default: false
-    numbers: true
+    numbers: false
     # Minimum value, only works with goconst.numbers
     # Default: 3
     min: 2

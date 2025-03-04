@@ -145,7 +145,7 @@ func TestFlagInfosConfiguration(t *testing.T) {
 	tests := []struct {
 		name     string
 		flagInfo FlagInfo
-		wantType interface{}
+		wantType any
 	}{
 		{
 			name:     "config flag",

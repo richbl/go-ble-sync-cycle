@@ -73,23 +73,23 @@ func SetExitHandler(handler ExitHandler) {
 }
 
 // Logging functions
-func Debug(first interface{}, args ...interface{}) {
+func Debug(first any, args ...any) {
 	logWithOptionalComponent(context.Background(), slog.LevelDebug, first, args...)
 }
 
-func Info(first interface{}, args ...interface{}) {
+func Info(first any, args ...any) {
 	logWithOptionalComponent(context.Background(), slog.LevelInfo, first, args...)
 }
 
-func Warn(first interface{}, args ...interface{}) {
+func Warn(first any, args ...any) {
 	logWithOptionalComponent(context.Background(), slog.LevelWarn, first, args...)
 }
 
-func Error(first interface{}, args ...interface{}) {
+func Error(first any, args ...any) {
 	logWithOptionalComponent(context.Background(), slog.LevelError, first, args...)
 }
 
-func Fatal(first interface{}, args ...interface{}) {
+func Fatal(first any, args ...any) {
 
 	logWithOptionalComponent(context.Background(), LevelFatal, first, args...)
 
@@ -165,6 +165,7 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 // Enabled returns true if the specified log level is enabled
 func (h *CustomTextHandler) Enabled(ctx context.Context, level slog.Level) bool {
+
 	return h.Handler.Enabled(ctx, level)
 }
 
@@ -181,6 +182,7 @@ func (h *CustomTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 
 // WithGroup returns a new handler with the specified group name
 func (h *CustomTextHandler) WithGroup(name string) slog.Handler {
+
 	return &CustomTextHandler{
 		Handler:    h.Handler.WithGroup(name),
 		out:        h.out,
@@ -251,7 +253,7 @@ func parseLogLevel(level string) slog.Level {
 }
 
 // buildMessage constructs the log message from the given argument
-func buildMessage(first interface{}, args ...interface{}) string {
+func buildMessage(first any, args ...any) string {
 
 	var parts []string
 
@@ -269,7 +271,7 @@ func buildMessage(first interface{}, args ...interface{}) string {
 }
 
 // logWithOptionalComponent logs a message with an optional component name
-func logWithOptionalComponent(ctx context.Context, level slog.Level, first interface{}, args ...interface{}) {
+func logWithOptionalComponent(ctx context.Context, level slog.Level, first any, args ...any) {
 
 	var component string
 	var msg string
