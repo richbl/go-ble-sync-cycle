@@ -19,7 +19,7 @@ func TestLoad(t *testing.T) {
 	}{
 		{
 			name:        "valid config file",
-			configFile:  "test_config.toml",
+			configFile:  "config_test.toml",
 			expectError: false,
 		},
 		{
