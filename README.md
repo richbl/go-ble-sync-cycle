@@ -13,26 +13,26 @@
 ## Features
 
 - Real-time synchronization between cycling speed and video playback
-- Support for compliant Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensors
-- TOML-based configuration for easy application customization that includes:
-    - BLE sensor identification (BD_ADDR)
+- Support for compliant Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensors (configured for speed mode)
+- TOML-based configuration for application customizations that include:
+    - BLE sensor setup (BD_ADDR)
     - Bluetooth device scanning timeout
     - Wheel circumference, required for accurate speed conversion
     - Support for different speed units: miles per hour (mph) and kilometers per hour (km/h)
     - Speed smoothing option for a more natural video playback
     - Configurable choice of video file for playback
-    - Various display options for video playback, including:
+    - Various display options for optimal video playback, including:
         - The display of sensor speed, video playback speed and playback time remaining via on-screen display (OSD)
         - Video window scaling (full screen, half screen, etc.)
         - OSD font size
-- Simple command-line interface provides real-time component feedback
-    - Command-line flag options permit for easy override of configuration settings, including:
+- Simple command-line interface provides real-time application status
+    - Command-line flag options provide for easy override of configuration settings, including:
         - Location of the configuration file
-            - Multiple configuration files can be defined to support different cycling sessions and different bicycle configurations
+            - Allowing for the creation of multiple configuration files that can be created to support different cycling sessions and different bicycle configurations
         - Where to start video playback (seek functionality)
         - Display of application usage/help information
 - Configurable logging levels (debug, info, warn, error) to manage the information displayed during application execution
-- Graceful handling of connection interrupts and system signals ensures all components shut down cleanly
+- Graceful handling of connection interrupts and system signals ensures all components shut down cleanly upon application exit
 
 ## Rationale
 
@@ -55,6 +55,19 @@ Since I already use a (non-digital) bicycle trainer while riding indoors, it mad
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6"><img src="[[https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6)]([https://github.com/user-attachments/assets/a3165440-33d8-42a9-9992-8acf18375da9](https://github.com/user-attachments/assets/b33d68ac-0e4e-42b0-8d08-d4d5dac0cde6))" width=700></picture>
 </p>
 
-## Want to Learn More?
+## Want to Know More?
 
-For more information about **BLE Sync Cycle**, including installation, configuration, and usage details, check out the [**BLE Sync Cycle** project wiki](https://github.com/richbl/go-ble-sync-cycle/wiki).
+For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle project wiki](https://github.com/richbl/go-ble-sync-cycle/wiki). The wiki includes the following sections:
+
+- Hardware and software requirements
+- Application installation
+    - Configuring the application to best suit your own needs
+- Running the application
+    - Stepping through an example application startup)
+- Frequently Asked Questions (FAQ)
+- Project roadmap
+- Acknowledgements
+    - A big thanks to the various package owners that made this project possible
+- Project license
+
+Enjoy!
