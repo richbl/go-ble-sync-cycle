@@ -156,3 +156,62 @@ func createTestController(t *testing.T) *PlaybackController {
 
 	return controller
 }
+
+// TestConfigurePlaybackWindow tests different window configuration scenarios
+func TestConfigurePlaybackWindow(t *testing.T) {
+
+	controller := createTestController(t)
+
+	// Test full screen scenario
+	controller.videoConfig.WindowScaleFactor = 1.0
+	err := controller.configurePlaybackWindow()
+	assert.NoError(t, err, "should configure full screen playback window")
+
+	// Test scaled window scenario
+	controller.videoConfig.WindowScaleFactor = 0.5
+	err = controller.configurePlaybackWindow()
+	assert.NoError(t, err, "should configure scaled playback window")
+}
+
+// TestConfigureKeepOpen tests that the player is configured to keep open after playback
+func TestConfigureKeepOpen(t *testing.T) {
+
+	controller := createTestController(t)
+
+	err := controller.configureKeepOpen()
+	assert.NoError(t, err, "should configure player to keep open after playback")
+}
+
+// TestConfigureOSD checks OSD configuration
+func TestConfigureOSD(t *testing.T) {
+
+	controller := createTestController(t)
+
+	// Test OSD enabled
+	controller.osdConfig.ShowOSD = true
+	err := controller.configureOSD()
+	assert.NoError(t, err, "should configure OSD when enabled")
+
+	// Test OSD disabled
+	controller.osdConfig.ShowOSD = false
+	err = controller.configureOSD()
+	assert.NoError(t, err, "should not configure OSD when disabled")
+}
+
+// TestSeekToStartPosition checks seeking to a start position
+func TestSeekToStartPosition(t *testing.T) {
+
+	controller := createTestController(t)
+
+	err := controller.seekToStartPosition()
+	assert.NoError(t, err, "should seek to start position")
+}
+
+// TestHandleZeroSpeed tests the zero speed handling logic
+func TestHandleZeroSpeed(t *testing.T) {
+
+	controller := createTestController(t)
+
+	err := controller.handleZeroSpeed()
+	assert.NoError(t, err, "should handle zero speed without error")
+}
