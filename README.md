@@ -63,7 +63,7 @@ For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle pro
 - Application installation
     - Configuring the application to best suit your own needs
 - Running the application
-    - Stepping through an example application startup)
+    - Stepping through an example application startup
 - Frequently Asked Questions (FAQ)
 - Project roadmap
 - Acknowledgements
