@@ -41,14 +41,14 @@ func setupVlcTest(t *testing.T) (*vlcPlayer, func()) {
 	return player, cleanup
 }
 
-func TestVLCPlayer_Lifecycle(t *testing.T) {
+func TestVLCPlayerLifecycle(t *testing.T) {
 	_, cleanup := setupVlcTest(t)
 	defer cleanup()
 
 	// The setup function already loads the file, so this test primarily checks initialization and cleanup.
 }
 
-func TestVLCPlayer_PlaybackControls(t *testing.T) {
+func TestVLCPlayerPlaybackControls(t *testing.T) {
 	player, cleanup := setupVlcTest(t)
 	defer cleanup()
 
@@ -74,7 +74,7 @@ func TestVLCPlayer_PlaybackControls(t *testing.T) {
 	})
 }
 
-func TestVLCPlayer_Configuration(t *testing.T) {
+func TestVLCPlayerConfiguration(t *testing.T) {
 	player, cleanup := setupVlcTest(t)
 	defer cleanup()
 
@@ -105,7 +105,7 @@ func TestVLCPlayer_Configuration(t *testing.T) {
 	})
 }
 
-func TestVLCPlayer_parseTimePosition(t *testing.T) {
+func TestVLCPlayerparseTimePosition(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    string

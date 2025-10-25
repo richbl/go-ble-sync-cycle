@@ -41,14 +41,14 @@ func setupMpvTest(t *testing.T) (*mpvPlayer, func()) {
 	return player, cleanup
 }
 
-func TestMpvPlayer_Lifecycle(t *testing.T) {
+func TestMpvPlayerLifecycle(t *testing.T) {
 	_, cleanup := setupMpvTest(t)
 	defer cleanup()
 
 	// The setup function already loads the file, so this test primarily checks initialization and cleanup
 }
 
-func TestMpvPlayer_PlaybackControls(t *testing.T) {
+func TestMpvPlayerPlaybackControls(t *testing.T) {
 	player, cleanup := setupMpvTest(t)
 	defer cleanup()
 
@@ -74,7 +74,7 @@ func TestMpvPlayer_PlaybackControls(t *testing.T) {
 	})
 }
 
-func TestMpvPlayer_Configuration(t *testing.T) {
+func TestMpvPlayerConfiguration(t *testing.T) {
 	player, cleanup := setupMpvTest(t)
 	defer cleanup()
 
