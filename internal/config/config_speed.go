@@ -19,7 +19,7 @@ func (sc *SpeedConfig) validate() error {
 	}
 
 	if !validSpeedUnits[sc.SpeedUnits] {
-		return fmt.Errorf(errFormat, errInvalidSpeedUnits, sc.SpeedUnits)
+		return fmt.Errorf(errFormat, sc.SpeedUnits, errInvalidSpeedUnits)
 	}
 
 	return validateConfigFields(sc.configValidationRanges())

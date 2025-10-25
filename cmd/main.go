@@ -9,12 +9,12 @@ import (
 	"time"
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
-	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
+	config "github.com/richbl/go-ble-sync-cycle/internal/config"
 	flags "github.com/richbl/go-ble-sync-cycle/internal/flags"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
-	shutdownmanager "github.com/richbl/go-ble-sync-cycle/internal/services"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	services "github.com/richbl/go-ble-sync-cycle/internal/services"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
-	video "github.com/richbl/go-ble-sync-cycle/internal/video-player"
+	video "github.com/richbl/go-ble-sync-cycle/internal/video"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -23,8 +23,9 @@ import (
 const (
 	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.11.0"
+	appVersion = "0.12.0"
 	configFile = "config.toml"
+	errFormat  = "%v: %w"
 )
 
 // appControllers holds the application component controllers for managing speed, video playback,
@@ -35,7 +36,7 @@ type appControllers struct {
 	bleController   *ble.Controller
 }
 
-// Common errors
+// Error definitions
 var (
 	errVideoPlaybackController = errors.New("failed to create video playback controller")
 	errBLEController           = errors.New("failed to create BLE controller")
@@ -119,10 +120,10 @@ func waveGoodbye() {
 
 // initializeUtilityServices initializes the core components of the application, including the
 // service manager, exit handler, and logger
-func initializeUtilityServices(cfg *config.Config) *shutdownmanager.ShutdownManager {
+func initializeUtilityServices(cfg *config.Config) *services.ShutdownManager {
 
 	// Initialize the service manager with a timeout
-	mgr := shutdownmanager.NewShutdownManager(30 * time.Second)
+	mgr := services.NewShutdownManager(30 * time.Second)
 	mgr.Start()
 
 	// Initialize the logger
@@ -155,12 +156,12 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		return &appControllers{}, logger.VIDEO, fmt.Errorf("%w: %v", errVideoPlaybackController, err)
+		return &appControllers{}, logger.VIDEO, fmt.Errorf(errFormat, errVideoPlaybackController, err)
 	}
 
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		return &appControllers{}, logger.BLE, fmt.Errorf("%w: %v", errBLEController, err)
+		return &appControllers{}, logger.BLE, fmt.Errorf(errFormat, errBLEController, err)
 	}
 
 	return &appControllers{
@@ -171,7 +172,7 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 }
 
 // logBLESetupError displays BLE setup errors and exits the application
-func logBLESetupError(err error, msg string, mgr *shutdownmanager.ShutdownManager) {
+func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
 
 	if !errors.Is(err, context.Canceled) {
 		logger.Fatal(logger.BLE, msg, err.Error())
@@ -183,7 +184,7 @@ func logBLESetupError(err error, msg string, mgr *shutdownmanager.ShutdownManage
 }
 
 // bleScanAndConnect scans for a BLE peripheral and connects to it
-func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *shutdownmanager.ShutdownManager) bluetooth.Device {
+func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *services.ShutdownManager) bluetooth.Device {
 
 	var scanResult bluetooth.ScanResult
 	var connectResult bluetooth.Device
@@ -201,7 +202,7 @@ func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *s
 }
 
 // bleGetServicesAndCharacteristics retrieves BLE services and characteristics
-func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *shutdownmanager.ShutdownManager) {
+func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *services.ShutdownManager) {
 
 	var serviceResult []bluetooth.DeviceService
 	var err error
@@ -217,7 +218,7 @@ func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.
 }
 
 // startServiceRunners starts the BLE and video service runners and returns a slice of service runners
-func (controllers *appControllers) startServiceRunners(mgr *shutdownmanager.ShutdownManager) {
+func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownManager) {
 
 	// Run the BLE service
 	mgr.Run(func(ctx context.Context) error {
@@ -234,7 +235,7 @@ func (controllers *appControllers) startServiceRunners(mgr *shutdownmanager.Shut
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.videoPlayer.Start(ctx, controllers.speedController); err != nil {
-			logger.Info(logger.VIDEO, err.Error())
+			logger.Error(logger.VIDEO, err.Error())
 			return err
 		}
 

@@ -1,4 +1,4 @@
-package shutdownmanager
+package services
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // smContext represents the cancellation context for ShutdownManager

@@ -22,6 +22,8 @@ type VideoOSDConfig struct {
 	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
 	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
 	DisplayTimeRemaining bool `toml:"display_time_remaining"`
+	MarginX              int  `toml:"margin_left"`
+	MarginY              int  `toml:"margin_top"`
 	ShowOSD              bool // Computed field based on display settings
 }
 
@@ -34,10 +36,11 @@ func (vc *VideoConfig) validate() error {
 
 	validPlayer := map[string]bool{
 		MediaPlayerMPV: true,
+		MediaPlayerVLC: true,
 	}
 
 	if !validPlayer[vc.MediaPlayer] {
-		return fmt.Errorf(errFormat, errInvalidPlayer, vc.MediaPlayer)
+		return fmt.Errorf(errFormat, vc.MediaPlayer, errInvalidPlayer)
 	}
 
 	if err := validateConfigFields(vc.configValidationRanges()); err != nil {
@@ -45,7 +48,7 @@ func (vc *VideoConfig) validate() error {
 	}
 
 	if !validateTimeFormat(vc.SeekToPosition) {
-		return fmt.Errorf(errFormat, errInvalidSeek, vc.SeekToPosition)
+		return fmt.Errorf(errFormat, vc.SeekToPosition, errInvalidSeek)
 	}
 
 	// Compute ShowOSD state based on display settings in TOML config file
@@ -63,6 +66,8 @@ func (vc *VideoConfig) configValidationRanges() *[]validationRange {
 		{vc.UpdateIntervalSec, 0.1, 3.0, errInvalidInterval},
 		{vc.SpeedMultiplier, 0.1, 1.5, errSpeedMultiplier},
 		{vc.OnScreenDisplay.FontSize, 10, 200, errFontSize},
+		{vc.OnScreenDisplay.MarginX, 0, 100, errOSDMargin},
+		{vc.OnScreenDisplay.MarginY, 0, 100, errOSDMargin},
 	}
 
 }

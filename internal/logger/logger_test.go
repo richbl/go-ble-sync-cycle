@@ -41,7 +41,7 @@ var (
 
 // Error formats
 const (
-	errTypeFormat = "%w: got %T"
+	errTypeFormat = "%w: %T"
 )
 
 // setupTest creates a new test logger with buffer
