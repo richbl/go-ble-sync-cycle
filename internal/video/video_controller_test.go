@@ -280,7 +280,7 @@ func setupTestController(t *testing.T) (*PlaybackController, *mockMediaPlayer, *
 }
 
 // TestPlaybackController_Start tests the Start method of PlaybackController
-func TestPlaybackController_Start(t *testing.T) {
+func TestPlaybackControllerStart(t *testing.T) {
 
 	controller, mockPlayer, speedCtrl := setupTestController(t)
 
@@ -521,17 +521,18 @@ func TestUpdateDisplay(t *testing.T) {
 		}
 
 		var expectedText bytes.Buffer
+		var errFailedToWriteExpectedText = "failed to write expected text: %v"
 
 		if _, err := expectedText.WriteString("Cycle Speed: 15.5 mph\n"); err != nil {
-			t.Fatalf("failed to write expected text: %v", err)
+			t.Fatalf(errFailedToWriteExpectedText, err)
 		}
 
 		if _, err := expectedText.WriteString("Playback Speed: 1.55x\n"); err != nil {
-			t.Fatalf("failed to write expected text: %v", err)
+			t.Fatalf(errFailedToWriteExpectedText, err)
 		}
 
 		if _, err := expectedText.WriteString("Time Remaining: 00:02:05\n"); err != nil {
-			t.Fatalf("failed to write expected text: %v", err)
+			t.Fatalf(errFailedToWriteExpectedText, err)
 		}
 
 		if mockPlayer.lastShowText != expectedText.String() {
