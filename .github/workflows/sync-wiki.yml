@@ -1,0 +1,68 @@
+name: Sync wiki folder to GitHub Wiki
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Clone wiki repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # clone the wiki repo so we can push changes
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki_repo
+
+      - name: Detect wiki default branch
+        run: |
+          pushd wiki_repo
+          default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+          if [ -z "$default_branch" ]; then
+            # fallback if detection fails
+            default_branch=main
+          fi
+          echo "DEFAULT_BRANCH=$default_branch" >> $GITHUB_ENV
+          popd
+
+      - name: Check for wiki/ folder in repo
+        run: |
+          if [ ! -d "./wiki" ]; then
+            echo "No wiki/ folder found in the repository — nothing to sync."
+            exit 0
+          fi
+
+      - name: Sync wiki/ to cloned wiki repo
+        run: |
+          # Copy everything from the repo's wiki/ into the cloned wiki repo (preserves .git)
+          rsync -av --delete ./wiki/ ./wiki_repo/
+
+      - name: Commit & push changes to GitHub Wiki
+        run: |
+          pushd wiki_repo
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to push to wiki"
+            exit 0
+          fi
+          git commit -m "Sync wiki/ from ${{ github.repository }}@${{ github.sha }}"
+          git push origin "HEAD:${{ env.DEFAULT_BRANCH }}"
+          popd
+
