@@ -3,7 +3,7 @@ package ble
 import (
 	"testing"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // init is called to set the log level

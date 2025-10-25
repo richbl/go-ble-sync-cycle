@@ -1,16 +1,16 @@
 # BLE Sync Cycle TOML configuration
-# 0.11.0
+# 0.12.0
 
 [app]
   logging_level = "debug" # Log messages to see during execution: "debug", "info", "warn", "error"
-                         # where "debug" is the most verbose and "error" is least verbose
+                          # where "debug" is the most verbose and "error" is least verbose
 
 [ble]
-  sensor_bd_addr = "F1:42:D8:DE:35:16" # Address of BLE peripheral device (e.g. "11:22:33:44:55:66")
+  sensor_bd_addr = "FA:46:1D:77:C8:E1" # Address of BLE peripheral device (e.g. "11:22:33:44:55:66")
   scan_timeout_secs = 30               # Seconds (1-100) to wait for peripheral response before generating error
 
 [speed]
-  speed_threshold = 0.25       # Minimum speed change (0.00-10.00) to trigger video speed update
+  speed_threshold = 0.25        # Minimum speed change (0.00-10.00) to trigger video speed update
   speed_units = "mph"           # "km/h" or "mph"
   smoothing_window = 5          # Number of recent speeds (1-25) to generate a moving average
   wheel_circumference_mm = 2155 # Wheel circumference in millimeters (50-3000) 
@@ -24,7 +24,9 @@
   speed_multiplier = 0.8         # Multiplier (0.1-1.0) that adjusts sensor speed to video playback speed
                                  # (0.1 = slow, 1.0 = normal speed)
   [video.OSD]
-    font_size = 40                # Font size (10-200) for on-screen display (OSD)
     display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
     display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
     display_time_remaining = true # Display time remaining on the on-screen display (true/false)
+    font_size = 40                # Font size (10-200) for on-screen display (OSD)
+    margin_left = 10              # pixel offset of OSD (0-100) from the left of the media player window
+    margin_top = 10               # pixel offset of the OSD (0-100) from the top of the media player window

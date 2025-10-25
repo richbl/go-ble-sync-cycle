@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -50,27 +51,29 @@ const (
 	MediaPlayerMPV = "mpv"
 	MediaPlayerVLC = "vlc"
 
-	errTypeFormat = "%w: got %T"
-	errFormat     = "%w: %v"
+	errTypeFormat = "%w: %T"
+	errFormat     = "%v: %w"
 )
 
 // Error messages
 var (
-	errInvalidLogLevel    = fmt.Errorf("invalid log level")
-	errInvalidSpeedUnits  = fmt.Errorf("invalid speed units")
-	errVideoFile          = fmt.Errorf("video file error")
-	errInvalidPlayer      = fmt.Errorf("invalid media player")
-	errInvalidInterval    = fmt.Errorf("update_interval_sec must be 0.1-3.0")
-	errInvalidSeek        = fmt.Errorf("seek_to_position must be in MM:SS or SS format")
-	errSmoothingWindow    = fmt.Errorf("smoothing window must be 1-25")
-	errWheelCircumference = fmt.Errorf("wheel_circumference_mm must be 50-3000")
-	errSpeedThreshold     = fmt.Errorf("speed_threshold must be 0.00-10.00")
-	errSpeedMultiplier    = fmt.Errorf("speed_multiplier must be 0.1-1.5")
-	errInvalidBDAddr      = fmt.Errorf("invalid sensor BD_ADDR in configuration")
-	errInvalidScanTimeout = fmt.Errorf("scan_timeout_secs must be 1-100")
-	errFontSize           = fmt.Errorf("font_size must be 10-200")
-	errWindowScale        = fmt.Errorf("window_scale_factor must be 0.1-1.0")
-	errUnsupportedType    = fmt.Errorf("unsupported type")
+	errInvalidLogLevel    = errors.New("invalid log level")
+	errInvalidConfigFile  = errors.New("invalid config file")
+	errInvalidSpeedUnits  = errors.New("invalid speed units")
+	errVideoFile          = errors.New("video file error")
+	errInvalidPlayer      = errors.New("invalid media player")
+	errInvalidInterval    = errors.New("update_interval_sec must be 0.1-3.0")
+	errInvalidSeek        = errors.New("seek_to_position must be in MM:SS or SS format")
+	errSmoothingWindow    = errors.New("smoothing window must be 1-25")
+	errWheelCircumference = errors.New("wheel_circumference_mm must be 50-3000")
+	errSpeedThreshold     = errors.New("speed_threshold must be 0.00-10.00")
+	errSpeedMultiplier    = errors.New("speed_multiplier must be 0.1-1.5")
+	errInvalidBDAddr      = errors.New("invalid sensor BD_ADDR in configuration")
+	errInvalidScanTimeout = errors.New("scan_timeout_secs must be 1-100")
+	errFontSize           = errors.New("font_size must be 10-200")
+	errOSDMargin          = errors.New("margin value must be 0-100")
+	errWindowScale        = errors.New("window_scale_factor must be 0.1-1.0")
+	errUnsupportedType    = errors.New("unsupported type")
 )
 
 // Load loads the configuration from a TOML file using the provided flags
@@ -102,7 +105,7 @@ func readConfigFile(path string, cfg *Config) (*Config, error) {
 
 	_, err := toml.DecodeFile(path, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode config file: %w", err)
+		return nil, fmt.Errorf(errFormat, errInvalidConfigFile, err)
 	}
 
 	return cfg, nil
@@ -113,7 +116,7 @@ func setSeekToPosition(cfg *Config, clFlags flags.Flags) error {
 
 	if clFlags.Seek != "" {
 		if !validateTimeFormat(clFlags.Seek) {
-			return fmt.Errorf(errFormat, errInvalidSeek, clFlags.Seek)
+			return fmt.Errorf(errFormat, clFlags.Seek, errInvalidSeek)
 		}
 		cfg.Video.SeekToPosition = clFlags.Seek
 	}
@@ -155,7 +158,7 @@ func (ac *AppConfig) validate() error {
 	}
 
 	if !validLogLevels[ac.LogLevel] {
-		return fmt.Errorf(errFormat, errInvalidLogLevel, ac.LogLevel)
+		return fmt.Errorf(errFormat, ac.LogLevel, errInvalidLogLevel)
 	}
 
 	return nil
@@ -223,7 +226,7 @@ func validateFloat(value float64, minVal, maxVal any, errMsg error) error {
 func validateRange[T ValidationType](value, minVal, maxVal T, errMsg error) error {
 
 	if value < minVal || value > maxVal {
-		return fmt.Errorf(errFormat, errMsg, value)
+		return fmt.Errorf(errFormat, value, errMsg)
 	}
 
 	return nil

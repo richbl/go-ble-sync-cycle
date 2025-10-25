@@ -2,11 +2,12 @@ package speed
 
 import (
 	"container/ring"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // state holds the current speed measurement, smoothed speed, and timestamp
@@ -24,13 +25,13 @@ type Controller struct {
 	state  state
 }
 
-// Common errors
+// Error definitions
 var (
-	errUnsupportedType = fmt.Errorf("unsupported type")
+	errUnsupportedType = errors.New("unsupported type")
 )
 
 const (
-	errTypeFormat = "%w: got %T"
+	errFormat = "%v: %w"
 )
 
 // NewSpeedController creates a new speed controller with a specified window size, which
@@ -66,7 +67,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 
 		value, ok := x.(float64)
 		if !ok {
-			logger.Error(logger.BLE, fmt.Errorf(errTypeFormat, errUnsupportedType, value))
+			logger.Error(logger.BLE, fmt.Errorf(errFormat, value, errUnsupportedType))
 			return
 		}
 
@@ -101,7 +102,7 @@ func (sc *Controller) GetSpeedBuffer() []string {
 		if x != nil {
 			value, ok := x.(float64)
 			if !ok {
-				logger.Error(logger.SPEED, fmt.Errorf(errTypeFormat, errUnsupportedType, value))
+				logger.Error(logger.SPEED, fmt.Errorf(errFormat, value, errUnsupportedType))
 				return
 			}
 

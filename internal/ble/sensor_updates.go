@@ -3,11 +3,12 @@ package ble
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	config "github.com/richbl/go-ble-sync-cycle/internal/config"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
@@ -39,8 +40,8 @@ var unitConversion = map[string]float64{
 
 // Error definitions
 var (
-	errNoSpeedData      = fmt.Errorf("no speed data reported")
-	errInvalidSpeedData = fmt.Errorf("invalid data format or length")
+	errNoSpeedData      = errors.New("no speed data reported")
+	errInvalidSpeedData = errors.New("invalid data format or length")
 )
 
 // initSpeedData initializes the speedData struct with pre-calculated constants

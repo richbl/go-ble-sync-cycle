@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-// ComponentType represents the type of component for logging identification
+// ComponentType represents the type of component for logger identification
 type ComponentType string
 
 // Supported component types

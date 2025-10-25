@@ -8,8 +8,8 @@ import (
 
 	"tinygo.org/x/bluetooth"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	config "github.com/richbl/go-ble-sync-cycle/internal/config"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // blePeripheralDetails holds details about the BLE peripheral
@@ -35,12 +35,8 @@ type actionParams struct {
 
 // Error definitions
 var (
-	errScanTimeout     = fmt.Errorf("scanning time limit reached")
-	errUnsupportedType = fmt.Errorf("unsupported type")
-)
-
-const (
-	errTypeFormat = "%w: got %T"
+	errScanTimeout     = errors.New("scanning time limit reached")
+	errUnsupportedType = errors.New("unsupported type")
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -128,7 +124,7 @@ func assertBLEType[T any](result any, target T) (T, error) {
 	typedResult, ok := result.(T)
 	if !ok {
 		var zero T
-		return zero, fmt.Errorf(errTypeFormat, errUnsupportedType, target)
+		return zero, fmt.Errorf("%w: %T", errUnsupportedType, target)
 	}
 
 	return typedResult, nil

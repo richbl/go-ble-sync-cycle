@@ -7,13 +7,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/configuration"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	config "github.com/richbl/go-ble-sync-cycle/internal/config"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 const (
 	speedUnitsKMH        = "kph"
-	speedUnitsMPH        = "mph"
 	sensorTestBDAddr     = "test-bd-addr"
 	testTimeout          = 2 * time.Second
 	initialScanDelay     = 2 * time.Second

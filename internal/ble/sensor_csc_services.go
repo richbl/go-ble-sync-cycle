@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logging"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"tinygo.org/x/bluetooth"
 )
 
