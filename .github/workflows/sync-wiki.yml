@@ -31,27 +31,44 @@ jobs:
             exit 0
           fi
 
-      - name: Clone wiki repository outside workspace
+      - name: Clone wiki repository into runner temp (fresh)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Use the runner temp directory so the cloned wiki repo cannot be accidentally added to the main repo
           WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
           rm -rf "$WIKI_CLONE_DIR"
           git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git" "$WIKI_CLONE_DIR"
+
+      - name: Verify clone succeeded
+        run: |
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          if [ ! -d "$WIKI_CLONE_DIR/.git" ]; then
+            echo "::error::Wiki clone missing .git — aborting. Contents of $WIKI_CLONE_DIR:"
+            ls -la "$WIKI_CLONE_DIR" || true
+            exit 1
+          fi
 
       - name: Detect wiki default branch
         run: |
           WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
           pushd "$WIKI_CLONE_DIR"
           default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
-          if [ -z "$default_branch" ]; then
-            default_branch=main
-          fi
+          if [ -z "$default_branch" ]; then default_branch=main; fi
           echo "DEFAULT_BRANCH=$default_branch" >> $GITHUB_ENV
           popd
 
-      - name: Copy wiki/ to cloned wiki repo
+      - name: Ensure local wiki clone matches remote HEAD
+        run: |
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          pushd "$WIKI_CLONE_DIR"
+          git fetch --no-tags origin
+          # Checkout the default branch (create if it doesn't exist locally)
+          git checkout "${DEFAULT_BRANCH}" 2>/dev/null || git checkout -b "${DEFAULT_BRANCH}"
+          # Reset to remote to start from a clean state (clone was fresh, but safe)
+          git reset --hard "origin/${DEFAULT_BRANCH}" || true
+          popd
+
+      - name: Copy wiki/ into cloned wiki repo
         run: |
           WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
           rsync -av --delete ./wiki/ "$WIKI_CLONE_DIR"/
@@ -66,6 +83,8 @@ jobs:
             exit 0
           fi
           git commit -m "Sync wiki/ from ${{ github.repository }}@${{ github.sha }}"
-          git push origin "HEAD:${{ env.DEFAULT_BRANCH }}"
+          # Integrate any upstream changes to avoid non-fast-forward errors
+          git pull --rebase origin "${DEFAULT_BRANCH}" || true
+          git push origin "HEAD:${DEFAULT_BRANCH}"
           popd
 
