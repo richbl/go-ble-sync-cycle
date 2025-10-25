@@ -71,7 +71,7 @@ jobs:
       - name: Copy wiki/ into cloned wiki repo
         run: |
           WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
-          rsync -av --delete ./wiki/ "$WIKI_CLONE_DIR"/
+          rsync -av --delete --exclude='.git' ./wiki/ "$WIKI_CLONE_DIR"/
 
       - name: Commit & push changes to GitHub Wiki
         run: |
