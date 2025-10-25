@@ -24,39 +24,42 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Clone wiki repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # clone the wiki repo so we can push changes
-          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki_repo
-
-      - name: Detect wiki default branch
-        run: |
-          pushd wiki_repo
-          default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
-          if [ -z "$default_branch" ]; then
-            # fallback if detection fails
-            default_branch=main
-          fi
-          echo "DEFAULT_BRANCH=$default_branch" >> $GITHUB_ENV
-          popd
-
-      - name: Check for wiki/ folder in repo
+      - name: Ensure wiki folder exists
         run: |
           if [ ! -d "./wiki" ]; then
             echo "No wiki/ folder found in the repository — nothing to sync."
             exit 0
           fi
 
-      - name: Sync wiki/ to cloned wiki repo
+      - name: Clone wiki repository outside workspace
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Copy everything from the repo's wiki/ into the cloned wiki repo (preserves .git)
-          rsync -av --delete ./wiki/ ./wiki_repo/
+          # Use the runner temp directory so the cloned wiki repo cannot be accidentally added to the main repo
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          rm -rf "$WIKI_CLONE_DIR"
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git" "$WIKI_CLONE_DIR"
+
+      - name: Detect wiki default branch
+        run: |
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          pushd "$WIKI_CLONE_DIR"
+          default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+          if [ -z "$default_branch" ]; then
+            default_branch=main
+          fi
+          echo "DEFAULT_BRANCH=$default_branch" >> $GITHUB_ENV
+          popd
+
+      - name: Copy wiki/ to cloned wiki repo
+        run: |
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          rsync -av --delete ./wiki/ "$WIKI_CLONE_DIR"/
 
       - name: Commit & push changes to GitHub Wiki
         run: |
-          pushd wiki_repo
+          WIKI_CLONE_DIR="${RUNNER_TEMP}/repo_wiki"
+          pushd "$WIKI_CLONE_DIR"
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to push to wiki"
