@@ -24,10 +24,10 @@
 
 - [Overview](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overview)
 - [Running the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Running-the-Application)
-- [Overriding the Configuration File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overriding-the-Configuration-File)
-    - [Setting the Configuration File Path](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overriding-the-Configuration-File#setting-the-configuration-file-path)
-    - [Seeking to a Specific Time in the Video](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overriding-the-Configuration-File#seeking-to-a-specific-time-in-the-video)
-    - [Displaying Help in BLE Sync Cycle](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overriding-the-Configuration-File#displaying-help-in-ble-sync-cycle)
+- [Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options)
+    - [Setting the Configuration File Path](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options#setting-the-configuration-file-path)
+    - [Seeking to a Specific Time in the Video](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options#seeking-to-a-specific-time-in-the-video)
+    - [Displaying Help in BLE Sync Cycle](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options#displaying-help-in-ble-sync-cycle)
 
 ## FAQ
 
