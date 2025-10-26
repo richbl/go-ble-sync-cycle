@@ -14,7 +14,7 @@ After starting `ble-sync-cycle`, you should see the following output. Note that 
 2025/03/04 14:31:47 ----- ----- BLE Sync Cycle 0.12.0 shutdown complete. Goodbye
 ```
 
-In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral "advertises" both its device services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file. In most cases, however, rerunning the application will resolve the issue, as the BLE peripheral will eventually advertise its services and characteristics.
+In this first example, while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file. In most cases however, rerunning the application will resolve the issue.
 
 ```console
 2025/03/04 14:32:48 ----- ----- Starting BLE Sync Cycle 0.12.0
@@ -46,7 +46,7 @@ In this first example, while the application was able to find the BLE peripheral
 ...
 ```
 
-In the example above, the application found the device CSC services and characteristics and is now running in a loop, listening to the BLE peripheral for speed data. The application will also update the video player to match the speed of the sensor. Here, since the video has just begun, its speed is set to 0.0 (paused).
+In the next example (above), the application found the device CSC services and characteristics and is now running in a loop, listening to the BLE peripheral for speed data. The application will also update the playback speed of the media player to match the speed of the sensor. Here, since the video has just begun, its speed is set to 0.0 (paused).
 
 ```console
 ...
