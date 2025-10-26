@@ -2,25 +2,23 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
 </p>
 
-**BLE Sync Cycle** relies on two external media player libraries for video playback:
-
-- The [mpv](https://mpv.io/) media player
-- The [VLC](https://www.videolan.org/vlc) media player
-
-One or both players can be used, but the following software libraries must be installed for each player:
-
-For mpv:
-
-1. Install the `libmpv2` library:
+1. Clone the repository and then change into the project directory:
 
     ```console
-    sudo apt-get install libmpv2
+    git clone https://github.com/richbl/go-ble-sync-cycle
+    cd go-ble-sync-cycle
     ```
 
-For VLC:
-
-1. Install the `libvlc-dev` library:
+2. Install Go package dependencies for the project:
 
     ```console
-    sudo apt-get install libvlc-dev
+    go mod download
     ```
+
+3. Build the application:
+
+    ```console
+    go build -o ble-sync-cycle cmd/*
+    ```
+
+The resulting `build` command will compile the`ble-sync-cycle` executable in the current directory.
