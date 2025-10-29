@@ -28,4 +28,6 @@
 
 * Configurable log levels (debug, info, warn, error)
 
+* On every application startup, the battery level of the BLE sensor is checked and displayed
+
 * Graceful handling of connection interrupts and system signals for a clean shutdown

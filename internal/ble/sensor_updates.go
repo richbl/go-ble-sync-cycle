@@ -3,7 +3,6 @@ package ble
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"math"
 
@@ -38,15 +37,8 @@ var unitConversion = map[string]float64{
 	config.SpeedUnitsMPH: mphConversion,
 }
 
-// Error definitions
-var (
-	errNoSpeedData      = errors.New("no speed data reported")
-	errInvalidSpeedData = errors.New("invalid data format or length")
-)
-
 // initSpeedData initializes the speedData struct with pre-calculated constants
 func initSpeedData(wheelCircumferenceMM int, speedUnitMultiplier float64) *speedData {
-
 	return &speedData{
 		wheelCircumferenceM:   float64(wheelCircumferenceMM) / 1000,
 		timeConversionFactor:  1.0 / 1024,
@@ -68,7 +60,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 	notificationHandler := func(buf []byte) {
 		speed, err := sd.processBLESpeed(m.speedConfig.SpeedUnits, buf)
 		if err != nil {
-			logger.Error(logger.SPEED, "Error processing BLE speed data:", err)
+			logger.Warn(logger.SPEED, "Error processing BLE speed data:", err)
 			return
 		}
 		speedController.UpdateSpeed(speed)
@@ -76,7 +68,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 
 	// Enable real-time notifications from BLE sensor
 	if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(notificationHandler); err != nil {
-		return err
+		return fmt.Errorf(errFormat, ErrNotificationEnable, err)
 	}
 
 	// Manage context cancellation
@@ -85,9 +77,9 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 		fmt.Print("\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
 
-		// Disable BLE sensor notifications
+		// Disable real-time notifications from BLE sensor
 		if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(nil); err != nil {
-			logger.Error(logger.BLE, "failed to disable notifications:", err.Error())
+			logger.Error(logger.BLE, "failed to disable BLE notifications:", err)
 		}
 
 		errChan <- nil
@@ -159,11 +151,11 @@ func (sd *speedData) initializeWheelData() float64 {
 func (sd *speedData) parseSpeedData(speedData []byte) error {
 
 	if len(speedData) < 1 {
-		return errNoSpeedData
+		return ErrNoSpeedData
 	}
 
 	if speedData[0]&wheelRevFlag == 0 || len(speedData) < minDataLength {
-		return errInvalidSpeedData
+		return ErrInvalidSpeedData
 	}
 
 	sd.wheelRevs = binary.LittleEndian.Uint32(speedData[1:5])

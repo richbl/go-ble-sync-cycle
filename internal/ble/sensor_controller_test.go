@@ -14,7 +14,6 @@ import (
 const (
 	speedUnitsKMH        = "kph"
 	sensorTestBDAddr     = "test-bd-addr"
-	testTimeout          = 2 * time.Second
 	initialScanDelay     = 2 * time.Second
 	wheelCircumferenceMM = 2000
 )
@@ -52,17 +51,6 @@ func controllersIntegrationTest() (*Controller, error) {
 	return createTestController(speedUnitsKMH)
 }
 
-// createTestContextWithTimeout creates a test context with a timeout
-//
-//nolint:ireturn // ctx interface is required for testing
-func createTestContextWithTimeout(t *testing.T) (context.Context, context.CancelFunc) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	t.Cleanup(cancel)
-
-	return ctx, cancel
-}
-
 // setupTestBLEController creates a test BLE controller
 func setupTestBLEController(t *testing.T) *Controller {
 
@@ -90,7 +78,9 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 		return
 	}
 
-	ctx, _ := createTestContextWithTimeout(t)
+	// This test expects a timeout error
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 	_, err := controller.ScanForBLEPeripheral(ctx)
 	assert.Error(t, err)
 }

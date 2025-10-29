@@ -8,43 +8,40 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-// CSC service and characteristic UUIDs
+// CSC service and characteristic UUIDs as defined by Bluetooth SIG
 var (
 	cscServiceUUID        = bluetooth.New16BitUUID(0x1816)
 	cscCharacteristicUUID = bluetooth.New16BitUUID(0x2A5B)
 )
 
-// GetBLEServices retrieves CSC services from the BLE peripheral
-func (m *Controller) GetBLEServices(ctx context.Context, device bluetooth.Device) ([]bluetooth.DeviceService, error) {
+// GetCSCServices discovers and returns available CSC services from the BLE peripheral
+func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
 	params := actionParams{
 		ctx:        ctx,
-		action:     func(found chan<- any, errChan chan<- error) { m.discoverServicesAction(device, found, errChan) },
+		action:     func(found chan<- any, errChan chan<- error) { m.discoverCSCServices(device, found, errChan) },
 		logMessage: fmt.Sprintf("discovering CSC service %s", cscServiceUUID.String()),
 		stopAction: nil,
 	}
 
-	// Scan for CSC services
+	// Discover CSC services
 	result, err := m.performBLEAction(params)
+	if err != nil {
+		return nil, fmt.Errorf(errFormat, ErrCSCServiceDiscovery, err)
+	}
+
+	typedResult, err := assertBLEType(result, []CharacteristicDiscoverer{})
 	if err != nil {
 		return nil, err
 	}
 
-	// Check the result type
-	var typedResult []bluetooth.DeviceService
-
-	typedResult, err = assertBLEType(result, []bluetooth.DeviceService{})
-	if err != nil {
-		return []bluetooth.DeviceService{}, err
-	}
-
-	logger.Info(logger.BLE, "found CSC service", typedResult[0].UUID().String())
+	logger.Info(logger.BLE, "found CSC service")
 
 	return typedResult, nil
 }
 
-// discoverServicesAction performs the discovery of CSC services
-func (m *Controller) discoverServicesAction(device bluetooth.Device, found chan<- any, errChan chan<- error) {
+// discoverCSCServices performs the discovery of CSC services
+func (m *Controller) discoverCSCServices(device ServiceDiscoverer, found chan<- any, errChan chan<- error) {
 
 	services, err := device.DiscoverServices([]bluetooth.UUID{cscServiceUUID})
 	if err != nil {
@@ -52,27 +49,34 @@ func (m *Controller) discoverServicesAction(device bluetooth.Device, found chan<
 		return
 	}
 
-	found <- services
+	if len(services) == 0 {
+		errChan <- ErrNoCSCServices
+		return
+	}
+
+	result := make([]CharacteristicDiscoverer, 0, len(services))
+
+	for _, service := range services {
+		result = append(result, &deviceServiceWrapper{service: service})
+	}
+
+	found <- result
 }
 
-// GetBLECharacteristics retrieves CSC characteristics from the BLE peripheral
-func (m *Controller) GetBLECharacteristics(ctx context.Context, services []bluetooth.DeviceService) error {
+// GetCSCCharacteristics discovers and stores the CSC measurement characteristic from the BLE peripheral
+func (m *Controller) GetCSCCharacteristics(ctx context.Context, services []CharacteristicDiscoverer) error {
 
 	params := actionParams{
 		ctx: ctx,
 		action: func(found chan<- any, errChan chan<- error) {
-			m.discoverCharacteristicsAction(services, found, errChan)
+			m.discoverCSCCharacteristics(services, found, errChan)
 		},
 		logMessage: fmt.Sprintf("discovering CSC characteristic %s", cscCharacteristicUUID.String()),
 		stopAction: nil,
 	}
 
-	// Scan for CSC characteristics
-	_, err := m.performBLEAction(params)
-
-	if err != nil {
-		logger.Error(logger.BLE, "CSC characteristics discovery failed:", err.Error())
-		return err
+	if _, err := m.performBLEAction(params); err != nil {
+		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
 	logger.Info(logger.BLE, "found CSC characteristic", m.blePeripheralDetails.bleCharacteristic.UUID().String())
@@ -80,8 +84,13 @@ func (m *Controller) GetBLECharacteristics(ctx context.Context, services []bluet
 	return nil
 }
 
-// discoverCharacteristicsAction performs the discovery of CSC characteristics
-func (m *Controller) discoverCharacteristicsAction(services []bluetooth.DeviceService, found chan<- any, errChan chan<- error) {
+// discoverCSCCharacteristics performs the discovery of CSC characteristics
+func (m *Controller) discoverCSCCharacteristics(services []CharacteristicDiscoverer, found chan<- any, errChan chan<- error) {
+
+	if len(services) == 0 {
+		errChan <- ErrNoServicesProvided
+		return
+	}
 
 	characteristics, err := services[0].DiscoverCharacteristics([]bluetooth.UUID{cscCharacteristicUUID})
 	if err != nil {
@@ -89,6 +98,11 @@ func (m *Controller) discoverCharacteristicsAction(services []bluetooth.DeviceSe
 		return
 	}
 
-	m.blePeripheralDetails.bleCharacteristic = &characteristics[0]
+	if len(characteristics) == 0 {
+		errChan <- ErrNoCSCCharacteristics
+		return
+	}
+
+	m.blePeripheralDetails.bleCharacteristic = characteristics[0]
 	found <- characteristics
 }

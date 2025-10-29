@@ -53,6 +53,7 @@ const (
 
 	errTypeFormat = "%w: %T"
 	errFormat     = "%v: %w"
+	errFormatRev  = "%w: %v"
 )
 
 // Error messages
@@ -78,6 +79,7 @@ var (
 
 // Load loads the configuration from a TOML file using the provided flags
 func Load(configFile string) (*Config, error) {
+
 	clFlags := flags.GetFlags()
 
 	if clFlags.Config != "" {
@@ -116,7 +118,7 @@ func setSeekToPosition(cfg *Config, clFlags flags.Flags) error {
 
 	if clFlags.Seek != "" {
 		if !validateTimeFormat(clFlags.Seek) {
-			return fmt.Errorf(errFormat, clFlags.Seek, errInvalidSeek)
+			return fmt.Errorf(errFormatRev, errInvalidSeek, clFlags.Seek)
 		}
 		cfg.Video.SeekToPosition = clFlags.Seek
 	}
@@ -139,7 +141,7 @@ func (c *Config) validate() error {
 
 	for _, v := range validators {
 		if err := v.validate(); err != nil {
-			return fmt.Errorf("%s configuration error: %w", v.name, err)
+			return fmt.Errorf("%s section configuration error: %w", v.name, err)
 		}
 	}
 
@@ -158,7 +160,7 @@ func (ac *AppConfig) validate() error {
 	}
 
 	if !validLogLevels[ac.LogLevel] {
-		return fmt.Errorf(errFormat, ac.LogLevel, errInvalidLogLevel)
+		return fmt.Errorf(errFormatRev, errInvalidLogLevel, ac.LogLevel)
 	}
 
 	return nil
@@ -226,7 +228,7 @@ func validateFloat(value float64, minVal, maxVal any, errMsg error) error {
 func validateRange[T ValidationType](value, minVal, maxVal T, errMsg error) error {
 
 	if value < minVal || value > maxVal {
-		return fmt.Errorf(errFormat, value, errMsg)
+		return fmt.Errorf(errFormatRev, errMsg, value)
 	}
 
 	return nil

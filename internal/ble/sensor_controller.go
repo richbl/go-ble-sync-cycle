@@ -12,11 +12,19 @@ import (
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
+// CharacteristicReader is an interface for a bluetooth peripheral characteristic
+type CharacteristicReader interface {
+	EnableNotifications(handler func(buf []byte)) error
+	Read(p []byte) (n int, err error)
+	UUID() bluetooth.UUID
+}
+
 // blePeripheralDetails holds details about the BLE peripheral
 type blePeripheralDetails struct {
-	bleConfig         config.BLEConfig
-	bleAdapter        bluetooth.Adapter
-	bleCharacteristic *bluetooth.DeviceCharacteristic
+	bleConfig             config.BLEConfig
+	bleAdapter            bluetooth.Adapter
+	bleCharacteristic     CharacteristicReader
+	batteryCharacteristic CharacteristicReader
 }
 
 // Controller is a central controller for managing the BLE peripheral
@@ -35,8 +43,30 @@ type actionParams struct {
 
 // Error definitions
 var (
-	errScanTimeout     = errors.New("scanning time limit reached")
-	errUnsupportedType = errors.New("unsupported type")
+	// General BLE errors
+	ErrScanTimeout        = errors.New("scanning time limit reached")
+	ErrUnsupportedType    = errors.New("unsupported type")
+	ErrNoServicesProvided = errors.New("no services provided for characteristic discovery")
+
+	// Battery service/characteristic errors
+	ErrNoBatteryServices        = errors.New("no battery services found")
+	ErrNoBatteryCharacteristics = errors.New("no battery characteristics found")
+
+	// CSC service/characteristic errors
+	ErrCSCServiceDiscovery  = errors.New("CSC service discovery failed")
+	ErrCSCCharDiscovery     = errors.New("CSC characteristic discovery failed")
+	ErrNoCSCServices        = errors.New("no CSC services found")
+	ErrNoCSCCharacteristics = errors.New("no CSC characteristics found")
+
+	// Speed data processing errors
+	ErrNoSpeedData        = errors.New("no speed data reported")
+	ErrInvalidSpeedData   = errors.New("invalid data format or length")
+	ErrNotificationEnable = errors.New("failed to enable BLE notifications")
+)
+
+// Format for wrapping errors
+const (
+	errFormat = "%v: %w"
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
@@ -45,7 +75,6 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 	bleAdapter := bluetooth.DefaultAdapter
 
 	if err := bleAdapter.Enable(); err != nil {
-		logger.Error(logger.BLE, "failed to enable BLE adapter:", err)
 		return nil, err
 	}
 
@@ -53,9 +82,8 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 
 	return &Controller{
 		blePeripheralDetails: blePeripheralDetails{
-			bleConfig:         bleConfig,
-			bleAdapter:        *bleAdapter,
-			bleCharacteristic: &bluetooth.DeviceCharacteristic{},
+			bleConfig:  bleConfig,
+			bleAdapter: *bleAdapter,
 		},
 		speedConfig: speedConfig,
 	}, nil
@@ -71,16 +99,17 @@ func (m *Controller) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanRe
 		stopAction: m.blePeripheralDetails.bleAdapter.StopScan,
 	}
 
-	// Perform the BLE scan
 	result, err := m.performBLEAction(params)
 	if err != nil {
+		if errors.Is(err, ErrScanTimeout) {
+			return bluetooth.ScanResult{}, err
+		}
+
 		return bluetooth.ScanResult{}, err
 	}
 
-	// Check the result type
-	var typedResult bluetooth.ScanResult
-
-	typedResult, err = assertBLEType(result, bluetooth.ScanResult{})
+	// Confirm the result type
+	typedResult, err := assertBLEType(result, bluetooth.ScanResult{})
 	if err != nil {
 		return bluetooth.ScanResult{}, err
 	}
@@ -105,10 +134,7 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 		return bluetooth.Device{}, err
 	}
 
-	// Check the result type
-	var typedResult bluetooth.Device
-
-	typedResult, err = assertBLEType(result, bluetooth.Device{})
+	typedResult, err := assertBLEType(result, bluetooth.Device{})
 	if err != nil {
 		return bluetooth.Device{}, err
 	}
@@ -124,7 +150,7 @@ func assertBLEType[T any](result any, target T) (T, error) {
 	typedResult, ok := result.(T)
 	if !ok {
 		var zero T
-		return zero, fmt.Errorf("%w: %T", errUnsupportedType, target)
+		return zero, fmt.Errorf("%w: expected %T, got %T", ErrUnsupportedType, target, result)
 	}
 
 	return typedResult, nil
@@ -133,11 +159,9 @@ func assertBLEType[T any](result any, target T) (T, error) {
 // performBLEAction is a wrapper for performing BLE discovery actions
 func (m *Controller) performBLEAction(params actionParams) (any, error) {
 
-	// Create a context with a timeout
 	scanCtx, cancel := context.WithTimeout(params.ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 
-	// Create channels for signaling action completion
 	found := make(chan any, 1)
 	errChan := make(chan error, 1)
 
@@ -168,8 +192,9 @@ func (m *Controller) handleActionTimeout(ctx context.Context, stopAction func() 
 
 	}
 
+	// Check if the context was cancelled due to timeout or interrupt
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		return nil, errScanTimeout
+		return nil, fmt.Errorf("%w (%ds)", ErrScanTimeout, m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)
 	}
 
 	fmt.Print("\r") // Clear the ^C character from the terminal line
@@ -195,7 +220,6 @@ func (m *Controller) scanAction(found chan<- any, errChan chan<- error) {
 func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- any, errChan chan<- error) {
 
 	dev, err := m.blePeripheralDetails.bleAdapter.Connect(device.Address, bluetooth.ConnectionParams{})
-
 	if err != nil {
 		errChan <- err
 		return
@@ -207,22 +231,21 @@ func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- any
 // startScanning starts the BLE peripheral scan
 func (m *Controller) startScanning(found chan<- bluetooth.ScanResult) error {
 
-	//nolint:revive // bleAdapter.Scan requires adapter struct (though it's not used)
-	err := m.blePeripheralDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+	err := m.blePeripheralDetails.bleAdapter.Scan(func(_ *bluetooth.Adapter, result bluetooth.ScanResult) {
 
 		// Stop scanning when the target peripheral is found
 		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorBDAddr {
 
 			if err := m.blePeripheralDetails.bleAdapter.StopScan(); err != nil {
-				logger.Error(logger.BLE, "failed to stop scan:", err.Error())
+				logger.Error(logger.BLE, "failed to stop scan:", err)
 			}
+
 			found <- result
 		}
-
 	})
 
 	if err != nil {
-		logger.Error(logger.BLE, "scan error:", err.Error())
+		return err
 	}
 
 	return nil

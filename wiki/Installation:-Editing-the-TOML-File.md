@@ -10,7 +10,7 @@ The default `config.toml` file is shown below:
 
 ```toml
 # BLE Sync Cycle TOML configuration
-# 0.12.0
+# 0.13.0
 
 [app]
   logging_level = "info" # Log messages to see during execution: "debug", "info", "warn", "error"

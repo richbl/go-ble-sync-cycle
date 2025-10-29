@@ -23,7 +23,7 @@ import (
 const (
 	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.12.0"
+	appVersion = "0.13.0"
 	configFile = "config.toml"
 	errFormat  = "%v: %w"
 )
@@ -175,7 +175,7 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
 
 	if !errors.Is(err, context.Canceled) {
-		logger.Fatal(logger.BLE, msg, err.Error())
+		logger.Fatal(logger.BLE, msg+":", err.Error())
 	}
 
 	// Time to go... so say goodbye
@@ -191,7 +191,7 @@ func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *s
 	var err error
 
 	if scanResult, err = controllers.bleController.ScanForBLEPeripheral(ctx); err != nil {
-		logBLESetupError(err, "failed to scan for BLE peripheral:", mgr)
+		logBLESetupError(err, "failed to scan for BLE peripheral", mgr)
 	}
 
 	if connectResult, err = controllers.bleController.ConnectToBLEPeripheral(ctx, scanResult); err != nil {
@@ -204,14 +204,26 @@ func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *s
 // bleGetServicesAndCharacteristics retrieves BLE services and characteristics
 func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *services.ShutdownManager) {
 
-	var serviceResult []bluetooth.DeviceService
+	var serviceResult []ble.CharacteristicDiscoverer
 	var err error
 
-	if serviceResult, err = controllers.bleController.GetBLEServices(ctx, connectResult); err != nil {
-		logBLESetupError(err, "failed to acquire BLE services:", mgr)
+	// Get the battery service
+	if serviceResult, err = controllers.bleController.GetBatteryService(ctx, &connectResult); err != nil {
+		logBLESetupError(err, "failed to acquire battery service", mgr)
 	}
 
-	if err = controllers.bleController.GetBLECharacteristics(ctx, serviceResult); err != nil {
+	// Get the battery level
+	if err = controllers.bleController.GetBatteryLevel(ctx, serviceResult); err != nil {
+		logBLESetupError(err, "failed to acquire battery level", mgr)
+	}
+
+	// Get the CSC services
+	if serviceResult, err = controllers.bleController.GetCSCServices(ctx, &connectResult); err != nil {
+		logBLESetupError(err, "failed to acquire BLE services", mgr)
+	}
+
+	// Get the CSC characteristics
+	if err = controllers.bleController.GetCSCCharacteristics(ctx, serviceResult); err != nil {
 		logBLESetupError(err, "failed to acquire BLE characteristics", mgr)
 	}
 
@@ -224,7 +236,7 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.bleController.GetBLEUpdates(ctx, controllers.speedController); err != nil {
-			logger.Info(logger.BLE, err.Error())
+			logger.Error(logger.BLE, err.Error())
 			return err
 		}
 

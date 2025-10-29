@@ -6,9 +6,10 @@ import (
 
 // Error definitions
 var (
-	errInvalidTimeFormat = errors.New("invalid time format")
-	errOSDUpdate         = errors.New("failed to update OSD")
-	errVideoComplete     = errors.New("video playback completed")
+	errInvalidTimeFormat      = errors.New("invalid time format")
+	errOSDUpdate              = errors.New("failed to update OSD")
+	errVideoComplete          = errors.New("video playback completed")
+	errUnsupportedVideoPlayer = errors.New("unsupported video player specified")
 )
 
 const (

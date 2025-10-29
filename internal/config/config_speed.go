@@ -1,6 +1,8 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // SpeedConfig defines speed calculation and measurement settings from the TOML config file
 type SpeedConfig struct {
@@ -19,7 +21,7 @@ func (sc *SpeedConfig) validate() error {
 	}
 
 	if !validSpeedUnits[sc.SpeedUnits] {
-		return fmt.Errorf(errFormat, sc.SpeedUnits, errInvalidSpeedUnits)
+		return fmt.Errorf(errFormatRev, errInvalidSpeedUnits, sc.SpeedUnits)
 	}
 
 	return validateConfigFields(sc.configValidationRanges())
