@@ -19,7 +19,7 @@ func newMpvPlayer() (*mpvPlayer, error) {
 	}
 
 	if err := m.player.Initialize(); err != nil {
-		return nil, fmt.Errorf(errFormat, "failed to initialize mpv", err)
+		return nil, err
 	}
 
 	return m, nil
@@ -45,12 +45,12 @@ func (m *mpvPlayer) getTimeRemaining() (int64, error) {
 
 	timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
 	if err != nil {
-		return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
+		return 0, err
 	}
 
 	timeRemainingInt, ok := timeRemaining.(int64)
 	if !ok {
-		return 0, fmt.Errorf(errFormat, errTimeRemaining, errInvalidTimeFormat)
+		return 0, errInvalidTimeFormat
 
 	}
 

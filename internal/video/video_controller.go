@@ -60,7 +60,7 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 		player, err = newVLCPlayer()
 
 	default:
-		return nil, fmt.Errorf(errFormat, "unsupported media player", err)
+		return nil, errUnsupportedVideoPlayer
 	}
 
 	if err != nil {

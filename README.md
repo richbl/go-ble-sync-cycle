@@ -14,28 +14,35 @@
 
 ## Features
 
-- Real-time synchronization between cycling speed and video playback
-- Support for compliant Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensors (configured for speed mode)
-- Support for multiple media players, including [mpv](https://mpv.io) and [VLC](https://www.videolan.org)
-- TOML-based configuration for application customizations that include:
-    - BLE sensor setup (BD_ADDR)
-    - Bluetooth device scanning timeout
-    - Wheel circumference, required for accurate speed conversion
-    - Support for different speed units: miles per hour (mph) and kilometers per hour (km/h)
-    - Speed smoothing option for a more natural video playback
-    - Configurable choice of video file for playback
-    - Various display options for optimal video playback, including:
-        - The display of sensor speed, video playback speed and playback time remaining via on-screen display (OSD)
-        - Video window scaling (full screen, half screen, etc.)
-        - OSD font size
-- Simple command-line interface provides real-time application status
-    - Command-line flag options provide for easy override of configuration settings, including:
-        - Location of the configuration file
-            - Allowing for the creation of multiple configuration files that can be created to support different cycling sessions and different bicycle configurations
-        - Where to start video playback (seek functionality)
-        - Display of application usage/help information
-- Configurable logger levels (debug, info, warn, error) to manage the information displayed during application execution
-- Graceful handling of connection interrupts and system signals ensures all components shut down cleanly upon application exit
+* Real-time synchronization of cycling speed and video playback
+
+* Supports compliant BLE Cycling Speed and Cadence (CSC) sensors (in speed mode)
+
+* Integrates with [mpv](https://mpv.io) and [VLC](https://www.videolan.org) media players
+
+* Highly configurable TOML-based config file for:
+    * BLE sensor address (BD\_ADDR) and scan timeout
+    * Wheel circumference (for accurate speed)
+    * Speed units (mph or km/h)
+    * Speed smoothing for natural playback
+    * Video file selection
+    * Display options:
+        * On-screen display (OSD) for speed and time remaining
+        * Video window scaling (fullscreen, etc.)
+        * OSD position and font size
+
+* Command-line interface for real-time application status
+
+* CLI flags to override settings:
+    * Configuration file path (allows for multiple profiles)
+    * Video start time (seek)
+    * Help/usage information
+
+* Configurable log levels (debug, info, warn, error)
+
+* On every application startup, the battery level of the BLE sensor is checked and displayed
+
+* Graceful handling of connection interrupts and system signals for a clean shutdown
 
 ## Rationale
 
@@ -45,12 +52,12 @@ While there are several existing solutions that allow for "virtual" indoor cycli
 
 My needs are different:
 
-- I want to train _using my own bicycle_. Since I prefer riding recumbents, it wouldn’t make sense for me to train on a traditional upright trainer
-- I need a solution that can function with minimal dependencies and without requiring an Internet connection, as I live in a rural part of the Pacific Northwest where both electrical and Internet services are unreliable
+* I want to train _using my own bicycle_. Since I prefer riding recumbents, it wouldn’t make sense for me to train on a traditional upright trainer
+* I need a solution that can function with minimal dependencies and without requiring an Internet connection, as I live in a rural part of the Pacific Northwest where both electrical and Internet services are unreliable
 
 > Check out my [**Watchfile Remote [Rust Edition] project**](https://github.com/richbl/rust-watchfile-remote) for an example of how I handle our regular loss of Internet service here in the woods of the Pacific Northwest
 
-- Finally (and importantly), I want flexibility in the solutions and components that I use, as I typically like to tweak the systems I work with. Call me crazy, but I suspect it's my nature as an engineer to tinker...
+* Finally (and importantly), I want flexibility in the solutions and components that I use, as I typically like to tweak the systems I work with. Call me crazy, but I suspect it's my nature as an engineer to tinker...
 
 Since I already use an analog bicycle trainer while riding indoors, it made sense for me to find a way to pair my existing Bluetooth cycling sensors with a local computer which could then drive some kind of interesting feedback while cycling. This project was created to fit that need.
 
@@ -62,15 +69,43 @@ Since I already use an analog bicycle trainer while riding indoors, it made sens
 
 For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle project wiki](https://github.com/richbl/go-ble-sync-cycle/wiki). The wiki includes the following sections:
 
-- Hardware and software requirements
-- Application installation
-    - Configuring the application to best suit your own needs
-- Running the application
-    - Stepping through an example application startup
-- Frequently Asked Questions (FAQ)
-- Project roadmap
-- Acknowledgements
-    - A big thanks to the various package owners that made this project possible
-- Project license
+* BLE Sync Cycle
+    * Home
+    * Features
+    * Rationale
+
+* Requirements
+    * Hardware
+    * Software
+
+* Installation
+    * Application Dependencies
+    * Building the Application
+    * Editing the TOML File
+        * The [app] Section
+        * The [ble] Section
+        * The [speed] Section
+        * The [video] Section
+        * The [video.OSD] Section
+
+* Basic Usage
+    * Overview
+    * Running the Application
+    * Using the Command Line Options
+        * Setting the Configuration File Path
+        * Seeking to a Specific Time in the Video
+        * Displaying Help in BLE Sync Cycle
+
+* FAQ
+    * Frequently Asked Questions
+
+* Roadmap
+    * Roadmap
+
+* Acknowledgements
+    * Acknowledgements
+
+* License
+    * License
 
 Enjoy!

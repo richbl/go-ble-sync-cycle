@@ -27,11 +27,12 @@ type Controller struct {
 
 // Error definitions
 var (
-	errUnsupportedType = errors.New("unsupported type")
+	errUnsupportedSpeedType = errors.New("unsupported speed type encountered")
 )
 
+// Format for wrapping errors
 const (
-	errFormat = "%v: %w"
+	errFormatRev = "%w: %v"
 )
 
 // NewSpeedController creates a new speed controller with a specified window size, which
@@ -67,7 +68,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 
 		value, ok := x.(float64)
 		if !ok {
-			logger.Error(logger.BLE, fmt.Errorf(errFormat, value, errUnsupportedType))
+			logger.Error(logger.BLE, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
 			return
 		}
 
@@ -102,7 +103,7 @@ func (sc *Controller) GetSpeedBuffer() []string {
 		if x != nil {
 			value, ok := x.(float64)
 			if !ok {
-				logger.Error(logger.SPEED, fmt.Errorf(errFormat, value, errUnsupportedType))
+				logger.Error(logger.SPEED, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
 				return
 			}
 

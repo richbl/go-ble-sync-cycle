@@ -40,7 +40,7 @@ func (vc *VideoConfig) validate() error {
 	}
 
 	if !validPlayer[vc.MediaPlayer] {
-		return fmt.Errorf(errFormat, vc.MediaPlayer, errInvalidPlayer)
+		return fmt.Errorf(errFormatRev, errInvalidPlayer, vc.MediaPlayer)
 	}
 
 	if err := validateConfigFields(vc.configValidationRanges()); err != nil {
@@ -48,7 +48,7 @@ func (vc *VideoConfig) validate() error {
 	}
 
 	if !validateTimeFormat(vc.SeekToPosition) {
-		return fmt.Errorf(errFormat, vc.SeekToPosition, errInvalidSeek)
+		return fmt.Errorf(errFormatRev, errInvalidSeek, vc.SeekToPosition)
 	}
 
 	// Compute ShowOSD state based on display settings in TOML config file

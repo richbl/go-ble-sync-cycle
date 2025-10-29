@@ -23,7 +23,7 @@ func (bc *BLEConfig) validate() error {
 	re := regexp.MustCompile(pattern)
 
 	if !re.MatchString(strings.TrimSpace(bc.SensorBDAddr)) {
-		return fmt.Errorf(errFormat, bc.SensorBDAddr, errInvalidBDAddr)
+		return fmt.Errorf(errFormatRev, errInvalidBDAddr, bc.SensorBDAddr)
 	}
 
 	return nil

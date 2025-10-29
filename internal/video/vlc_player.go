@@ -22,7 +22,7 @@ func newVLCPlayer() (*vlcPlayer, error) {
 
 	// Initialize VLC library
 	if err := vlc.Init("--no-video-title-show", "--quiet"); err != nil {
-		return nil, fmt.Errorf(errFormat, "failed to initialize VLC", err)
+		return nil, err
 	}
 
 	// Create player
@@ -30,10 +30,10 @@ func newVLCPlayer() (*vlcPlayer, error) {
 	if err != nil {
 
 		if releaseErr := vlc.Release(); releaseErr != nil {
-			logger.Warn(logger.VIDEO, "failed to release VLC library:", releaseErr)
+			logger.Error(logger.VIDEO, "failed to release VLC library:", releaseErr)
 		}
 
-		return nil, fmt.Errorf(errFormat, "failed to create VLC player", err)
+		return nil, err
 	}
 
 	return &vlcPlayer{
@@ -49,7 +49,7 @@ func (v *vlcPlayer) loadFile(path string) error {
 
 	media, err := v.player.LoadMediaFromPath(path)
 	if err != nil {
-		return fmt.Errorf(errFormat, path, err)
+		return err
 	}
 
 	defer func() {
@@ -81,7 +81,7 @@ func (v *vlcPlayer) getTimeRemaining() (int64, error) {
 
 	currentTime, err := v.player.MediaTime()
 	if err != nil {
-		return 0, fmt.Errorf(errFormat, "failed to get current time", err)
+		return 0, err
 	}
 
 	return (int64)((length - currentTime) / 1000), nil // Convert ms to seconds
@@ -161,7 +161,7 @@ func (v *vlcPlayer) seek(position string) error {
 
 	timeMs, err := parseTimePosition(position)
 	if err != nil {
-		return err
+		return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
 	}
 
 	return v.player.SetMediaTime(timeMs)
@@ -194,7 +194,7 @@ func (v *vlcPlayer) setupEvents() error {
 
 	manager, err := v.player.EventManager()
 	if err != nil {
-		return fmt.Errorf(errFormat, "failed to get event manager", err)
+		return fmt.Errorf(errFormat, "failed to get VLC event manager", err)
 	}
 
 	// eventCallback is triggered when the video playback ends.
@@ -204,7 +204,7 @@ func (v *vlcPlayer) setupEvents() error {
 
 	_, err = manager.Attach(vlc.MediaPlayerEndReached, eventCallback, nil)
 	if err != nil {
-		return fmt.Errorf(errFormat, "failed to attach event handler", err)
+		return fmt.Errorf(errFormat, "failed to attach VLC event handler", err)
 	}
 
 	return nil
