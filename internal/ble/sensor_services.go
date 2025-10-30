@@ -152,20 +152,29 @@ func (m *Controller) discoverCharacteristics(opts charDiscoveryOptions, found ch
 	found <- buffer[0]
 }
 
-// GetBatteryService discovers and returns available battery services from the BLE peripheral
-func (m *Controller) GetBatteryService(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
+// executeAction is a helper that creates actionParams and executes a BLE action
+func (m *Controller) executeAction(ctx context.Context, logMessage string, action func(chan<- any, chan<- error)) (any, error) {
 
 	params := actionParams{
-		ctx: ctx,
-		action: func(found chan<- any, errChan chan<- error) {
-			m.discoverServices(batteryServiceConfig, device, found, errChan)
-		},
-		logMessage: fmt.Sprintf("discovering battery service %s", batteryServiceConfig.serviceUUID.String()),
+		ctx:        ctx,
+		action:     action,
+		logMessage: logMessage,
 		stopAction: nil,
 	}
 
-	// Discover battery services
-	result, err := m.performBLEAction(params)
+	return m.performBLEAction(params)
+}
+
+// GetBatteryService discovers and returns available battery services from the BLE peripheral
+func (m *Controller) GetBatteryService(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
+
+	result, err := m.executeAction(
+		ctx,
+		fmt.Sprintf("discovering battery service %s", batteryServiceConfig.serviceUUID.String()),
+		func(found chan<- any, errChan chan<- error) {
+			m.discoverServices(batteryServiceConfig, device, found, errChan)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -190,17 +199,13 @@ func (m *Controller) GetBatteryLevel(ctx context.Context, services []Characteris
 		readValue:      true,
 	}
 
-	params := actionParams{
-		ctx: ctx,
-		action: func(found chan<- any, errChan chan<- error) {
+	result, err := m.executeAction(
+		ctx,
+		fmt.Sprintf("discovering battery characteristic %s", batteryServiceConfig.characteristicUUID.String()),
+		func(found chan<- any, errChan chan<- error) {
 			m.discoverCharacteristics(opts, found, errChan)
 		},
-		logMessage: fmt.Sprintf("discovering battery characteristic %s", batteryServiceConfig.characteristicUUID.String()),
-		stopAction: nil,
-	}
-
-	// Discover battery characteristic
-	result, err := m.performBLEAction(params)
+	)
 	if err != nil {
 		return err
 	}
@@ -219,17 +224,13 @@ func (m *Controller) GetBatteryLevel(ctx context.Context, services []Characteris
 // GetCSCServices discovers and returns available CSC services from the BLE peripheral
 func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
-	params := actionParams{
-		ctx: ctx,
-		action: func(found chan<- any, errChan chan<- error) {
+	result, err := m.executeAction(
+		ctx,
+		fmt.Sprintf("discovering CSC service %s", cscServiceConfig.serviceUUID.String()),
+		func(found chan<- any, errChan chan<- error) {
 			m.discoverServices(cscServiceConfig, device, found, errChan)
 		},
-		logMessage: fmt.Sprintf("discovering CSC service %s", cscServiceConfig.serviceUUID.String()),
-		stopAction: nil,
-	}
-
-	// Discover CSC services
-	result, err := m.performBLEAction(params)
+	)
 	if err != nil {
 		return nil, fmt.Errorf(errFormat, ErrCSCServiceDiscovery, err)
 	}
@@ -254,16 +255,14 @@ func (m *Controller) GetCSCCharacteristics(ctx context.Context, services []Chara
 		readValue:      false,
 	}
 
-	params := actionParams{
-		ctx: ctx,
-		action: func(found chan<- any, errChan chan<- error) {
+	_, err := m.executeAction(
+		ctx,
+		fmt.Sprintf("discovering CSC characteristic %s", cscServiceConfig.characteristicUUID.String()),
+		func(found chan<- any, errChan chan<- error) {
 			m.discoverCharacteristics(opts, found, errChan)
 		},
-		logMessage: fmt.Sprintf("discovering CSC characteristic %s", cscServiceConfig.characteristicUUID.String()),
-		stopAction: nil,
-	}
-
-	if _, err := m.performBLEAction(params); err != nil {
+	)
+	if err != nil {
 		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
