@@ -94,6 +94,74 @@ func createTestBLEController(t *testing.T) *Controller {
 	return controller
 }
 
+// createSuccessfulServiceMock creates a mock that returns empty services
+func createSuccessfulServiceMock(t *testing.T, expectedUUID bluetooth.UUID) *mockServiceDiscoverer {
+
+	return &mockServiceDiscoverer{
+		discoverServicesFunc: func(uuids []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
+			assert.Equal(t, []bluetooth.UUID{expectedUUID}, uuids)
+			return []bluetooth.DeviceService{{}}, nil
+		},
+	}
+
+}
+
+// createEmptyServiceMock creates a mock that returns no services
+func createEmptyServiceMock() *mockServiceDiscoverer {
+
+	return &mockServiceDiscoverer{
+		discoverServicesFunc: func(_ []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
+			return nil, nil
+		},
+	}
+
+}
+
+// createFailingServiceMock creates a mock that returns an error
+func createFailingServiceMock(err error) *mockServiceDiscoverer {
+
+	return &mockServiceDiscoverer{
+		discoverServicesFunc: func(_ []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
+			return nil, err
+		},
+	}
+
+}
+
+// createSuccessfulCharMock creates a mock returning a characteristic
+func createSuccessfulCharMock(t *testing.T, expectedUUID bluetooth.UUID, char CharacteristicReader) *mockCharacteristicDiscoverer {
+
+	return &mockCharacteristicDiscoverer{
+		discoverCharacteristicsFunc: func(uuids []bluetooth.UUID) ([]CharacteristicReader, error) {
+			assert.Equal(t, []bluetooth.UUID{expectedUUID}, uuids)
+			return []CharacteristicReader{char}, nil
+		},
+	}
+
+}
+
+// createEmptyCharMock creates a mock returning no characteristics
+func createEmptyCharMock() *mockCharacteristicDiscoverer {
+
+	return &mockCharacteristicDiscoverer{
+		discoverCharacteristicsFunc: func(_ []bluetooth.UUID) ([]CharacteristicReader, error) {
+			return []CharacteristicReader{}, nil
+		},
+	}
+
+}
+
+// createFailingCharMock creates a mock that returns an error
+func createFailingCharMock(err error) *mockCharacteristicDiscoverer {
+
+	return &mockCharacteristicDiscoverer{
+		discoverCharacteristicsFunc: func(_ []bluetooth.UUID) ([]CharacteristicReader, error) {
+			return nil, err
+		},
+	}
+
+}
+
 // runGetBatteryServiceTest is a helper for testing GetBatteryService scenarios
 func runGetBatteryServiceTest(t *testing.T, mockServiceDiscoverer *mockServiceDiscoverer, assertFunc func(*testing.T, []CharacteristicDiscoverer, error)) {
 
