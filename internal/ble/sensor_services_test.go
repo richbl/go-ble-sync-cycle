@@ -94,74 +94,6 @@ func createTestBLEController(t *testing.T) *Controller {
 	return controller
 }
 
-// createSuccessfulServiceMock creates a mock that returns empty services
-func createSuccessfulServiceMock(t *testing.T, expectedUUID bluetooth.UUID) *mockServiceDiscoverer {
-
-	return &mockServiceDiscoverer{
-		discoverServicesFunc: func(uuids []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
-			assert.Equal(t, []bluetooth.UUID{expectedUUID}, uuids)
-			return []bluetooth.DeviceService{{}}, nil
-		},
-	}
-
-}
-
-// createEmptyServiceMock creates a mock that returns no services
-func createEmptyServiceMock() *mockServiceDiscoverer {
-
-	return &mockServiceDiscoverer{
-		discoverServicesFunc: func(_ []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
-			return nil, nil
-		},
-	}
-
-}
-
-// createFailingServiceMock creates a mock that returns an error
-func createFailingServiceMock(err error) *mockServiceDiscoverer {
-
-	return &mockServiceDiscoverer{
-		discoverServicesFunc: func(_ []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
-			return nil, err
-		},
-	}
-
-}
-
-// createSuccessfulCharMock creates a mock returning a characteristic
-func createSuccessfulCharMock(t *testing.T, expectedUUID bluetooth.UUID, char CharacteristicReader) *mockCharacteristicDiscoverer {
-
-	return &mockCharacteristicDiscoverer{
-		discoverCharacteristicsFunc: func(uuids []bluetooth.UUID) ([]CharacteristicReader, error) {
-			assert.Equal(t, []bluetooth.UUID{expectedUUID}, uuids)
-			return []CharacteristicReader{char}, nil
-		},
-	}
-
-}
-
-// createEmptyCharMock creates a mock returning no characteristics
-func createEmptyCharMock() *mockCharacteristicDiscoverer {
-
-	return &mockCharacteristicDiscoverer{
-		discoverCharacteristicsFunc: func(_ []bluetooth.UUID) ([]CharacteristicReader, error) {
-			return []CharacteristicReader{}, nil
-		},
-	}
-
-}
-
-// createFailingCharMock creates a mock that returns an error
-func createFailingCharMock(err error) *mockCharacteristicDiscoverer {
-
-	return &mockCharacteristicDiscoverer{
-		discoverCharacteristicsFunc: func(_ []bluetooth.UUID) ([]CharacteristicReader, error) {
-			return nil, err
-		},
-	}
-
-}
-
 // runGetBatteryServiceTest is a helper for testing GetBatteryService scenarios
 func runGetBatteryServiceTest(t *testing.T, mockServiceDiscoverer *mockServiceDiscoverer, assertFunc func(*testing.T, []CharacteristicDiscoverer, error)) {
 
@@ -234,7 +166,7 @@ func TestGetBatteryServiceNoServicesFound(t *testing.T) {
 
 	runGetBatteryServiceTest(t, mock, func(t *testing.T, services []CharacteristicDiscoverer, err error) {
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no battery services found")
+		assert.ErrorIs(t, err, ErrNoBatteryServices)
 		assert.Nil(t, services)
 	})
 
@@ -298,7 +230,7 @@ func TestGetBatteryLevelNoCharacteristicsFound(t *testing.T) {
 
 	runGetBatteryLevelTest(t, []CharacteristicDiscoverer{mockService}, func(t *testing.T, err error) {
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no battery characteristics found")
+		assert.ErrorIs(t, err, ErrNoBatteryCharacteristics)
 	})
 
 }
@@ -366,7 +298,7 @@ func TestGetCSCServicesNoServicesFound(t *testing.T) {
 
 	runGetCSCServicesTest(t, mock, func(t *testing.T, services []CharacteristicDiscoverer, err error) {
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no CSC services found")
+		assert.ErrorIs(t, err, ErrNoCSCServices)
 		assert.Nil(t, services)
 	})
 
@@ -384,7 +316,7 @@ func TestGetCSCServicesDiscoveryError(t *testing.T) {
 	runGetCSCServicesTest(t, mock, func(t *testing.T, services []CharacteristicDiscoverer, err error) {
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errServiceDiscoveryFailed)
-		assert.Contains(t, err.Error(), "CSC service discovery failed")
+		assert.Contains(t, err.Error(), ErrCSCServiceDiscovery.Error())
 		assert.Nil(t, services)
 	})
 
@@ -424,7 +356,7 @@ func TestGetCSCCharacteristicsNoCharacteristicsFound(t *testing.T) {
 	runGetCSCCharacteristicsTest(t, []CharacteristicDiscoverer{mockService}, func(t *testing.T, err error) {
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrNoCSCCharacteristics)
-		assert.Contains(t, err.Error(), "CSC characteristic discovery failed")
+		assert.Contains(t, err.Error(), ErrCSCCharDiscovery.Error())
 	})
 
 }
@@ -441,7 +373,7 @@ func TestGetCSCCharacteristicsDiscoveryError(t *testing.T) {
 	runGetCSCCharacteristicsTest(t, []CharacteristicDiscoverer{mockService}, func(t *testing.T, err error) {
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errCharacteristicsDiscoveryFailed)
-		assert.Contains(t, err.Error(), "CSC characteristic discovery failed")
+		assert.Contains(t, err.Error(), ErrCSCCharDiscovery.Error())
 	})
 
 }
@@ -452,7 +384,7 @@ func TestGetCSCCharacteristicsEmptyServicesList(t *testing.T) {
 	runGetCSCCharacteristicsTest(t, []CharacteristicDiscoverer{}, func(t *testing.T, err error) {
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrNoServicesProvided)
-		assert.Contains(t, err.Error(), "CSC characteristic discovery failed")
+		assert.Contains(t, err.Error(), ErrCSCCharDiscovery.Error())
 	})
 
 }

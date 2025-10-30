@@ -97,15 +97,8 @@ For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle pro
         * Displaying Help in BLE Sync Cycle
 
 * FAQ
-    * Frequently Asked Questions
-
 * Roadmap
-    * Roadmap
-
 * Acknowledgements
-    * Acknowledgements
-
 * License
-    * License
 
 Enjoy!
