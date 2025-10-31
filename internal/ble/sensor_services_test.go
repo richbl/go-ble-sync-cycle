@@ -15,7 +15,6 @@ var (
 	errServiceDiscoveryFailed         = errors.New("service discovery failed")
 	errCharacteristicsDiscoveryFailed = errors.New("characteristics discovery failed")
 	errCharReadFailed                 = errors.New("characteristic read failed")
-	errNotificationEnable             = errors.New("failed to enable notifications")
 )
 
 // mockServiceDiscoverer is a mock implementation of ServiceDiscoverer
@@ -67,7 +66,8 @@ func (m *mockCharacteristicReader) EnableNotifications(handler func(buf []byte))
 	if m.enableNotificationsFunc != nil {
 		return m.enableNotificationsFunc(handler)
 	}
-	return errNotificationEnable
+
+	return ErrNotificationEnable
 }
 
 // serviceTestConfig defines the configuration for testing a BLE service type
