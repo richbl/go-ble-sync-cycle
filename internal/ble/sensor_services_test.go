@@ -15,7 +15,6 @@ var (
 	errServiceDiscoveryFailed         = errors.New("service discovery failed")
 	errCharacteristicsDiscoveryFailed = errors.New("characteristics discovery failed")
 	errCharReadFailed                 = errors.New("characteristic read failed")
-	errBufferTooSmall                 = errors.New("buffer too small")
 )
 
 // mockServiceDiscoverer is a mock implementation of ServiceDiscoverer
