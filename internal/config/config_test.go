@@ -52,6 +52,8 @@ func TestLoad(t *testing.T) {
 // TestAppConfigValidate tests the AppConfig validate function
 func TestAppConfigValidate(t *testing.T) {
 
+	sessionTitle := "a valid title"
+
 	// Define test cases
 	tests := []struct {
 		name         string
@@ -59,13 +61,13 @@ func TestAppConfigValidate(t *testing.T) {
 		sessionTitle string
 		expectError  bool
 	}{
-		{"valid debug", logLevelDebug, "a valid title", false},
-		{"valid info", logLevelInfo, "a valid title", false},
-		{"valid warn", logLevelWarn, "a valid title", false},
-		{"valid error", logLevelError, "a valid title", false},
-		{"valid fatal", logLevelFatal, "a valid title", false},
-		{"invalid log level", "invalid", "a valid title", true},
-		{"valid session title", logLevelInfo, "a valid title", false},
+		{"valid debug", logLevelDebug, sessionTitle, false},
+		{"valid info", logLevelInfo, sessionTitle, false},
+		{"valid warn", logLevelWarn, sessionTitle, false},
+		{"valid error", logLevelError, sessionTitle, false},
+		{"valid fatal", logLevelFatal, sessionTitle, false},
+		{"invalid log level", "invalid", sessionTitle, true},
+		{"valid session title", logLevelInfo, sessionTitle, false},
 		{"invalid session title", logLevelInfo, "This is a very long session title that is designed to be well over the two hundred character limit that has been imposed on it to ensure that the validation logic is correctly catching strings that are too long.", true},
 	}
 
