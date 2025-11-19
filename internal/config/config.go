@@ -21,7 +21,8 @@ type Config struct {
 
 // AppConfig defines application-wide settings
 type AppConfig struct {
-	LogLevel string `toml:"logging_level"`
+	LogLevel     string `toml:"logging_level"`
+	SessionTitle string `toml:"session_title"`
 }
 
 // ValidationType, used for config validation, is a type that can be either an int or a float64
@@ -58,23 +59,24 @@ const (
 
 // Error messages
 var (
-	errInvalidLogLevel    = errors.New("invalid log level")
-	errInvalidConfigFile  = errors.New("invalid config file")
-	errInvalidSpeedUnits  = errors.New("invalid speed units")
-	errVideoFile          = errors.New("video file error")
-	errInvalidPlayer      = errors.New("invalid media player")
-	errInvalidInterval    = errors.New("update_interval_sec must be 0.1-3.0")
-	errInvalidSeek        = errors.New("seek_to_position must be in MM:SS or SS format")
-	errSmoothingWindow    = errors.New("smoothing window must be 1-25")
-	errWheelCircumference = errors.New("wheel_circumference_mm must be 50-3000")
-	errSpeedThreshold     = errors.New("speed_threshold must be 0.00-10.00")
-	errSpeedMultiplier    = errors.New("speed_multiplier must be 0.1-1.5")
-	errInvalidBDAddr      = errors.New("invalid sensor BD_ADDR in configuration")
-	errInvalidScanTimeout = errors.New("scan_timeout_secs must be 1-100")
-	errFontSize           = errors.New("font_size must be 10-200")
-	errOSDMargin          = errors.New("margin value must be 0-100")
-	errWindowScale        = errors.New("window_scale_factor must be 0.1-1.0")
-	errUnsupportedType    = errors.New("unsupported type")
+	errInvalidLogLevel     = errors.New("invalid log level")
+	errInvalidSessionTitle = errors.New("invalid session title")
+	errInvalidConfigFile   = errors.New("invalid config file")
+	errInvalidSpeedUnits   = errors.New("invalid speed units")
+	errVideoFile           = errors.New("video file error")
+	errInvalidPlayer       = errors.New("invalid media player")
+	errInvalidInterval     = errors.New("update_interval_secs must be 0.1-3.0")
+	errInvalidSeek         = errors.New("seek_to_position must be in MM:SS or SS format")
+	errSmoothingWindow     = errors.New("smoothing window must be 1-25")
+	errWheelCircumference  = errors.New("wheel_circumference_mm must be 50-3000")
+	errSpeedThreshold      = errors.New("speed_threshold must be 0.00-10.00")
+	errSpeedMultiplier     = errors.New("speed_multiplier must be 0.1-1.5")
+	errInvalidBDAddr       = errors.New("invalid sensor BD_ADDR in configuration")
+	errInvalidScanTimeout  = errors.New("scan_timeout_secs must be 1-100")
+	errFontSize            = errors.New("font_size must be 10-200")
+	errOSDMargin           = errors.New("margin value must be 0-100")
+	errWindowScale         = errors.New("window_scale_factor must be 0.1-1.0")
+	errUnsupportedType     = errors.New("unsupported type")
 )
 
 // Load loads the configuration from a TOML file using the provided flags
@@ -161,6 +163,10 @@ func (ac *AppConfig) validate() error {
 
 	if !validLogLevels[ac.LogLevel] {
 		return fmt.Errorf(errFormatRev, errInvalidLogLevel, ac.LogLevel)
+	}
+
+	if len(ac.SessionTitle) > 200 {
+		return fmt.Errorf(errFormatRev, errInvalidSessionTitle, ac.SessionTitle)
 	}
 
 	return nil

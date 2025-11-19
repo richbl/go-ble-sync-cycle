@@ -1,32 +1,32 @@
-# BLE Sync Cycle TOML configuration
+# BLE Sync Cycle TOML Configuration
 # 0.13.0
 
 [app]
-  logging_level = "info"          # Log messages to see during execution: "debug", "info", "warn", "error"
-                                  # where "debug" is the most verbose and "error" is least verbose
+  session_title = "Session Title" # Short description of the current cycling session (0-200 characters)
+  logging_level = "info"          # Log messages generated during execution ("debug", "info", "warn", "error")
 
 [ble]
-  sensor_bd_addr = "FA:46:1D:77:C8:E1" # Address of BLE peripheral device (e.g. "11:22:33:44:55:66")
-  scan_timeout_secs = 30          # Seconds (1-100) to wait for peripheral response before generating error
+  sensor_bd_addr = "FA:46:1D:77:C8:E1" # The Bluetooth Device Address (BD_ADDR) of the BLE peripheral
+  scan_timeout_secs = 30               # Time to wait for a response from the peripheral before connect fails (1-100 seconds)
 
 [speed]
-  speed_threshold = 0.25          # Minimum speed change (0.00-10.00) to trigger video speed update
-  speed_units = "mph"             # "km/h" or "mph"
-  smoothing_window = 5            # Number of recent speeds (1-25) to generate a moving average
-  wheel_circumference_mm = 2155   # Wheel circumference in millimeters (50-3000) 
+  wheel_circumference_mm = 2155 # Wheel circumference (50-3000 millimeters)
+  speed_units = "mph"           # The unit of measurement for speed ("mph" or "km/h")
+  speed_threshold = 0.25        # Minimum speed change to trigger video playback update (0.00-10.00)
+  smoothing_window = 5          # Number of recent speed readings to generate a stable moving average (1-25)
 
 [video]
-  media_player = "mpv"            # Media player to use ("mpv" or "vlc")
-  file_path = "cycling_test.mp4"  # Path to the video file to play
-  window_scale_factor = 1.0       # Scale factor (0.1-1.0) for the video window (1.0 = full screen)
-  seek_to_position = "00:00"      # Seek minutes:seconds ("MM:SS") into the video playback
-  update_interval_sec = 0.25      # Seconds (0.10-3.00) to wait between video player updates
-  speed_multiplier = 0.8          # Multiplier (0.1-1.5) that adjusts sensor speed to video playback speed
-                                  # (0.1 = slower, 1.0 = normal, 1.5 = faster playback)
+  media_player = "mpv"           # The video playback back-end to use ("mpv" or "vlc")
+  file_path = "cycling_test.mp4" # File path to the video file for playback
+  seek_to_position = "00:00"     # Starting playback position in the video ("MM:SS")
+  window_scale_factor = 1.0      # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
+  update_interval_secs = 0.25    # Frequency that the video player is sent speed updates (0.10-3.00 seconds)
+  speed_multiplier = 0.8         # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
+
   [video.OSD]
-    display_cycle_speed = true    # Display cycle speed on the on-screen display (true/false)
-    display_playback_speed = true # Display video playback speed on the on-screen display (true/false)
-    display_time_remaining = true # Display time remaining on the on-screen display (true/false)
-    font_size = 40                # Font size (10-200) for on-screen display (OSD)
-    margin_left = 25              # pixel offset of OSD (0-100) from the left of the media player window
-    margin_top = 25               # pixel offset of the OSD (0-100) from the top of the media player window
+    display_cycle_speed = true    # Display the current cycle speed on the on-screen display (true/false)
+    display_playback_speed = true # Display the current video playback speed on the on-screen display (true/false)
+    display_time_remaining = true # Display the current video time remaining on the on-screen display (true/false)
+    font_size = 40                # Font size of the on-screen display (10-200 pixels)
+    margin_left = 25              # Offset of the OSD from the left of the media player window (0-100 pixels)
+    margin_top = 25               # Offset of the OSD from the top of the media player window (0-100 pixels)

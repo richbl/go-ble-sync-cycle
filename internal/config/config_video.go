@@ -11,7 +11,7 @@ type VideoConfig struct {
 	FilePath          string         `toml:"file_path"`
 	WindowScaleFactor float64        `toml:"window_scale_factor"`
 	SeekToPosition    string         `toml:"seek_to_position"`
-	UpdateIntervalSec float64        `toml:"update_interval_sec"`
+	UpdateIntervalSec float64        `toml:"update_interval_secs"`
 	SpeedMultiplier   float64        `toml:"speed_multiplier"`
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
 }
