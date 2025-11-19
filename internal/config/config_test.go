@@ -54,24 +54,29 @@ func TestAppConfigValidate(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
-		name        string
-		logLevel    string
-		expectError bool
+		name         string
+		logLevel     string
+		sessionTitle string
+		expectError  bool
 	}{
-		{"valid debug", logLevelDebug, false},
-		{"valid info", logLevelInfo, false},
-		{"valid warn", logLevelWarn, false},
-		{"valid error", logLevelError, false},
-		{"valid fatal", logLevelFatal, false},
-		{"invalid log level", "invalid", true},
+		{"valid debug", logLevelDebug, "a valid title", false},
+		{"valid info", logLevelInfo, "a valid title", false},
+		{"valid warn", logLevelWarn, "a valid title", false},
+		{"valid error", logLevelError, "a valid title", false},
+		{"valid fatal", logLevelFatal, "a valid title", false},
+		{"invalid log level", "invalid", "a valid title", true},
+		{"valid session title", logLevelInfo, "a valid title", false},
+		{"invalid session title", logLevelInfo, "This is a very long session title that is designed to be well over the two hundred character limit that has been imposed on it to ensure that the validation logic is correctly catching strings that are too long.", true},
 	}
 
 	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-
-			ac := AppConfig{LogLevel: tt.logLevel}
+			ac := AppConfig{
+				LogLevel:     tt.logLevel,
+				SessionTitle: tt.sessionTitle,
+			}
 			err := ac.validate()
 			if (err != nil) != tt.expectError {
 				t.Errorf("AppConfig.validate() error = %v, expectError %v", err, tt.expectError)

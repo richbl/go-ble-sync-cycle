@@ -1,0 +1,800 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.1 -->
+<interface>
+  <!-- interface-name bsc_gui.ui -->
+  <requires lib="gio" version="2.0" />
+  <requires lib="gtk" version="4.18" />
+  <requires lib="libadwaita" version="1.7" />
+  <menu id="appMenu">
+    <section>
+      <item>
+        <attribute name="action">app.about</attribute>
+        <attribute name="label" translatable="yes">About</attribute>
+      </item>
+      <item>
+        <attribute name="action">app.exit</attribute>
+        <attribute name="label" translatable="yes">Exit</attribute>
+      </item>
+    </section>
+  </menu>
+  <object class="AdwApplicationWindow" id="main_window">
+    <property name="content">
+      <object class="AdwToolbarView" id="toolbar_view">
+        <property name="content">
+          <object class="GtkBox" id="toolbar_box">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="AdwViewSwitcher" id="view_switcher">
+                <property name="stack">view_stack</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStack" id="view_stack">
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <child>
+                  <object class="AdwViewStackPage" id="page1_session_select">
+                    <property name="child">
+                      <object class="GtkBox" id="session_select_box">
+                        <property name="margin-bottom">24</property>
+                        <property name="margin-end">24</property>
+                        <property name="margin-start">24</property>
+                        <property name="margin-top">24</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <child>
+                          <object class="GtkBox" id="page1_logo_box">
+                            <property name="halign">center</property>
+                            <property name="margin-top">24</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">6</property>
+                            <child>
+                              <object class="GtkImage" id="page1_logo_image">
+                                <property name="icon-name">bsc_logo</property>
+                                <property name="icon-size">normal</property>
+                                <property name="pixel-size">128</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="app_title_label">
+                                <property name="label">BLE Sync Cycle</property>
+                                <style>
+                                  <class name="title-1" />
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="app_subtitle_label">
+                                <property name="label">Virtual Cycling Using Bluetooth LE</property>
+                                <style>
+                                  <class name="dim-label" />
+                                </style>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwClamp" id="session_select_clamp">
+                            <child>
+                              <object class="GtkBox" id="session_select_box_list">
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">24</property>
+                                <child>
+                                  <object class="AdwPreferencesGroup" id="session_select_group">
+                                    <property name="title">Select a BSC Session</property>
+                                    <child>
+                                      <object class="GtkListBox" id="session_listbox">
+                                        <property name="selection-mode">single</property>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row1">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Loop Trail in the Dolomites</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row2">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Cycling in the Alps</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row3">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Bellingham Forest Trail</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row4">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Centennial Trail to Arlington</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row5">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Iceland Ring Road (1)</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="AdwActionRow" id="session_row6">
+                                            <property name="activatable">True</property>
+                                            <property name="title" translatable="yes">Iceland Ring Road (2)</property>
+                                          </object>
+                                        </child>
+                                        <style>
+                                          <class name="boxed-list" />
+                                        </style>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="AdwPreferencesGroup" id="session_action_group">
+                                    <child>
+                                      <object class="AdwActionRow" id="session_action_row">
+                                        <property name="activatable">False</property>
+                                        <child type="suffix">
+                                          <object class="GtkBox" id="session_action_box">
+                                            <property name="halign">end</property>
+                                            <property name="margin-bottom">12</property>
+                                            <property name="margin-end">12</property>
+                                            <property name="margin-top">12</property>
+                                            <property name="orientation">horizontal</property>
+                                            <property name="spacing">12</property>
+                                            <child>
+                                              <object class="GtkButton" id="edit_session_button">
+                                                <property name="label" translatable="yes">Edit Session</property>
+                                                <style>
+                                                  <class name="pill" />
+                                                </style>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="load_session_button">
+                                                <property name="label" translatable="yes">Load Session</property>
+                                                <style>
+                                                  <class name="suggested-action" />
+                                                  <class name="pill" />
+                                                </style>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                    <property name="icon-name">document-properties-symbolic</property>
+                    <property name="name">page1</property>
+                    <property name="title">BSC Sessions</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwViewStackPage" id="page2_session_status">
+                    <property name="child">
+                      <object class="AdwPreferencesPage" id="session_status_page">
+                        <property name="title">Session Status</property>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="status_header_group">
+                            <child>
+                              <object class="GtkBox" id="status_header_box">
+                                <property name="halign">center</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage" id="page2_logo_image">
+                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="pixel-size">48</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="status_header_label">
+                                    <property name="label">Session Status</property>
+                                    <style>
+                                      <class name="title-1" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="session_info_group">
+                            <property name="title">Session Title</property>
+                            <child>
+                              <object class="AdwActionRow" id="session_name_row">
+                                <property name="title">Dolomites Scenic Drive</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="sensor_info_group">
+                            <property name="title">BLE Sensor Connection</property>
+                            <child>
+                              <object class="AdwActionRow" id="sensor_status_row">
+                                <property name="subtitle">Disconnected</property>
+                                <property name="title">Connection</property>
+                                <child type="suffix">
+                                  <object class="GtkImage" id="connection_status_icon">
+                                    <property name="icon-name">emblem-ok-symbolic</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="success" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="battery_level_row">
+                                <property name="subtitle">Unknown</property>
+                                <property name="title">Battery Level</property>
+                                <child type="suffix">
+                                  <object class="GtkImage" id="battery_icon">
+                                    <property name="icon-name">battery-good-symbolic</property>
+                                    <property name="valign">center</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="metrics_group">
+                            <property name="title">Session Metrics</property>
+                            <child>
+                              <object class="AdwActionRow" id="speed_row">
+                                <property name="subtitle">mph</property>
+                                <property name="title">Current Speed</property>
+                                <child type="suffix">
+                                  <object class="GtkLabel" id="speed_large_label">
+                                    <property name="label">0.0</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="title-1" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="playback_speed_row">
+                                <property name="title">Playback Speed</property>
+                                <child type="suffix">
+                                  <object class="GtkLabel" id="playback_speed_large_label">
+                                    <property name="label">1.00x</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="title-1" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="time_remaining_row">
+                                <property name="title">Time Remaining</property>
+                                <child type="suffix">
+                                  <object class="GtkLabel" id="time_remaining_large_label">
+                                    <property name="label">--:--:--</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="title-2" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="control_button_group">
+                            <child>
+                              <object class="AdwActionRow" id="session_control_row">
+                                <property name="activatable">False</property>
+                                <child type="suffix">
+                                  <object class="GtkBox" id="session_control_box">
+                                    <property name="halign">end</property>
+                                    <property name="margin-bottom">12</property>
+                                    <property name="margin-end">12</property>
+                                    <property name="margin-top">12</property>
+                                    <property name="orientation">horizontal</property>
+                                    <property name="spacing">12</property>
+                                    <child>
+                                      <object class="GtkButton" id="session_control_button">
+                                        <property name="icon-name">media-playback-start-symbolic</property>
+                                        <property name="label" translatable="yes">Start Session</property>
+                                        <style>
+                                          <class name="suggested-action" />
+                                          <class name="pill" />
+                                        </style>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                    <property name="icon-name">media-playback-start-symbolic</property>
+                    <property name="name">page2</property>
+                    <property name="title">BSC Session Status</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwViewStackPage" id="page3_session_log">
+                    <property name="child">
+                      <object class="AdwPreferencesPage" id="session_log_page">
+                        <property name="title">Session Log</property>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="log_header_group">
+                            <child>
+                              <object class="GtkBox" id="log_header_box">
+                                <property name="halign">center</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">12</property>
+                                <child>
+                                  <object class="GtkImage" id="page3_logo_image">
+                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="pixel-size">48</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="log_header_label">
+                                    <property name="label">Session Log</property>
+                                    <style>
+                                      <class name="title-1" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="logging_info_group">
+                            <property name="title">Logging Level</property>
+                            <child>
+                              <object class="AdwActionRow" id="logging_level_row">
+                                <property name="title">Debug</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="log_output_group">
+                            <child>
+                              <object class="GtkScrolledWindow" id="logging_scroll_window">
+                                <property name="has-frame">True</property>
+                                <property name="hscrollbar-policy">never</property>
+                                <property name="min-content-height">400</property>
+                                <property name="vexpand">True</property>
+                                <child>
+                                  <object class="GtkTextView" id="logging_view">
+                                    <property name="cursor-visible">False</property>
+                                    <property name="editable">False</property>
+                                    <property name="margin-bottom">6</property>
+                                    <property name="margin-end">6</property>
+                                    <property name="margin-start">6</property>
+                                    <property name="margin-top">6</property>
+                                    <property name="monospace">True</property>
+                                    <property name="wrap-mode">word-char</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                    <property name="icon-name">seeing-symbolic</property>
+                    <property name="name">page3</property>
+                    <property name="title">BSC Session Log</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwViewStackPage" id="page4_session_editor">
+                    <property name="child">
+                      <object class="AdwPreferencesPage" id="session_editor_page">
+                        <property name="title">BSC Session Editor</property>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_session_details_group_heading">
+                            <child>
+                              <object class="GtkBox" id="page4_logo_box">
+                                <property name="halign">center</property>
+                                <property name="spacing">6</property>
+                                <child>
+                                  <object class="GtkImage" id="page4_logo_image">
+                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="icon-size">inherit</property>
+                                    <property name="pixel-size">48</property>
+                                    <property name="visible">True</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="session_editor_label">
+                                    <property name="label">Session Editor</property>
+                                    <style>
+                                      <class name="title-1" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_session_details_group">
+                            <property name="title">Session Details</property>
+                            <child>
+                              <object class="AdwEntryRow" id="session_title_entry_row">
+                                <property name="show-apply-button">True</property>
+                                <property name="text">Centennial Trail to Arlington</property>
+                                <property name="title" translatable="yes">Session Title</property>
+                                <property name="tooltip-text">Short description of the current cycling session (0-200 characters)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwComboRow" id="log_level_combo">
+                                <property name="model">
+                                  <object class="GtkStringList" id="log_level_list">
+                                    <items>
+                                      <item translatable="yes">debug</item>
+                                      <item translatable="yes">info</item>
+                                      <item translatable="yes">warn</item>
+                                      <item translatable="yes">error</item>
+                                    </items>
+                                  </object>
+                                </property>
+                                <property name="selected">0</property>
+                                <property name="title">Logging Level</property>
+                                <property name="tooltip-text">Log messages generated during execution</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_ble_sensor_status_group">
+                            <property name="title">BLE Sensor</property>
+                            <child>
+                              <object class="AdwEntryRow" id="bt_address_entry_row">
+                                <property name="input-purpose">free-form</property>
+                                <property name="show-apply-button">True</property>
+                                <property name="text">34:fe:3f:ac:22:0d</property>
+                                <property name="title" translatable="yes">Bluetooth Device Address</property>
+                                <property name="tooltip-text">The Bluetooth Device Address (BD_ADDR) of the BLE peripheral</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="scan_timeout_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="scan_timeout_adjustment">
+                                    <property name="lower">1</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">100</property>
+                                    <property name="value">30</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">seconds</property>
+                                <property name="title">Scan Timeout</property>
+                                <property name="tooltip-text">Time to wait for a response from the peripheral before connect fails (1-100 seconds)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="edit_sensor_status_row">
+                                <property name="subtitle">Not Connected</property>
+                                <property name="title" translatable="yes">Sensor Status</property>
+                                <property name="tooltip-text">Connection status of the BLE peripheral device</property>
+                                <child type="suffix">
+                                  <object class="GtkButton" id="button_scan">
+                                    <property name="label">Scan</property>
+                                    <property name="tooltip-text">Scan for the BLE device with the given address</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="flat" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_speed_settings_group">
+                            <property name="title">Speed Settings</property>
+                            <child>
+                              <object class="AdwSpinRow" id="edit_wheel_circumference_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="wheel_circumference_adjustment">
+                                    <property name="lower">50</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">3000</property>
+                                    <property name="value">1932</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">millimeters</property>
+                                <property name="title">Wheel Circumference</property>
+                                <property name="tooltip-text">Wheel circumference (50-3000 millimeters)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwComboRow" id="edit_speed_units_combo">
+                                <property name="model">
+                                  <object class="GtkStringList" id="speed_units_list">
+                                    <items>
+                                      <item translatable="yes">mph</item>
+                                      <item translatable="yes">km/h</item>
+                                    </items>
+                                  </object>
+                                </property>
+                                <property name="selected">0</property>
+                                <property name="title">Speed Units</property>
+                                <property name="tooltip-text">The unit of measurement for speed</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="edit_speed_threshold_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="speed_threshold_adjustment">
+                                    <property name="lower">0.00</property>
+                                    <property name="page-increment">1.00</property>
+                                    <property name="step-increment">.10</property>
+                                    <property name="upper">10.00</property>
+                                    <property name="value">0.25</property>
+                                  </object>
+                                </property>
+                                <property name="digits">2</property>
+                                <property name="subtitle">mph or km/h</property>
+                                <property name="title">Speed Threshold</property>
+                                <property name="tooltip-text" translatable="yes">Minimum speed change to trigger video playback update (0.00-10.00)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="edit_speed_smoothing_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="speed_smoothing_adjustment">
+                                    <property name="lower">1</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">25</property>
+                                    <property name="value">10</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">number of readings</property>
+                                <property name="title">Speed Smoothing</property>
+                                <property name="tooltip-text">Number of recent speed readings to generate a stable moving average (1-25)</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_video_settings_group">
+                            <property name="title">Video Settings</property>
+                            <child>
+                              <object class="AdwComboRow" id="edit_media_player_combo">
+                                <property name="model">
+                                  <object class="GtkStringList" id="media_player_list">
+                                    <items>
+                                      <item translatable="yes">mpv</item>
+                                      <item translatable="yes">VLC</item>
+                                    </items>
+                                  </object>
+                                </property>
+                                <property name="selected">0</property>
+                                <property name="title">Media Player</property>
+                                <property name="tooltip-text">The video playback back-end to use ("mpv" or "vlc")</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="video_file_row">
+                                <property name="activatable">True</property>
+                                <property name="subtitle">/home/richbl/downloads/something.mp4</property>
+                                <property name="title" translatable="yes">Video File</property>
+                                <property name="tooltip-text" translatable="yes">File path to the video file for playback</property>
+                                <child type="suffix">
+                                  <object class="GtkButton" id="video_file_button">
+                                    <property name="icon-name">document-open-symbolic</property>
+                                    <property name="tooltip-text">Browse for video file</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="flat" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwEntryRow" id="start_time_entry_row">
+                                <property name="input-purpose">number</property>
+                                <property name="show-apply-button">True</property>
+                                <property name="text">00:00</property>
+                                <property name="title" translatable="yes">Start Time</property>
+                                <property name="tooltip-text" translatable="yes">Starting playback position in the video (MM:SS format)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="edit_window_scale_factor_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="window_scale_factor_adjustment">
+                                    <property name="lower">0.1</property>
+                                    <property name="page-increment">.1</property>
+                                    <property name="step-increment">.1</property>
+                                    <property name="upper">1.0</property>
+                                    <property name="value">1.0</property>
+                                  </object>
+                                </property>
+                                <property name="digits">1</property>
+                                <property name="subtitle">0.1 = 10%, 1.0 = full screen</property>
+                                <property name="title">Window Scale Factor</property>
+                                <property name="tooltip-text" translatable="yes">Scales the size of the video window (0.1-1.0)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="edit_speed_multiplier_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="speed_multiplier_adjustment">
+                                    <property name="lower">0.1</property>
+                                    <property name="page-increment">.1</property>
+                                    <property name="step-increment">.1</property>
+                                    <property name="upper">1.5</property>
+                                    <property name="value">0.8</property>
+                                  </object>
+                                </property>
+                                <property name="digits">1</property>
+                                <property name="subtitle">0.1 = slower, 1.0 = normal, 1.5 = faster</property>
+                                <property name="title">Speed Multiplier</property>
+                                <property name="tooltip-text" translatable="yes">Multiplier to control video playback rate (0.1-1.5)</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_display_settings_group">
+                            <property name="title">On-Screen Display (OSD)</property>
+                            <child>
+                              <object class="AdwSwitchRow" id="display_cycle_speed_switch">
+                                <property name="active">True</property>
+                                <property name="title" translatable="yes">Show Cycle Speed</property>
+                                <property name="tooltip-text" translatable="yes">Display the current cycle speed on the on-screen display</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSwitchRow" id="display_playback_speed_switch">
+                                <property name="active">True</property>
+                                <property name="title" translatable="yes">Show Playback Speed</property>
+                                <property name="tooltip-text" translatable="yes">Display the current video playback speed on the on-screen display</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSwitchRow" id="display_time_remaining_switch">
+                                <property name="active">True</property>
+                                <property name="title" translatable="yes">Show Time Remaining</property>
+                                <property name="tooltip-text" translatable="yes">Display the current video time remaining on the on-screen display</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="display_font_size_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="display_font_size_adjustment">
+                                    <property name="lower">10</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">200</property>
+                                    <property name="value">40</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">pixels</property>
+                                <property name="title">Font Size</property>
+                                <property name="tooltip-text" translatable="yes">Font size of the on-screen display (10-200 pixels)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="pixel_offset_left_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="pixel_offset_left_adjustment">
+                                    <property name="lower">0</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">100</property>
+                                    <property name="value">25</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">pixels</property>
+                                <property name="title">Left Margin</property>
+                                <property name="tooltip-text" translatable="yes">Offset of the OSD from the left of the media player window (0-100 pixels)</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwSpinRow" id="pixel_offset_top_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="pixel_offset_top_adjustment">
+                                    <property name="lower">0</property>
+                                    <property name="page-increment">10</property>
+                                    <property name="step-increment">1</property>
+                                    <property name="upper">100</property>
+                                    <property name="value">25</property>
+                                  </object>
+                                </property>
+                                <property name="subtitle">pixels</property>
+                                <property name="title">Top Margin</property>
+                                <property name="tooltip-text" translatable="yes">Offset of the OSD from the top of the media player window (0-100 pixels)</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="AdwPreferencesGroup" id="edit_save_group">
+                            <child>
+                              <object class="AdwActionRow" id="edit_save_row">
+                                <property name="activatable">False</property>
+                                <child type="suffix">
+                                  <object class="GtkBox" id="save_button_box">
+                                    <property name="halign">end</property>
+                                    <property name="margin-bottom">12</property>
+                                    <property name="margin-end">12</property>
+                                    <property name="margin-top">12</property>
+                                    <property name="orientation">horizontal</property>
+                                    <property name="spacing">12</property>
+                                    <child>
+                                      <object class="GtkButton" id="save_as_button">
+                                        <property name="label" translatable="yes">Save As...</property>
+                                        <style>
+                                          <class name="pill" />
+                                        </style>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="save_button">
+                                        <property name="label" translatable="yes">Save</property>
+                                        <style>
+                                          <class name="suggested-action" />
+                                          <class name="pill" />
+                                        </style>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                    <property name="icon-name">accessories-text-editor-symbolic</property>
+                    <property name="name">page4</property>
+                    <property name="title">BSC Session Editor</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="top">
+          <object class="AdwHeaderBar" id="header_bar">
+            <child type="end">
+              <object class="GtkMenuButton" id="app_menu_button">
+                <property name="icon-name">open-menu-symbolic</property>
+                <property name="menu-model">appMenu</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+    <property name="default-height">800</property>
+    <property name="default-width">600</property>
+    <property name="title">BLE Sync Cycle</property>
+  </object>
+</interface>
