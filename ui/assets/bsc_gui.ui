@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Created with Cambalache 0.96.1 -->
 <interface>
-  <!-- interface-name bsc_gui.ui -->
+  <!-- interface-name bsc_gui2.ui -->
   <requires lib="gio" version="2.0" />
   <requires lib="gtk" version="4.18" />
   <requires lib="libadwaita" version="1.7" />
@@ -85,7 +85,7 @@
                                     <child>
                                       <object class="GtkListBox" id="session_listbox">
                                         <property name="selection-mode">single</property>
-                                        <child>
+                                        <!-- <child>
                                           <object class="AdwActionRow" id="session_row1">
                                             <property name="activatable">True</property>
                                             <property name="title" translatable="yes">Loop Trail in the Dolomites</property>
@@ -120,7 +120,7 @@
                                             <property name="activatable">True</property>
                                             <property name="title" translatable="yes">Iceland Ring Road (2)</property>
                                           </object>
-                                        </child>
+                                        </child> -->
                                         <style>
                                           <class name="boxed-list" />
                                         </style>
@@ -144,6 +144,7 @@
                                             <child>
                                               <object class="GtkButton" id="edit_session_button">
                                                 <property name="label" translatable="yes">Edit Session</property>
+                                                <property name="sensitive">False</property>
                                                 <style>
                                                   <class name="pill" />
                                                 </style>
@@ -152,6 +153,7 @@
                                             <child>
                                               <object class="GtkButton" id="load_session_button">
                                                 <property name="label" translatable="yes">Load Session</property>
+                                                <property name="sensitive">False</property>
                                                 <style>
                                                   <class name="suggested-action" />
                                                   <class name="pill" />
@@ -796,5 +798,15 @@
     <property name="default-height">800</property>
     <property name="default-width">600</property>
     <property name="title">BLE Sync Cycle</property>
+  </object>
+
+  <object class="AdwAboutDialog" id="about_window">
+    <property name="application-icon">bsc_logo</property>
+    <property name="application-name" translatable="yes">BLE Sync Cycle</property>
+    <property name="copyright" translatable="yes">Copyright © 2025 Rich Bloch</property>
+    <property name="developer-name" translatable="yes">Rich Bloch</property>
+    <property name="license">MIT</property>
+    <property name="version">v0.1.0-alpha</property>
+    <property name="website">https://github.com/richbl/go-ble-sync-cycle</property>
   </object>
 </interface>

@@ -15,6 +15,7 @@ import (
 	services "github.com/richbl/go-ble-sync-cycle/internal/services"
 	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
 	video "github.com/richbl/go-ble-sync-cycle/internal/video"
+	"github.com/richbl/go-ble-sync-cycle/ui"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -53,7 +54,19 @@ func main() {
 	// Check for help flag
 	checkForHelpFlag()
 
-	// Load configuration
+	// Check for application mode (GUI or no-GUI)
+	if !checkForNoGUIFlag() {
+		log.Println(logger.Yellow + "[INF] " + logger.Reset + "[APP] running in GUI mode: GUI features will be enabled")
+
+		// TODO: refactor GUI startup to include session loading from config files
+
+		// Initialize and start GUI components
+		ui.StartGUI()
+
+		return
+	}
+
+	// Load configuration from TOML file
 	cfg := loadConfig(configFile)
 
 	// Initialize services
@@ -93,6 +106,12 @@ func checkForHelpFlag() {
 		waveGoodbye()
 	}
 
+}
+
+// checkForNoGUIFlag checks for the no-gui flag passed on the command-line
+func checkForNoGUIFlag() bool {
+	clFlags := flags.GetFlags()
+	return clFlags.NoGUI
 }
 
 // loadConfig loads and validates the TOML configuration file
