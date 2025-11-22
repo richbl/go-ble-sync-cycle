@@ -18,6 +18,7 @@ type FlagInfo struct {
 
 // Flags holds a list of available command-line flags
 type Flags struct {
+	NoGUI  bool
 	Config string
 	Seek   string
 	Help   bool
@@ -26,6 +27,13 @@ type Flags struct {
 var (
 	flags     Flags
 	flagInfos = []FlagInfo{
+		{
+			Result:    &flags.NoGUI,
+			Name:      "no-gui",
+			ShortName: "n",
+			Value:     "",
+			Usage:     "Run the application without a graphical user interface (GUI)",
+		},
 		{
 			Result:    &flags.Config,
 			Name:      "config",
