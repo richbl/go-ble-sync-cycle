@@ -190,7 +190,7 @@ func StartGUI() {
 		builder := gtk.NewBuilderFromString(uiXML)
 		ui := NewAppUI(builder)
 
-		aboutWindow := get(builder, "about_window").Cast().(*adw.AboutDialog)
+		aboutWindow := getObj(builder, "about_window").Cast().(*adw.AboutDialog)
 
 		// Create the "About" action handler
 		aboutAction := gio.NewSimpleAction("about", nil)
@@ -215,15 +215,4 @@ func StartGUI() {
 		os.Exit(code)
 	}
 
-}
-
-// get is a helper function to retrieve an object from the builder and ensure it exists
-func get(builder *gtk.Builder, id string) *glib.Object {
-
-	obj := builder.GetObject(id)
-	if obj == nil {
-		log.Fatalf("Critical: Widget ID '%s' not found in XML.", id)
-	}
-
-	return obj
 }
