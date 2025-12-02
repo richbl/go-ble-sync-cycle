@@ -1,0 +1,214 @@
+// File: ui_session_select.go
+package ui
+
+import (
+	"fmt"
+	"path/filepath"
+	"sync/atomic"
+
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/session"
+)
+
+// Session represents the configuration file and its display name
+type Session struct {
+	ID         int
+	Title      string
+	ConfigPath string
+}
+
+// Status represents the logical connection/battery status
+type Status int
+
+const (
+	StatusConnected Status = iota
+	StatusNotConnected
+	StatusStopped
+	StatusConnecting
+	StatusFailed
+)
+
+// ObjectKind represents the logical object we are displaying
+type ObjectKind int
+
+const (
+	ObjectBLE ObjectKind = iota
+	ObjectBattery
+)
+
+// StatusPresentation holds the UI-facing data for a status
+type StatusPresentation struct {
+	Display string
+	Icon    string
+}
+
+// statusTable centralizes all mappings of (object, status) -> UI data
+var statusTable = map[ObjectKind]map[Status]StatusPresentation{
+	ObjectBLE: {
+		StatusConnected:    {Display: "Connected", Icon: "bluetooth-symbolic"},
+		StatusNotConnected: {Display: "Not Connected", Icon: "bluetooth-disconnected-symbolic"},
+		StatusStopped:      {Display: "Stopped", Icon: "bluetooth-disconnected-symbolic"},
+		StatusConnecting:   {Display: "Connecting...", Icon: "bluetooth-acquiring-symbolic"},
+		StatusFailed:       {Display: "Failed", Icon: "bluetooth-disconnected-symbolic"},
+	},
+	ObjectBattery: {
+		StatusConnected:    {Display: "Connected", Icon: "battery-good-symbolic"},
+		StatusNotConnected: {Display: "Unknown", Icon: "battery-symbolic"},
+		StatusStopped:      {Display: "Unknown", Icon: "battery-symbolic"},
+		StatusConnecting:   {Display: "Connecting...", Icon: "battery-symbolic"},
+		StatusFailed:       {Display: "Unknown", Icon: "battery-symbolic"},
+	},
+}
+
+// SessionController manages the logic for Page 1 (Session Selection) and related UI
+type SessionController struct {
+	UI             *AppUI
+	Sessions       []Session
+	SessionManager *session.Manager
+	starting       atomic.Bool // To prevent multiple concurrent starts
+}
+
+// NewSessionController creates the controller
+func NewSessionController(ui *AppUI) *SessionController {
+
+	return &SessionController{
+		UI:             ui,
+		SessionManager: session.NewManager(),
+	}
+}
+
+// setupPage1Signals wires up event listeners for the session selection tab (Page 1)
+func (sc *SessionController) setupPage1Signals() {
+
+	sc.setupListBoxSignals()
+	sc.setupLoadButtonSignals()
+	sc.setupEditButtonSignals()
+
+}
+
+// setupPage2Signals wires up event listeners for the session status tab (Page 2)
+func (sc *SessionController) scanForSessions() {
+
+	sc.Sessions = nil
+
+	files, err := filepath.Glob("*.toml")
+	if err != nil {
+		fmt.Printf("Error scanning for TOML files: %v\n", err)
+		return
+	}
+
+	sessionID := 1
+	for _, filePath := range files {
+		metadata, err := config.LoadSessionMetadata(filePath)
+
+		if err != nil {
+			fmt.Printf("Skipping invalid config file %s: %v\n", filePath, err)
+			continue
+		}
+
+		if metadata.IsValid {
+
+			session := Session{
+				ID:         sessionID,
+				Title:      metadata.Title,
+				ConfigPath: metadata.FilePath,
+			}
+
+			sc.Sessions = append(sc.Sessions, session)
+			sessionID++
+		}
+
+	}
+
+	fmt.Printf("Session scan complete: found %d valid session(s)\n", len(sc.Sessions))
+
+}
+
+// PopulateSessionList refreshes the ListBox with current sessions
+func (sc *SessionController) PopulateSessionList() {
+
+	// Clear existing rows
+	sc.UI.Page1.ListBox.RemoveAll()
+
+	// Populate with current sessions
+	for _, s := range sc.Sessions {
+		row := adw.NewActionRow()
+		row.SetTitle(s.Title)
+		row.SetSubtitle(fmt.Sprintf("Config: %s", s.ConfigPath))
+		sc.UI.Page1.ListBox.Append(row)
+	}
+
+	// Ensure buttons are disabled if no row is selected
+	sc.UI.Page1.EditButton.SetSensitive(false)
+	sc.UI.Page1.LoadButton.SetSensitive(false)
+
+}
+
+// setupListBoxSignals wires up event listeners for the ListBox
+func (sc *SessionController) setupListBoxSignals() {
+
+	sc.UI.Page1.ListBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+
+		hasSelection := (row != nil)
+		sc.UI.Page1.EditButton.SetSensitive(hasSelection)
+		sc.UI.Page1.LoadButton.SetSensitive(hasSelection)
+
+		if hasSelection {
+			idx := row.Index()
+			if idx >= 0 && idx < len(sc.Sessions) {
+				selectedSession := sc.Sessions[idx]
+				fmt.Printf("Selected Session: %s (Config: %s)\n", selectedSession.Title, selectedSession.ConfigPath)
+			}
+
+		}
+
+	})
+
+}
+
+// setupLoadButtonSignals wires up event listeners for the Load button
+func (sc *SessionController) setupLoadButtonSignals() {
+
+	sc.UI.Page1.LoadButton.ConnectClicked(func() {
+
+		selectedRow := sc.UI.Page1.ListBox.SelectedRow()
+		if selectedRow != nil {
+
+			idx := selectedRow.Index()
+			if idx >= 0 && idx < len(sc.Sessions) {
+
+				selectedSession := sc.Sessions[idx]
+				fmt.Printf("Loading Session: %s...\n", selectedSession.Title)
+
+				// Load the session into the SessionManager
+				err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
+				if err != nil {
+					fmt.Printf("Error loading session: %v\n", err)
+					return
+				}
+
+				fmt.Printf("Session loaded successfully. State: %s\n", sc.SessionManager.GetState())
+
+				// Update Page 2 with session info
+				sc.updatePage2WithSession(selectedSession)
+
+				// Navigate to Page 2
+				sc.UI.ViewStack.SetVisibleChildName("page2")
+			}
+		}
+
+	})
+
+}
+
+// setupEditButtonSignals wires up event listeners for the Edit button
+func (sc *SessionController) setupEditButtonSignals() {
+
+	sc.UI.Page1.EditButton.ConnectClicked(func() {
+		fmt.Println("Navigating to Editor (page 4)...")
+		sc.UI.ViewStack.SetVisibleChildName("page4")
+	})
+
+}

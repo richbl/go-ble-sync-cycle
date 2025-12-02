@@ -1,5 +1,17 @@
 package video
 
+/*
+
+// DO NOT REMOVE: mpv player expects C locale set to LC_NUMERIC:
+//
+#include <locale.h>
+#include <stdlib.h>
+static void set_c_locale_numeric() {
+    setlocale(LC_NUMERIC, "C");
+}
+*/
+import "C"
+
 import (
 	"fmt"
 
@@ -13,6 +25,9 @@ type mpvPlayer struct {
 
 // newMpvPlayer creates a new mpvPlayer instance
 func newMpvPlayer() (*mpvPlayer, error) {
+
+	// Ensure C locale is set to "C" for numeric formats
+	C.set_c_locale_numeric()
 
 	m := &mpvPlayer{
 		player: mpv.New(),

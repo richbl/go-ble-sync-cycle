@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/config"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -95,4 +96,33 @@ func TestBLEControllerMethods(t *testing.T) {
 
 	assert.NotNil(t, controller.blePeripheralDetails)
 	assert.NotNil(t, controller.speedConfig)
+}
+
+// TestScanCancel creates a test BLE controller
+func TestScanCancel(t *testing.T) {
+
+	ctrl := setupTestBLEController(t)
+	if ctrl == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	_, err := ctrl.ScanForBLEPeripheral(ctx)
+	assert.ErrorIs(t, err, context.DeadlineExceeded) // Should cancel early
+
+}
+
+// TestScanForBLEPeripheralWithCancel tests scanning for BLE peripheral with context cancellation
+func TestScanForBLEPeripheralWithCancel(t *testing.T) {
+
+	controller := setupTestBLEController(t)
+	if controller == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond) // Short for test
+	defer cancel()
+	_, err := controller.ScanForBLEPeripheral(ctx)
+	require.ErrorIs(t, err, context.DeadlineExceeded, "Should cancel early via ctx")
+	// If device present, would connect but timeout forces cancel
+
 }

@@ -53,7 +53,7 @@ var testConfigData = struct {
 	speedMultiplier float64
 	speedThreshold  float64
 }{
-	filename:        "cycling_test.mp4",
+	filename:        "test_video.mp4",
 	windowScale:     1.0,
 	SeekToPosition:  "0.25",
 	updateInterval:  1.0,
@@ -288,13 +288,11 @@ func TestPlaybackControllerStart(t *testing.T) {
 	defer cancel()
 	var startErr error
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	// Start the controller in a separate goroutine
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		startErr = controller.Start(ctx, speedCtrl)
-	}()
+	})
 
 	// Allow time for initial setup
 	time.Sleep(100 * time.Millisecond)
@@ -369,7 +367,7 @@ func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.Spe
 	speedCtrl := speed.NewSpeedController(5)
 
 	// Fill the speed controller's buffer to get a predictable smoothed speed
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		speedCtrl.UpdateSpeed(tc.currentSpeed)
 	}
 

@@ -1,0 +1,467 @@
+// Package session manages BSC session lifecycle and state
+package session
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/richbl/go-ble-sync-cycle/internal/ble"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/services"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
+	"github.com/richbl/go-ble-sync-cycle/internal/video"
+	"tinygo.org/x/bluetooth"
+)
+
+// State represents the current state of a session
+type State int
+
+const (
+	StateIdle State = iota
+	StateLoaded
+	StateConnecting
+	StateConnected
+	StateRunning
+	StatePaused
+	StateError
+)
+
+// String returns a human-readable representation of the state
+func (s State) String() string {
+
+	return [...]string{
+		"Idle",
+		"Loaded",
+		"Connecting",
+		"Connected",
+		"Running",
+		"Paused",
+		"Error",
+	}[s]
+}
+
+// Manager coordinates session lifecycle and state
+type Manager struct {
+	mu           sync.RWMutex
+	state        State
+	config       *config.Config
+	configPath   string
+	errorMsg     string
+	controllers  *controllers
+	shutdownMgr  *services.ShutdownManager
+	PendingStart bool // Exported (capitalized) for visibility across packages
+}
+
+// controllers holds the application component controllers
+type controllers struct {
+	speedController *speed.Controller
+	videoPlayer     *video.PlaybackController
+	bleController   *ble.Controller
+	bleDevice       bluetooth.Device
+}
+
+// NewManager creates a new session manager in Idle state
+func NewManager() *Manager {
+
+	return &Manager{
+		state: StateIdle,
+	}
+}
+
+// LoadSession loads and validates a session configuration file
+func (m *Manager) LoadSession(configPath string) error {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Load and validate the configuration
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		m.state = StateError
+		m.errorMsg = fmt.Sprintf("Failed to load session: %v", err)
+
+		return err
+	}
+
+	// Update state
+	m.config = cfg
+	m.configPath = configPath
+	m.state = StateLoaded
+	m.errorMsg = ""
+
+	return nil
+}
+
+// GetState returns the current session state (thread-safe)
+func (m *Manager) GetState() State {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.state
+}
+
+// GetConfig returns a copy of the current configuration (thread-safe)
+func (m *Manager) GetConfig() *config.Config {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.config == nil {
+		return nil
+	}
+
+	// Return a pointer to the config (caller should treat as read-only)
+	return m.config
+}
+
+// GetConfigPath returns the path to the loaded configuration file
+func (m *Manager) GetConfigPath() string {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.configPath
+}
+
+// GetError returns the last error message if state is StateError
+func (m *Manager) GetError() string {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.errorMsg
+}
+
+// SetState updates the session state (used by service controllers)
+func (m *Manager) SetState(newState State) {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.state = newState
+}
+
+// SetError sets the error state with a message
+func (m *Manager) SetError(err error) {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.state = StateError
+	if err != nil {
+		m.errorMsg = err.Error()
+	} else {
+		m.errorMsg = ""
+	}
+
+}
+
+// Reset clears the session back to Idle state
+func (m *Manager) Reset() {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.state = StateIdle
+	m.config = nil
+	m.configPath = ""
+	m.errorMsg = ""
+
+}
+
+// IsLoaded returns true if a session is currently loaded
+func (m *Manager) IsLoaded() bool {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.config != nil && m.state != StateIdle
+}
+
+// IsRunning returns true if services are currently running
+func (m *Manager) IsRunning() bool {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.state == StateRunning
+}
+
+// StartSession initializes controllers and starts BLE and video services
+func (m *Manager) StartSession() error {
+
+	// Validate preconditions and flip PendingStart/state to Connecting atomically
+	if err := m.prepareStart(); err != nil {
+		return err
+	}
+
+	logger.Debug(logger.APP, "Creating ShutdownManager")
+	shutdownMgr := services.NewShutdownManager(30 * time.Second)
+	shutdownMgr.Start()
+
+	// store the shutdown manager reference
+	m.storeShutdownMgr(shutdownMgr)
+
+	logger.Debug(logger.APP, "Initializing controllers...")
+
+	controllers, err := m.initializeControllers()
+	if err != nil {
+		logger.Error(logger.APP, "Controllers init failed:", err)
+		m.cleanupStartFailure(shutdownMgr)
+
+		return fmt.Errorf("failed to initialize controllers: %w", err)
+	}
+
+	logger.Debug(logger.APP, "Controllers initialized OK")
+	logger.Debug(logger.APP, "Connecting BLE...")
+
+	bleDevice, err := m.connectBLE(controllers, shutdownMgr)
+	if err != nil {
+		logger.Error(logger.APP, "BLE connect failed:", err)
+		m.cleanupStartFailure(shutdownMgr)
+
+		return fmt.Errorf("BLE connection failed: %w", err)
+	}
+
+	controllers.bleDevice = bleDevice
+	logger.Debug(logger.APP, "BLE connected OK")
+
+	// Finalize successful start
+	m.mu.Lock()
+	m.controllers = controllers
+	m.PendingStart = false
+	m.state = StateRunning
+	logger.Debug(logger.APP, "Set state=Running, PendingStart=false")
+	m.mu.Unlock()
+
+	logger.Debug(logger.APP, "Starting services...")
+	m.startServices(controllers, shutdownMgr)
+	logger.Debug(logger.APP, "Services started")
+
+	return nil
+}
+
+// prepareStart validates state and sets PendingStart/state to Connecting
+func (m *Manager) prepareStart() error {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	logger.Debug(logger.APP, "Current state:", m.state, "Config nil?", m.config == nil)
+
+	if m.config == nil {
+		logger.Debug(logger.APP, "Exiting: no config")
+		return fmt.Errorf("no session loaded")
+	}
+
+	if m.state == StateError {
+		logger.Debug(logger.APP, "Reset from Error state to Loaded state")
+		m.state = StateLoaded
+	}
+
+	if m.state != StateLoaded {
+		logger.Debug(logger.APP, "Exiting: invalid state for start:", m.state)
+		return fmt.Errorf("session already started or in invalid state: %s", m.state)
+	}
+
+	if m.controllers != nil {
+		logger.Debug(logger.APP, "Exiting: controllers already exist")
+		return fmt.Errorf("session already started")
+	}
+
+	m.PendingStart = true
+	m.state = StateConnecting
+	logger.Debug(logger.APP, "Set PendingStart=true, state=Connecting")
+
+	return nil
+}
+
+// storeShutdownMgr stores the shutdown manager under lock
+func (m *Manager) storeShutdownMgr(s *services.ShutdownManager) {
+
+	m.mu.Lock()
+	m.shutdownMgr = s
+	logger.Debug(logger.APP, "ShutdownMgr stored")
+	m.mu.Unlock()
+
+}
+
+// cleanupStartFailure handles cleaning manager state when startup fails clearing PendingStart,
+// resets state to Loaded, clears controllers and the shutdown manager pointer, and ensures
+// the passed shutdownMgr is shutdown
+func (m *Manager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
+
+	m.mu.Lock()
+	m.PendingStart = false
+	m.state = StateLoaded
+	m.controllers = nil
+	m.shutdownMgr = nil
+	m.mu.Unlock()
+
+	// ensure the shutdown manager is shut down (cancels any ongoing operations)
+	if shutdownMgr != nil {
+		shutdownMgr.Shutdown()
+	}
+
+}
+
+// StopSession stops all services and cleans up controllers
+func (m *Manager) StopSession() error {
+
+	m.mu.Lock()
+	shutdownMgr := m.shutdownMgr
+	wasPending := m.PendingStart
+	m.state = StateLoaded
+	m.PendingStart = false
+	m.mu.Unlock()
+
+	if shutdownMgr == nil && !wasPending {
+		return fmt.Errorf("no active session to stop")
+	}
+
+	// Emulate CLI signal: Clear echo and log interrupt-like message
+	fmt.Print("\r")
+
+	if wasPending {
+		logger.Info(logger.BLE, "stop requested, canceling pending BLE setup...")
+	} else {
+		logger.Info(logger.BLE, "stop requested, canceling active session...")
+	}
+
+	// Trigger shutdown (cancels ctx, waits wg—like Ctrl+C)
+	if shutdownMgr != nil {
+		shutdownMgr.Shutdown()
+	}
+
+	// Clear resources under lock
+	m.mu.Lock()
+	m.controllers = nil
+	m.shutdownMgr = nil
+	m.mu.Unlock()
+
+	// Emulate CLI cleanup: Stop any ongoing scan under mutex
+	ble.AdapterMu.Lock()
+	defer ble.AdapterMu.Unlock()
+
+	if err := bluetooth.DefaultAdapter.StopScan(); err != nil {
+		logger.Warn(logger.BLE, "failed to stop ongoing scan:", err)
+	} else {
+		logger.Info(logger.BLE, "BLE scan stopped")
+	}
+
+	if wasPending {
+		logger.Info(logger.APP, "stopped pending session startup")
+	} else {
+		logger.Info(logger.APP, "session stopped")
+	}
+
+	return nil
+}
+
+// initializeControllers creates the speed, video, and BLE controllers
+func (m *Manager) initializeControllers() (*controllers, error) {
+
+	m.mu.RLock()
+	cfg := m.config
+	m.mu.RUnlock()
+
+	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
+
+	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create video controller: %w", err)
+	}
+
+	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create BLE controller: %w", err)
+	}
+
+	return &controllers{
+		speedController: speedController,
+		videoPlayer:     videoPlayer,
+		bleController:   bleController,
+	}, nil
+}
+
+// connectBLE handles BLE scanning, connection, and service discovery
+func (m *Manager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownManager) (bluetooth.Device, error) {
+
+	ctx := *shutdownMgr.Context()
+
+	// Scan for BLE peripheral
+	scanResult, err := ctrl.bleController.ScanForBLEPeripheral(ctx)
+	if err != nil {
+		return bluetooth.Device{}, fmt.Errorf("BLE scan failed: %w", err)
+	}
+
+	m.mu.Lock()
+	m.state = StateConnecting
+	m.mu.Unlock()
+
+	// Connect to peripheral
+	device, err := ctrl.bleController.ConnectToBLEPeripheral(ctx, scanResult)
+	if err != nil {
+		return bluetooth.Device{}, fmt.Errorf("BLE connection failed: %w", err)
+	}
+
+	m.mu.Lock()
+	m.state = StateConnected
+	m.mu.Unlock()
+
+	// Get battery service
+	batteryServices, err := ctrl.bleController.GetBatteryService(ctx, &device)
+	if err != nil {
+		return bluetooth.Device{}, fmt.Errorf("failed to get battery service: %w", err)
+	}
+
+	// Get battery level
+	if err := ctrl.bleController.GetBatteryLevel(ctx, batteryServices); err != nil {
+		return bluetooth.Device{}, fmt.Errorf("failed to get battery level: %w", err)
+	}
+
+	// Get CSC services
+	cscServices, err := ctrl.bleController.GetCSCServices(ctx, &device)
+	if err != nil {
+		return bluetooth.Device{}, fmt.Errorf("failed to get CSC services: %w", err)
+	}
+
+	// Get CSC characteristics
+	if err := ctrl.bleController.GetCSCCharacteristics(ctx, cscServices); err != nil {
+		return bluetooth.Device{}, fmt.Errorf("failed to get CSC characteristics: %w", err)
+	}
+
+	return device, nil
+}
+
+// BatteryLevel returns the current battery level from the BLE controller
+func (m *Manager) BatteryLevel() byte {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers != nil && m.controllers.bleController != nil {
+		return m.controllers.bleController.BatteryLevel()
+	}
+
+	return 0 // Unknown (0%)
+}
+
+// startServices launches BLE and video services in background goroutines
+func (m *Manager) startServices(ctrl *controllers, shutdownMgr *services.ShutdownManager) {
+
+	// Run BLE service
+	shutdownMgr.Run(func(ctx context.Context) error {
+		return ctrl.bleController.GetBLEUpdates(ctx, ctrl.speedController)
+	})
+
+	// Run video service
+	shutdownMgr.Run(func(ctx context.Context) error {
+		return ctrl.videoPlayer.Start(ctx, ctrl.speedController)
+	})
+
+}

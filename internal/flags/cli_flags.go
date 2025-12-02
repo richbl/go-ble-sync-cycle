@@ -31,7 +31,7 @@ var (
 			Result:    &flags.NoGUI,
 			Name:      "no-gui",
 			ShortName: "n",
-			Value:     "",
+			Value:     "false",
 			Usage:     "Run the application without a graphical user interface (GUI)",
 		},
 		{
