@@ -85,42 +85,6 @@
                                     <child>
                                       <object class="GtkListBox" id="session_listbox">
                                         <property name="selection-mode">single</property>
-                                        <!-- <child>
-                                          <object class="AdwActionRow" id="session_row1">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Loop Trail in the Dolomites</property>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="AdwActionRow" id="session_row2">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Cycling in the Alps</property>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="AdwActionRow" id="session_row3">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Bellingham Forest Trail</property>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="AdwActionRow" id="session_row4">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Centennial Trail to Arlington</property>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="AdwActionRow" id="session_row5">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Iceland Ring Road (1)</property>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="AdwActionRow" id="session_row6">
-                                            <property name="activatable">True</property>
-                                            <property name="title" translatable="yes">Iceland Ring Road (2)</property>
-                                          </object>
-                                        </child> -->
                                         <style>
                                           <class name="boxed-list" />
                                         </style>
@@ -212,7 +176,7 @@
                             <property name="title">Session Title</property>
                             <child>
                               <object class="AdwActionRow" id="session_name_row">
-                                <property name="title">Dolomites Scenic Drive</property>
+                                <property name="title">n/a</property>
                               </object>
                             </child>
                           </object>
@@ -226,11 +190,8 @@
                                 <property name="title">Connection</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="connection_status_icon">
-                                    <property name="icon-name">emblem-ok-symbolic</property>
+                                    <property name="icon-name">bluetooth-disconnected-symbolic</property>
                                     <property name="valign">center</property>
-                                    <style>
-                                      <class name="success" />
-                                    </style>
                                   </object>
                                 </child>
                               </object>
@@ -241,7 +202,7 @@
                                 <property name="title">Battery Level</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="battery_icon">
-                                    <property name="icon-name">battery-good-symbolic</property>
+                                    <property name="icon-name">battery-symbolic</property>
                                     <property name="valign">center</property>
                                   </object>
                                 </child>
@@ -310,10 +271,16 @@
                                     <property name="margin-top">12</property>
                                     <property name="orientation">horizontal</property>
                                     <property name="spacing">12</property>
+
                                     <child>
                                       <object class="GtkButton" id="session_control_button">
-                                        <property name="icon-name">media-playback-start-symbolic</property>
-                                        <property name="label" translatable="yes">Start Session</property>
+                                        <property name="child">
+                                          <object class="AdwButtonContent" id="session_control_button_content">
+                                            <property name="icon-name">media-playback-start-symbolic</property>
+                                            <property name="label" translatable="yes">Start Session</property>
+                                            <property name="sensitive">False</property>
+                                          </object>
+                                        </property>
                                         <style>
                                           <class name="suggested-action" />
                                           <class name="pill" />

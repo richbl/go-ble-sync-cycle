@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -22,7 +21,6 @@ import (
 
 // Application constants
 const (
-	appPrefix  = "----- -----"
 	appName    = "BLE Sync Cycle"
 	appVersion = "0.13.0"
 	configFile = "config.toml"
@@ -45,25 +43,24 @@ var (
 
 func main() {
 
-	// Hello computer...
-	waveHello()
-
 	// Parse for command-line flags
 	parseCmdLine()
+
+	// Initialize the default logger until config is loaded
+	logger.Initialize("debug")
+
+	// Hello computer...
+	waveHello()
 
 	// Check for help flag
 	checkForHelpFlag()
 
 	// Check for application mode (GUI or no-GUI)
 	if !checkForNoGUIFlag() {
-		log.Println(logger.Yellow + "[INF] " + logger.Reset + "[APP] running in GUI mode: GUI features will be enabled")
-
-		// TODO: refactor GUI startup to include session loading from config files
-
-		// Initialize and start GUI components
+		logger.Info(logger.APP, "running in GUI mode: GUI features enabled")
 		ui.StartGUI()
 
-		return
+		return // Exit CLI logic to allow GUI to take over
 	}
 
 	// Load configuration from TOML file
@@ -91,8 +88,7 @@ func main() {
 func parseCmdLine() {
 
 	if err := flags.ParseArgs(); err != nil {
-		log.Println(logger.Red+"[FTL] "+logger.Reset+"[APP] failed to parse command-line flags:", err.Error())
-		waveGoodbye()
+		logger.Fatal(logger.APP, "failed to parse command-line flags:", err.Error())
 	}
 
 }
@@ -119,8 +115,7 @@ func loadConfig(file string) *config.Config {
 
 	cfg, err := config.Load(file)
 	if err != nil {
-		log.Println(logger.Red+"[FTL] "+logger.Reset+"[APP] failed to load TOML configuration:", err.Error())
-		waveGoodbye()
+		logger.Fatal(logger.APP, "failed to load TOML configuration:", err.Error())
 	}
 
 	return cfg
@@ -128,12 +123,12 @@ func loadConfig(file string) *config.Config {
 
 // waveHello outputs a welcome message
 func waveHello() {
-	log.Println(appPrefix, "Starting", appName, appVersion)
+	logger.Info(logger.APP, "Starting", appName, appVersion)
 }
 
 // waveGoodbye outputs a goodbye message and exits the program
 func waveGoodbye() {
-	log.Println(appPrefix, appName, appVersion, "shutdown complete. Goodbye")
+	logger.Info(logger.APP, appName, appVersion, "shutdown complete. Goodbye")
 	os.Exit(0)
 }
 

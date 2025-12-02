@@ -197,7 +197,7 @@ func (v *vlcPlayer) setupEvents() error {
 		return fmt.Errorf(errFormat, "failed to get VLC event manager", err)
 	}
 
-	// eventCallback is triggered when the video playback ends.
+	// eventCallback is triggered when the video playback ends
 	eventCallback := func(_ vlc.Event, _ any) {
 		v.eventChan <- eventEndFile
 	}

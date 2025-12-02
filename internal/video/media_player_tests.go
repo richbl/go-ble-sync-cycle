@@ -15,7 +15,7 @@ func testVideoPath(t *testing.T) string {
 
 	t.Helper()
 
-	filePath, err := filepath.Abs("cycling_test.mp4")
+	filePath, err := filepath.Abs("test_video.mp4")
 	if err != nil {
 		t.Fatalf("Failed to get absolute path for test video: %v", err)
 	}

@@ -2,6 +2,7 @@ package ui
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 
@@ -11,45 +12,47 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-// Embed the UI XML file into the binary
-//
 //go:embed assets/bsc_gui.ui
 var uiXML string
 
-// AppUI serves as the central controller for the GUI.
+// AppUI serves as the central controller for the GUI
 type AppUI struct {
 	Window    *adw.ApplicationWindow
 	ViewStack *adw.ViewStack
-
-	Page1 *PageSessionSelect
-	Page2 *PageSessionStatus
-	Page3 *PageSessionLog
-	Page4 *PageSessionEditor
+	Page1     *PageSessionSelect
+	Page2     *PageSessionStatus
+	Page3     *PageSessionLog
+	Page4     *PageSessionEditor
 }
 
+// PageSessionSelect holds widgets for the session selection tab (Page 1)
 type PageSessionSelect struct {
 	ListBox    *gtk.ListBox
 	EditButton *gtk.Button
 	LoadButton *gtk.Button
 }
 
+// PageSessionStatus holds widgets for the session status tab (Page 2)
 type PageSessionStatus struct {
-	SessionNameRow     *adw.ActionRow
-	SensorStatusRow    *adw.ActionRow
-	SensorBatteryRow   *adw.ActionRow
-	SpeedLabel         *gtk.Label
-	PlaybackSpeedLabel *gtk.Label
-	TimeRemainingLabel *gtk.Label
-	SessionControlBtn  *gtk.Button
-	SensorConnIcon     *gtk.Image
-	SensorBattIcon     *gtk.Image
+	SessionNameRow           *adw.ActionRow
+	SensorStatusRow          *adw.ActionRow
+	SensorBatteryRow         *adw.ActionRow
+	SpeedLabel               *gtk.Label
+	PlaybackSpeedLabel       *gtk.Label
+	TimeRemainingLabel       *gtk.Label
+	SessionControlBtn        *gtk.Button
+	SessionControlBtnContent *adw.ButtonContent
+	SensorConnIcon           *gtk.Image
+	SensorBattIcon           *gtk.Image
 }
 
+// PageSessionLog holds widgets for the logging tab (Page 3)
 type PageSessionLog struct {
 	LogLevelRow *adw.ActionRow
 	TextView    *gtk.TextView
 }
 
+// PageSessionEditor holds widgets for the session editor tab (Page 4)
 type PageSessionEditor struct {
 	// Session Details
 	TitleEntry *adw.EntryRow
@@ -88,7 +91,7 @@ type PageSessionEditor struct {
 	SaveAsButton *gtk.Button
 }
 
-// NewAppUI initializes the AppUI structure by retrieving widgets from the GTK builder
+// NewAppUI constructs the AppUI from the GTK builder
 func NewAppUI(builder *gtk.Builder) *AppUI {
 
 	ui := &AppUI{
@@ -103,7 +106,7 @@ func NewAppUI(builder *gtk.Builder) *AppUI {
 	return ui
 }
 
-// getObj is a helper function to retrieve an object from the builder and ensure it exists
+// getObj retrieves a GTK object by ID and logs a fatal error if not found
 func getObj(builder *gtk.Builder, id string) *glib.Object {
 
 	obj := builder.GetObject(id)
@@ -114,7 +117,7 @@ func getObj(builder *gtk.Builder, id string) *glib.Object {
 	return obj
 }
 
-// hydrateSessionSelect populates the PageSessionSelect structure with widgets from the builder
+// hydrateSessionSelect constructs the PageSessionSelect from the GTK builder
 func hydrateSessionSelect(builder *gtk.Builder) *PageSessionSelect {
 
 	return &PageSessionSelect{
@@ -124,32 +127,35 @@ func hydrateSessionSelect(builder *gtk.Builder) *PageSessionSelect {
 	}
 }
 
-// hydrateSessionStatus populates the PageSessionStatus structure with widgets from the builder
+// hydrateSessionStatus constructs the PageSessionStatus from the GTK builder
 func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 
 	return &PageSessionStatus{
-		SessionNameRow:     getObj(builder, "session_name_row").Cast().(*adw.ActionRow),
-		SensorStatusRow:    getObj(builder, "sensor_status_row").Cast().(*adw.ActionRow),
-		SensorBatteryRow:   getObj(builder, "battery_level_row").Cast().(*adw.ActionRow),
-		SpeedLabel:         getObj(builder, "speed_large_label").Cast().(*gtk.Label),
-		PlaybackSpeedLabel: getObj(builder, "playback_speed_large_label").Cast().(*gtk.Label),
-		TimeRemainingLabel: getObj(builder, "time_remaining_large_label").Cast().(*gtk.Label),
-		SessionControlBtn:  getObj(builder, "session_control_button").Cast().(*gtk.Button),
-		SensorConnIcon:     getObj(builder, "connection_status_icon").Cast().(*gtk.Image),
-		SensorBattIcon:     getObj(builder, "battery_icon").Cast().(*gtk.Image),
+		SessionNameRow:           getObj(builder, "session_name_row").Cast().(*adw.ActionRow),
+		SensorStatusRow:          getObj(builder, "sensor_status_row").Cast().(*adw.ActionRow),
+		SensorBatteryRow:         getObj(builder, "battery_level_row").Cast().(*adw.ActionRow),
+		SpeedLabel:               getObj(builder, "speed_large_label").Cast().(*gtk.Label),
+		PlaybackSpeedLabel:       getObj(builder, "playback_speed_large_label").Cast().(*gtk.Label),
+		TimeRemainingLabel:       getObj(builder, "time_remaining_large_label").Cast().(*gtk.Label),
+		SessionControlBtn:        getObj(builder, "session_control_button").Cast().(*gtk.Button),
+		SessionControlBtnContent: getObj(builder, "session_control_button_content").Cast().(*adw.ButtonContent),
+		SensorConnIcon:           getObj(builder, "connection_status_icon").Cast().(*gtk.Image),
+		SensorBattIcon:           getObj(builder, "battery_icon").Cast().(*gtk.Image),
 	}
+
 }
 
-// hydrateSessionLog populates the PageSessionLog structure with widgets from the builder
+// hydrateSessionLog constructs the PageSessionLog from the GTK builder
 func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 
 	return &PageSessionLog{
 		LogLevelRow: getObj(builder, "logging_level_row").Cast().(*adw.ActionRow),
 		TextView:    getObj(builder, "logging_view").Cast().(*gtk.TextView),
 	}
+
 }
 
-// hydrateSessionEditor populates the PageSessionEditor structure with widgets from the builder
+// hydrateSessionEditor constructs the PageSessionEditor from the GTK builder
 func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 
 	return &PageSessionEditor{
@@ -180,37 +186,68 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 	}
 }
 
+// setupAllSignals sets up all UI signal handlers for the application
+func setupAllSignals(sc *SessionController) {
+
+	// Generalized navigation setup (handles all pages via map)
+	pageActions := map[string]func(){
+
+		"page1": func() {
+			fmt.Println("View switched to Page 1: Refreshing Session List from CWD...")
+			sc.scanForSessions()
+			sc.PopulateSessionList()
+		},
+		// "page2": func() { /* e.g., refresh metrics */ },
+		// "page3": func() { /* e.g., scroll to bottom of logs */ },
+		"page4": func() {
+			fmt.Println("Entered Editor (page 4): Load session config into fields (stubbed)")
+			// TODO: Populate sc.UI.Page4 fields from sc.SessionManager.GetConfig()
+		},
+	}
+
+	// Reuse existing navigation setup utility
+	setupNavigationSignals(sc.UI.ViewStack, pageActions)
+
+	// Per-tab signal setups
+	sc.setupPage1Signals()
+	sc.setupPage2Signals()
+	sc.setupLogsSignals()
+	sc.setupEditSignals()
+
+}
+
 // StartGUI initializes and runs the GTK application
 func StartGUI() {
+
 	app := gtk.NewApplication("com.github.richbl.ble-sync-cycle", gio.ApplicationFlagsNone)
 
 	app.ConnectActivate(func() {
-		adw.Init()
 
+		adw.Init()
 		builder := gtk.NewBuilderFromString(uiXML)
 		ui := NewAppUI(builder)
-
 		aboutWindow := getObj(builder, "about_window").Cast().(*adw.AboutDialog)
 
 		// Create the "About" action handler
 		aboutAction := gio.NewSimpleAction("about", nil)
 		aboutAction.ConnectActivate(func(_ *glib.Variant) {
-
 			var transientParent gtk.Widgetter = ui.Window
 			aboutWindow.Present(transientParent)
 		})
 
 		app.AddAction(aboutAction)
 
+		// Create SessionController and initialize
 		sessionCtrl := NewSessionController(ui)
 		sessionCtrl.scanForSessions()
 		sessionCtrl.PopulateSessionList()
-		sessionCtrl.SetupSignals()
 
+		setupAllSignals(sessionCtrl)
 		ui.Window.SetApplication(app)
 		ui.Window.Present()
 	})
 
+	// Run the GUI application
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)
 	}

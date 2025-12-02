@@ -148,18 +148,23 @@ func TestFlagInfosConfiguration(t *testing.T) {
 		wantType any
 	}{
 		{
-			name:     "config flag",
+			name:     "no-gui flag",
 			flagInfo: flagInfos[0],
-			wantType: (*string)(nil),
+			wantType: (*bool)(nil),
 		},
 		{
-			name:     "seek flag",
+			name:     "config flag",
 			flagInfo: flagInfos[1],
 			wantType: (*string)(nil),
 		},
 		{
-			name:     "help flag",
+			name:     "seek flag",
 			flagInfo: flagInfos[2],
+			wantType: (*string)(nil),
+		},
+		{
+			name:     "help flag",
+			flagInfo: flagInfos[3],
 			wantType: (*bool)(nil),
 		},
 	}

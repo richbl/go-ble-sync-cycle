@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +24,7 @@ type mockServiceDiscoverer struct {
 	discoverServicesFunc func(uuids []bluetooth.UUID) ([]bluetooth.DeviceService, error)
 }
 
+// DiscoverServices mocks the DiscoverServices method
 func (m *mockServiceDiscoverer) DiscoverServices(uuids []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
 
 	if m.discoverServicesFunc != nil {
@@ -37,6 +39,7 @@ type mockCharacteristicDiscoverer struct {
 	discoverCharacteristicsFunc func(uuids []bluetooth.UUID) ([]CharacteristicReader, error)
 }
 
+// DiscoverCharacteristics mocks the DiscoverCharacteristics method
 func (m *mockCharacteristicDiscoverer) DiscoverCharacteristics(uuids []bluetooth.UUID) ([]CharacteristicReader, error) {
 
 	if m.discoverCharacteristicsFunc != nil {
@@ -53,6 +56,7 @@ type mockCharacteristicReader struct {
 	enableNotificationsFunc func(handler func(buf []byte)) error
 }
 
+// Read mocks the Read method
 func (m *mockCharacteristicReader) Read(p []byte) (n int, err error) {
 
 	if m.readFunc != nil {
@@ -62,6 +66,7 @@ func (m *mockCharacteristicReader) Read(p []byte) (n int, err error) {
 	return 0, errCharReadFailed
 }
 
+// UUID mocks the UUID method
 func (m *mockCharacteristicReader) UUID() bluetooth.UUID {
 
 	if m.uuidFunc != nil {
@@ -71,6 +76,7 @@ func (m *mockCharacteristicReader) UUID() bluetooth.UUID {
 	return bluetooth.UUID{}
 }
 
+// EnableNotifications mocks the EnableNotifications method
 func (m *mockCharacteristicReader) EnableNotifications(handler func(buf []byte)) error {
 
 	if m.enableNotificationsFunc != nil {
@@ -349,5 +355,17 @@ func TestServiceConfigErrorTypes(t *testing.T) {
 		assert.Equal(t, ErrNoCSCServices, cscServiceConfig.errNoServicesFound)
 		assert.Equal(t, ErrNoCSCCharacteristics, cscServiceConfig.errNoCharacteristicFound)
 	})
+
+}
+
+// TestGetBatteryServiceWithCancel tests that GetBatteryService respects context cancellation
+func TestGetBatteryServiceWithCancel(t *testing.T) {
+
+	controller := createTestBLEController(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := controller.GetBatteryService(ctx, &mockServiceDiscoverer{})
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 
 }
