@@ -163,8 +163,6 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		LogLevel:            getObj(builder, "log_level_combo").Cast().(*adw.ComboRow),
 		BTAddressEntry:      getObj(builder, "bt_address_entry_row").Cast().(*adw.EntryRow),
 		ScanTimeout:         getObj(builder, "scan_timeout_spin").Cast().(*adw.SpinRow),
-		SensorStatus:        getObj(builder, "edit_sensor_status_row").Cast().(*adw.ActionRow),
-		ScanButton:          getObj(builder, "button_scan").Cast().(*gtk.Button),
 		WheelCircumference:  getObj(builder, "edit_wheel_circumference_spin").Cast().(*adw.SpinRow),
 		SpeedUnits:          getObj(builder, "edit_speed_units_combo").Cast().(*adw.ComboRow),
 		SpeedThreshold:      getObj(builder, "edit_speed_threshold_spin").Cast().(*adw.SpinRow),

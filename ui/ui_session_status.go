@@ -180,7 +180,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	sc.updateSessionControlButton(false)
 
 	// Enable the button now that session is loaded
-	sc.UI.Page2.SessionControlBtnContent.SetSensitive(true)
+	sc.UI.Page2.SessionControlBtn.SetSensitive(true)
 	fmt.Printf("Page 2 updated with session: %s\n", sess.Title)
 
 }

@@ -271,14 +271,13 @@
                                     <property name="margin-top">12</property>
                                     <property name="orientation">horizontal</property>
                                     <property name="spacing">12</property>
-
                                     <child>
                                       <object class="GtkButton" id="session_control_button">
+                                        <property name="sensitive">False</property>
                                         <property name="child">
                                           <object class="AdwButtonContent" id="session_control_button_content">
                                             <property name="icon-name">media-playback-start-symbolic</property>
                                             <property name="label" translatable="yes">Start Session</property>
-                                            <property name="sensitive">False</property>
                                           </object>
                                         </property>
                                         <style>
@@ -458,23 +457,6 @@
                                 <property name="subtitle">seconds</property>
                                 <property name="title">Scan Timeout</property>
                                 <property name="tooltip-text">Time to wait for a response from the peripheral before connect fails (1-100 seconds)</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="AdwActionRow" id="edit_sensor_status_row">
-                                <property name="subtitle">Not Connected</property>
-                                <property name="title" translatable="yes">Sensor Status</property>
-                                <property name="tooltip-text">Connection status of the BLE peripheral device</property>
-                                <child type="suffix">
-                                  <object class="GtkButton" id="button_scan">
-                                    <property name="label">Scan</property>
-                                    <property name="tooltip-text">Scan for the BLE device with the given address</property>
-                                    <property name="valign">center</property>
-                                    <style>
-                                      <class name="flat" />
-                                    </style>
-                                  </object>
-                                </child>
                               </object>
                             </child>
                           </object>
