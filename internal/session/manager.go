@@ -52,7 +52,7 @@ type Manager struct {
 	errorMsg     string
 	controllers  *controllers
 	shutdownMgr  *services.ShutdownManager
-	PendingStart bool // Exported (capitalized) for visibility across packages
+	PendingStart bool
 }
 
 // controllers holds the application component controllers
@@ -250,8 +250,6 @@ func (m *Manager) prepareStart() error {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	logger.Debug(logger.APP, "Current state:", m.state, "Config nil?", m.config == nil)
 
 	if m.config == nil {
 		logger.Debug(logger.APP, "Exiting: no config")

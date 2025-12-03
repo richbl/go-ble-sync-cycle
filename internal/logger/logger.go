@@ -19,6 +19,7 @@ const (
 	BLE   ComponentType = "[BLE]"
 	SPEED ComponentType = "[SPD]"
 	VIDEO ComponentType = "[VID]"
+	GUI   ComponentType = "[GUI]"
 )
 
 // ANSI color codes for terminal output

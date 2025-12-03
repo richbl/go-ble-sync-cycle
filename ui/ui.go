@@ -2,7 +2,6 @@ package ui
 
 import (
 	_ "embed"
-	"fmt"
 	"log"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 //go:embed assets/bsc_gui.ui
@@ -191,14 +191,21 @@ func setupAllSignals(sc *SessionController) {
 	pageActions := map[string]func(){
 
 		"page1": func() {
-			fmt.Println("View switched to Page 1: Refreshing Session List from CWD...")
+			logger.Debug(logger.GUI, "View switched to Session Select: refreshing session list from CWD...")
 			sc.scanForSessions()
 			sc.PopulateSessionList()
 		},
-		// "page2": func() { /* e.g., refresh metrics */ },
-		// "page3": func() { /* e.g., scroll to bottom of logs */ },
+		"page2": func() {
+			// TODO: refresh metrics if needed
+			logger.Debug(logger.GUI, "View switched to Session Status")
+		},
+		"page3": func() {
+			// TODO: implement log view refresh if needed and scroll to bottom
+			logger.Debug(logger.GUI, "View switched to Session Log")
+		},
+
 		"page4": func() {
-			fmt.Println("Entered Editor (page 4): Load session config into fields (stubbed)")
+			logger.Debug(logger.GUI, "View switched to Session Editor")
 			// TODO: Populate sc.UI.Page4 fields from sc.SessionManager.GetConfig()
 		},
 	}
@@ -207,10 +214,10 @@ func setupAllSignals(sc *SessionController) {
 	setupNavigationSignals(sc.UI.ViewStack, pageActions)
 
 	// Per-tab signal setups
-	sc.setupPage1Signals()
-	sc.setupPage2Signals()
-	sc.setupLogsSignals()
-	sc.setupEditSignals()
+	sc.setupSessionSelectSignals()
+	sc.setupSessionStatusSignals()
+	sc.setupSessionLogSignals()
+	sc.setupSessionEditSignals()
 
 }
 

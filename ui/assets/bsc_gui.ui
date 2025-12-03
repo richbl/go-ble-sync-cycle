@@ -26,6 +26,8 @@
             <child>
               <object class="AdwViewSwitcher" id="view_switcher">
                 <property name="stack">view_stack</property>
+                <property name="margin-end">12</property>
+                <property name="margin-start">12</property>
               </object>
             </child>
             <child>
@@ -407,9 +409,10 @@
                             <child>
                               <object class="AdwEntryRow" id="session_title_entry_row">
                                 <property name="show-apply-button">True</property>
-                                <property name="text">Centennial Trail to Arlington</property>
+                                <property name="text">BSC Session</property>
                                 <property name="title" translatable="yes">Session Title</property>
                                 <property name="tooltip-text">Short description of the current cycling session (0-200 characters)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -427,6 +430,7 @@
                                 <property name="selected">0</property>
                                 <property name="title">Logging Level</property>
                                 <property name="tooltip-text">Log messages generated during execution</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -438,9 +442,10 @@
                               <object class="AdwEntryRow" id="bt_address_entry_row">
                                 <property name="input-purpose">free-form</property>
                                 <property name="show-apply-button">True</property>
-                                <property name="text">34:fe:3f:ac:22:0d</property>
+                                <property name="text">00:00:00:00:00:00</property>
                                 <property name="title" translatable="yes">Bluetooth Device Address</property>
                                 <property name="tooltip-text">The Bluetooth Device Address (BD_ADDR) of the BLE peripheral</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -457,6 +462,7 @@
                                 <property name="subtitle">seconds</property>
                                 <property name="title">Scan Timeout</property>
                                 <property name="tooltip-text">Time to wait for a response from the peripheral before connect fails (1-100 seconds)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -478,6 +484,7 @@
                                 <property name="subtitle">millimeters</property>
                                 <property name="title">Wheel Circumference</property>
                                 <property name="tooltip-text">Wheel circumference (50-3000 millimeters)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -493,6 +500,7 @@
                                 <property name="selected">0</property>
                                 <property name="title">Speed Units</property>
                                 <property name="tooltip-text">The unit of measurement for speed</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -510,6 +518,7 @@
                                 <property name="subtitle">mph or km/h</property>
                                 <property name="title">Speed Threshold</property>
                                 <property name="tooltip-text" translatable="yes">Minimum speed change to trigger video playback update (0.00-10.00)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -526,6 +535,7 @@
                                 <property name="subtitle">number of readings</property>
                                 <property name="title">Speed Smoothing</property>
                                 <property name="tooltip-text">Number of recent speed readings to generate a stable moving average (1-25)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -546,6 +556,7 @@
                                 <property name="selected">0</property>
                                 <property name="title">Media Player</property>
                                 <property name="tooltip-text">The video playback back-end to use ("mpv" or "vlc")</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -554,6 +565,7 @@
                                 <property name="subtitle">/home/richbl/downloads/something.mp4</property>
                                 <property name="title" translatable="yes">Video File</property>
                                 <property name="tooltip-text" translatable="yes">File path to the video file for playback</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkButton" id="video_file_button">
                                     <property name="icon-name">document-open-symbolic</property>
@@ -573,6 +585,7 @@
                                 <property name="text">00:00</property>
                                 <property name="title" translatable="yes">Start Time</property>
                                 <property name="tooltip-text" translatable="yes">Starting playback position in the video (MM:SS format)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -590,6 +603,7 @@
                                 <property name="subtitle">0.1 = 10%, 1.0 = full screen</property>
                                 <property name="title">Window Scale Factor</property>
                                 <property name="tooltip-text" translatable="yes">Scales the size of the video window (0.1-1.0)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -607,6 +621,7 @@
                                 <property name="subtitle">0.1 = slower, 1.0 = normal, 1.5 = faster</property>
                                 <property name="title">Speed Multiplier</property>
                                 <property name="tooltip-text" translatable="yes">Multiplier to control video playback rate (0.1-1.5)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -619,6 +634,7 @@
                                 <property name="active">True</property>
                                 <property name="title" translatable="yes">Show Cycle Speed</property>
                                 <property name="tooltip-text" translatable="yes">Display the current cycle speed on the on-screen display</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -626,6 +642,7 @@
                                 <property name="active">True</property>
                                 <property name="title" translatable="yes">Show Playback Speed</property>
                                 <property name="tooltip-text" translatable="yes">Display the current video playback speed on the on-screen display</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -633,6 +650,7 @@
                                 <property name="active">True</property>
                                 <property name="title" translatable="yes">Show Time Remaining</property>
                                 <property name="tooltip-text" translatable="yes">Display the current video time remaining on the on-screen display</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -649,6 +667,7 @@
                                 <property name="subtitle">pixels</property>
                                 <property name="title">Font Size</property>
                                 <property name="tooltip-text" translatable="yes">Font size of the on-screen display (10-200 pixels)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -665,6 +684,7 @@
                                 <property name="subtitle">pixels</property>
                                 <property name="title">Left Margin</property>
                                 <property name="tooltip-text" translatable="yes">Offset of the OSD from the left of the media player window (0-100 pixels)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                             <child>
@@ -681,6 +701,7 @@
                                 <property name="subtitle">pixels</property>
                                 <property name="title">Top Margin</property>
                                 <property name="tooltip-text" translatable="yes">Offset of the OSD from the top of the media player window (0-100 pixels)</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -690,6 +711,7 @@
                             <child>
                               <object class="AdwActionRow" id="edit_save_row">
                                 <property name="activatable">False</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkBox" id="save_button_box">
                                     <property name="halign">end</property>
@@ -700,6 +722,7 @@
                                     <property name="spacing">12</property>
                                     <child>
                                       <object class="GtkButton" id="save_as_button">
+                                        <property name="sensitive">False</property>
                                         <property name="label" translatable="yes">Save As...</property>
                                         <style>
                                           <class name="pill" />
