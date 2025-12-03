@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
 
@@ -79,8 +80,8 @@ func NewSessionController(ui *AppUI) *SessionController {
 	}
 }
 
-// setupPage1Signals wires up event listeners for the session selection tab (Page 1)
-func (sc *SessionController) setupPage1Signals() {
+// setupSessionSelectSignals wires up event listeners for the session selection tab (Page 1)
+func (sc *SessionController) setupSessionSelectSignals() {
 
 	sc.setupListBoxSignals()
 	sc.setupLoadButtonSignals()
@@ -88,23 +89,36 @@ func (sc *SessionController) setupPage1Signals() {
 
 }
 
-// setupPage2Signals wires up event listeners for the session status tab (Page 2)
+// scanForSessions looks for valid session config files in the current working directory
 func (sc *SessionController) scanForSessions() {
+
+	logger.Debug(logger.GUI, "Scanning for session configuration files...")
 
 	sc.Sessions = nil
 
+	// Find all .toml files in the current directory
 	files, err := filepath.Glob("*.toml")
 	if err != nil {
-		fmt.Printf("Error scanning for TOML files: %v\n", err)
+		logger.Error(logger.GUI, fmt.Sprintf("Pattern-matching error when scanning for sessions: %v", err))
+
 		return
 	}
 
+	// Check if any files were actually found
+	if files == nil || len(files) == 0 {
+		logger.Debug(logger.GUI, "No session configuration files found.")
+		displayAlertDialog(sc.UI.Window, "Session Selection Failed", "No BSC session configuration files found in the current directory.")
+
+		return
+	}
+
+	// Load metadata for each session file found
 	sessionID := 1
 	for _, filePath := range files {
 		metadata, err := config.LoadSessionMetadata(filePath)
 
 		if err != nil {
-			fmt.Printf("Skipping invalid config file %s: %v\n", filePath, err)
+			logger.Warn(logger.GUI, fmt.Sprintf("Skipping invalid config file %s: %v", filePath, err))
 			continue
 		}
 
@@ -122,7 +136,7 @@ func (sc *SessionController) scanForSessions() {
 
 	}
 
-	fmt.Printf("Session scan complete: found %d valid session(s)\n", len(sc.Sessions))
+	logger.Debug(logger.GUI, fmt.Sprintf("Session scan complete: found %d valid session(s)", len(sc.Sessions)))
 
 }
 
@@ -159,7 +173,7 @@ func (sc *SessionController) setupListBoxSignals() {
 			idx := row.Index()
 			if idx >= 0 && idx < len(sc.Sessions) {
 				selectedSession := sc.Sessions[idx]
-				fmt.Printf("Selected Session: %s (Config: %s)\n", selectedSession.Title, selectedSession.ConfigPath)
+				logger.Debug(logger.GUI, fmt.Sprintf("Selected Session: %s (Config: %s)", selectedSession.Title, selectedSession.ConfigPath))
 			}
 
 		}
@@ -180,16 +194,16 @@ func (sc *SessionController) setupLoadButtonSignals() {
 			if idx >= 0 && idx < len(sc.Sessions) {
 
 				selectedSession := sc.Sessions[idx]
-				fmt.Printf("Loading Session: %s...\n", selectedSession.Title)
+				logger.Debug(logger.GUI, fmt.Sprintf("Loading Session: %s...", selectedSession.Title))
 
 				// Load the session into the SessionManager
 				err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
 				if err != nil {
-					fmt.Printf("Error loading session: %v\n", err)
+					logger.Error(logger.GUI, fmt.Sprintf("Error loading session: %v", err))
 					return
 				}
 
-				fmt.Printf("Session loaded successfully. State: %s\n", sc.SessionManager.GetState())
+				logger.Debug(logger.GUI, fmt.Sprintf("Session loaded successfully. State: %s", sc.SessionManager.GetState()))
 
 				// Update Page 2 with session info
 				sc.updatePage2WithSession(selectedSession)
@@ -207,7 +221,9 @@ func (sc *SessionController) setupLoadButtonSignals() {
 func (sc *SessionController) setupEditButtonSignals() {
 
 	sc.UI.Page1.EditButton.ConnectClicked(func() {
-		fmt.Println("Navigating to Editor (page 4)...")
+		logger.Debug(logger.GUI, "Navigating to Editor (page 4)...")
+
+		// Navigate to Page 4
 		sc.UI.ViewStack.SetVisibleChildName("page4")
 	})
 
