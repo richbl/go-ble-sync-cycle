@@ -28,6 +28,7 @@
                 <property name="stack">view_stack</property>
                 <property name="margin-end">12</property>
                 <property name="margin-start">12</property>
+                <property name="margin-bottom">12</property>
               </object>
             </child>
             <child>
@@ -767,7 +768,7 @@
         </child>
       </object>
     </property>
-    <property name="default-height">800</property>
+    <property name="default-height">816</property>
     <property name="default-width">600</property>
     <property name="title">BLE Sync Cycle</property>
   </object>

@@ -107,7 +107,7 @@ func (sc *SessionController) scanForSessions() {
 	// Check if any files were actually found
 	if files == nil || len(files) == 0 {
 		logger.Debug(logger.GUI, "No session configuration files found.")
-		displayAlertDialog(sc.UI.Window, "Session Selection Failed", "No BSC session configuration files found in the current directory.")
+		displayAlertDialog(sc.UI.Window, "Session Selection Failed", "No BSC session configuration files found in the current directory")
 
 		return
 	}
