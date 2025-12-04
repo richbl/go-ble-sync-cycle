@@ -106,7 +106,7 @@ func (sc *SessionController) scanForSessions() {
 
 	// Check if any files were actually found
 	if files == nil || len(files) == 0 {
-		logger.Debug(logger.GUI, "No session configuration files found.")
+		logger.Debug(logger.GUI, "No session configuration files found")
 		displayAlertDialog(sc.UI.Window, "Session Selection Failed", "No BSC session configuration files found in the current directory")
 
 		return
@@ -145,6 +145,19 @@ func (sc *SessionController) PopulateSessionList() {
 
 	// Clear existing rows
 	sc.UI.Page1.ListBox.RemoveAll()
+
+	if sc.Sessions == nil || len(sc.Sessions) == 0 {
+		logger.Debug(logger.GUI, "No sessions to populate in the list")
+
+		row := adw.NewActionRow()
+		row.SetTitle("No sessions found")
+		row.SetSubtitle(fmt.Sprintf(""))
+		sc.UI.Page1.ListBox.Append(row)
+
+		return
+	}
+
+	logger.Debug(logger.GUI, fmt.Sprintf("Populating session list with %d session(s)...", len(sc.Sessions)))
 
 	// Populate with current sessions
 	for _, s := range sc.Sessions {
