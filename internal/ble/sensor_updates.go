@@ -60,7 +60,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 	notificationHandler := func(buf []byte) {
 		speed, err := sd.processBLESpeed(m.speedConfig.SpeedUnits, buf)
 		if err != nil {
-			logger.Warn(logger.SPEED, "Error processing BLE speed data:", err)
+			logger.Warn(logger.SPEED, fmt.Sprintf("error processing BLE speed data: %v", err))
 			return
 		}
 		speedController.UpdateSpeed(speed)
@@ -79,7 +79,7 @@ func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.C
 
 		// Disable real-time notifications from BLE sensor
 		if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(nil); err != nil {
-			logger.Error(logger.BLE, "failed to disable BLE notifications:", err)
+			logger.Error(logger.BLE, fmt.Sprintf("failed to disable BLE notifications: %v", err))
 		}
 
 		errChan <- nil
@@ -97,7 +97,7 @@ func (sd *speedData) processBLESpeed(speedUnits string, speedData []byte) (float
 	}
 
 	speed := sd.calculateSpeed()
-	logger.Debug(logger.SPEED, logger.Blue+"BLE sensor speed:", speed, speedUnits)
+	logger.Debug(logger.SPEED, fmt.Sprintf("%sBLE sensor speed: %.2f %s", logger.Blue, speed, speedUnits))
 
 	return speed, nil
 }

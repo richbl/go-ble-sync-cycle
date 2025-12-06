@@ -170,7 +170,7 @@ func (m *Controller) GetBatteryService(ctx context.Context, device ServiceDiscov
 
 	result, err := m.executeAction(
 		ctx,
-		fmt.Sprintf("discovering battery service %s", batteryServiceConfig.serviceUUID.String()),
+		fmt.Sprintf("discovering battery service UUID=%s", batteryServiceConfig.serviceUUID.String()),
 		func(_ context.Context, found chan<- any, errChan chan<- error) {
 			m.discoverServices(batteryServiceConfig, device, found, errChan)
 		},
@@ -201,7 +201,7 @@ func (m *Controller) GetBatteryLevel(ctx context.Context, services []Characteris
 
 	result, err := m.executeAction(
 		ctx,
-		fmt.Sprintf("discovering battery characteristic %s", batteryServiceConfig.characteristicUUID.String()),
+		fmt.Sprintf("discovering battery characteristic UUID=%s", batteryServiceConfig.characteristicUUID.String()),
 		func(_ context.Context, found chan<- any, errChan chan<- error) {
 			m.discoverCharacteristics(opts, found, errChan)
 		},
@@ -216,8 +216,8 @@ func (m *Controller) GetBatteryLevel(ctx context.Context, services []Characteris
 	}
 
 	m.blePeripheralDetails.batteryLevel = batteryLevel
-	logger.Info(logger.BLE, "found battery characteristic", m.blePeripheralDetails.batteryCharacteristic.UUID().String())
-	logger.Info(logger.BLE, "BLE sensor battery level:", fmt.Sprintf("%d%%", batteryLevel))
+	logger.Info(logger.BLE, fmt.Sprintf("found battery characteristic UUID=%s", m.blePeripheralDetails.batteryCharacteristic.UUID().String()))
+	logger.Info(logger.BLE, fmt.Sprintf("BLE sensor battery level: %d%%", m.blePeripheralDetails.batteryLevel))
 
 	return nil
 }
@@ -227,7 +227,7 @@ func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscovere
 
 	result, err := m.executeAction(
 		ctx,
-		fmt.Sprintf("discovering CSC service %s", cscServiceConfig.serviceUUID.String()),
+		fmt.Sprintf("discovering CSC service UUID=%s", cscServiceConfig.serviceUUID.String()),
 		func(_ context.Context, found chan<- any, errChan chan<- error) {
 			m.discoverServices(cscServiceConfig, device, found, errChan)
 		},
@@ -241,7 +241,7 @@ func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscovere
 		return nil, err
 	}
 
-	logger.Info(logger.BLE, "found CSC service")
+	logger.Info(logger.BLE, fmt.Sprintf("found CSC service UUID=%s", cscServiceConfig.serviceUUID.String()))
 
 	return typedResult, nil
 }
@@ -257,7 +257,7 @@ func (m *Controller) GetCSCCharacteristics(ctx context.Context, services []Chara
 	}
 	_, err := m.executeAction(
 		ctx,
-		fmt.Sprintf("discovering CSC characteristic %s", cscServiceConfig.characteristicUUID.String()),
+		fmt.Sprintf("discovering CSC characteristic UUID=%s", cscServiceConfig.characteristicUUID.String()),
 		func(_ context.Context, found chan<- any, errChan chan<- error) { // Ignore ctx
 			m.discoverCharacteristics(opts, found, errChan)
 		},
@@ -267,7 +267,7 @@ func (m *Controller) GetCSCCharacteristics(ctx context.Context, services []Chara
 		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
-	logger.Info(logger.BLE, "found CSC characteristic", m.blePeripheralDetails.bleCharacteristic.UUID().String())
+	logger.Info(logger.BLE, fmt.Sprintf("found CSC characteristic UUID=%s", cscServiceConfig.characteristicUUID.String()))
 
 	return nil
 }

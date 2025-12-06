@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -92,7 +91,7 @@ func newOSDConfig(displayConfig config.VideoOSDConfig) osdConfig {
 // Start configures and starts playback of the media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(logger.VIDEO, "starting", p.videoConfig.MediaPlayer, "video playback...")
+	logger.Info(logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
 
 	defer p.player.terminatePlayer()
 
@@ -162,13 +161,13 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 		case <-ticker.C:
 
 			if err := p.updateSpeedFromController(speedController); err != nil {
-				logger.Warn(logger.VIDEO, "speed update error:", err)
+				logger.Warn(logger.VIDEO, fmt.Sprintf("speed update error: %v", err))
 			}
 
 		case <-ctx.Done():
 
 			fmt.Print("\r") // Clear the ^C character from the terminal line
-			logger.Info(logger.VIDEO, "interrupt detected, stopping", p.videoConfig.MediaPlayer, "video playback...")
+			logger.Info(logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
 			return nil // No need to show this context cancellation error
 		}
@@ -231,8 +230,7 @@ func (p *PlaybackController) updateSpeed() error {
 	// Update the playback speed based on current speed and unit multiplier
 	playbackSpeed := p.speedState.current * p.speedUnitMultiplier
 
-	logger.Debug(logger.VIDEO, logger.Cyan+"updating video playback speed to",
-		strconv.FormatFloat(playbackSpeed, 'f', 2, 64)+"x")
+	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
 
 	if err := p.player.setSpeed(playbackSpeed); err != nil {
 		return fmt.Errorf(errFormat, "failed to set playback speed", err)
@@ -276,7 +274,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", formatSeconds(timeRemaining))
 		} else {
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", "????")
-			logger.Warn(logger.VIDEO, errTimeRemaining+":", err)
+			logger.Warn(logger.VIDEO, fmt.Sprintf("%s: %v", errTimeRemaining, err))
 		}
 
 	}
@@ -292,12 +290,11 @@ func (p *PlaybackController) getTimeRemaining() (int64, error) {
 // logDebugInfo logs debug information about current speeds
 func (p *PlaybackController) logDebugInfo(speedController *speed.Controller) {
 
-	logger.Debug(logger.VIDEO, "sensor speed buffer: ["+strings.Join(speedController.GetSpeedBuffer(), " ")+"]")
-	logger.Debug(logger.VIDEO, logger.Magenta+"smoothed sensor speed:", strconv.FormatFloat(p.speedState.current, 'f', 2, 64), p.speedConfig.SpeedUnits)
-	logger.Debug(logger.VIDEO, logger.Magenta+"last playback speed:", strconv.FormatFloat(p.speedState.last, 'f', 2, 64), p.speedConfig.SpeedUnits)
-	logger.Debug(logger.VIDEO, logger.Magenta+"sensor speed delta:", strconv.FormatFloat(math.Abs(p.speedState.current-p.speedState.last), 'f', 2, 64), p.speedConfig.SpeedUnits)
-	logger.Debug(logger.VIDEO, logger.Magenta+"playback speed update threshold:", strconv.FormatFloat(p.speedConfig.SpeedThreshold, 'f', 2, 64), p.speedConfig.SpeedUnits)
-
+	logger.Debug(logger.VIDEO, fmt.Sprintf("sensor speed buffer: [%s]", strings.Join(speedController.GetSpeedBuffer(), " ")))
+	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"smoothed sensor speed: %.2f %s", p.speedState.current, p.speedConfig.SpeedUnits))
+	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"last playback speed: %.2f %s", p.speedState.last, p.speedConfig.SpeedUnits))
+	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"sensor speed delta: %.2f %s", math.Abs(p.speedState.current-p.speedState.last), p.speedConfig.SpeedUnits))
+	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"playback speed update threshold: %.2f %s", p.speedConfig.SpeedThreshold, p.speedConfig.SpeedUnits))
 }
 
 // formatSeconds converts seconds into HH:MM:SS format

@@ -27,7 +27,8 @@ func (sc *SessionController) setupSessionStatusSignals() {
 func (sc *SessionController) handleSessionControl() {
 
 	currentState := sc.SessionManager.GetState()
-	logger.Debug(logger.GUI, "Button clicked: State =", currentState)
+
+	logger.Debug(logger.GUI, fmt.Sprintf("button clicked: State=%s", currentState))
 
 	if currentState >= session.StateConnecting || sc.starting.Load() {
 		sc.handleStop()
@@ -41,14 +42,14 @@ func (sc *SessionController) handleSessionControl() {
 // handleStop processes stopping the session
 func (sc *SessionController) handleStop() {
 
-	logger.Debug(logger.GUI, "Stop branch entered")
+	logger.Debug(logger.GUI, "stop branch entered")
 
 	sc.SessionManager.StopSession()
 
-	logger.Debug(logger.GUI, "StopSession returned")
+	logger.Debug(logger.GUI, "stop session returned")
 
 	safeUpdateUI(func() {
-		logger.Debug(logger.GUI, "Updating UI for stop")
+		logger.Debug(logger.GUI, "updating UI for stop")
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
 	})
@@ -58,15 +59,15 @@ func (sc *SessionController) handleStop() {
 // handleStart processes starting the session
 func (sc *SessionController) handleStart() {
 
-	logger.Info(logger.GUI, "Starting BSC Session...")
+	logger.Info(logger.GUI, "starting BSC Session...")
 
 	if sc.starting.Load() {
-		logger.Warn(logger.GUI, "Start ignored: already pending")
+		logger.Warn(logger.GUI, "start ignored: already pending")
 		return
 	}
 
 	if !sc.starting.CompareAndSwap(false, true) {
-		logger.Warn(logger.GUI, "Start ignored: race on pending")
+		logger.Warn(logger.GUI, "start ignored: race on pending")
 		return
 	}
 
@@ -75,7 +76,7 @@ func (sc *SessionController) handleStart() {
 
 	// Update UI to show connecting state
 	safeUpdateUI(func() {
-		logger.Debug(logger.GUI, "Updating UI for start")
+		logger.Debug(logger.GUI, "updating UI for start")
 		sc.updateSessionControlButton(true)
 		sc.updatePage2Status(StatusConnecting, StatusNotConnected, "Unknown")
 	})
@@ -88,14 +89,14 @@ func (sc *SessionController) handleStart() {
 // startSessionGoroutine runs the StartSession method and updates UI based on result
 func (sc *SessionController) startSessionGoroutine() {
 
-	logger.Debug(logger.GUI, "Start goroutine launched")
+	logger.Debug(logger.GUI, "start goroutine launched")
 
 	defer func() {
 
-		logger.Debug(logger.GUI, "Start goroutine exiting")
+		logger.Debug(logger.GUI, "start goroutine exiting")
 
 		safeUpdateUI(func() {
-			logger.Debug(logger.GUI, "Updating UI post-start")
+			logger.Debug(logger.GUI, "updating UI post-start")
 
 			// Re-toggle to Start if success/error, but only if stopped
 			if sc.SessionManager.GetState() == session.StateLoaded {
@@ -106,7 +107,7 @@ func (sc *SessionController) startSessionGoroutine() {
 	}()
 
 	// Start the session
-	logger.Debug(logger.GUI, "Calling StartSession")
+	logger.Debug(logger.GUI, "calling StartSession()")
 
 	err := sc.SessionManager.StartSession()
 	if err != nil {
@@ -115,10 +116,10 @@ func (sc *SessionController) startSessionGoroutine() {
 	}
 
 	// Update UI to show success state
-	logger.Debug(logger.GUI, "Start Session successful")
+	logger.Debug(logger.GUI, "StartSession() successful")
 
 	safeUpdateUI(func() {
-		logger.Debug(logger.GUI, "Updating UI for successful start")
+		logger.Debug(logger.GUI, "updating UI for successful start")
 		battery := fmt.Sprintf("%d%%", sc.SessionManager.BatteryLevel())
 		sc.updatePage2Status(StatusConnected, StatusConnected, battery)
 	})
@@ -128,11 +129,11 @@ func (sc *SessionController) startSessionGoroutine() {
 // handleStartError processes errors from StartSession
 func (sc *SessionController) handleStartError(err error) {
 
-	logger.Error(logger.GUI, fmt.Sprintf("StartSession error: %v", err))
+	logger.Error(logger.GUI, fmt.Sprintf("start session error: %v", err))
 
 	safeUpdateUI(func() {
 
-		logger.Debug(logger.GUI, "Updating UI for error")
+		logger.Debug(logger.GUI, "updating UI for error")
 
 		sc.updateSessionControlButton(false)
 		if errors.Is(err, context.Canceled) {
@@ -172,7 +173,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 
 	// Enable the button now that session is loaded
 	sc.UI.Page2.SessionControlBtn.SetSensitive(true)
-	logger.Debug(logger.GUI, fmt.Sprintf("Page 2 updated with session: %s", sess.Title))
+	logger.Debug(logger.GUI, fmt.Sprintf("page 2 updated with session: %s", sess.Title))
 
 }
 

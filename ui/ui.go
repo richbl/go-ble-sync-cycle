@@ -191,21 +191,21 @@ func setupAllSignals(sc *SessionController) {
 	pageActions := map[string]func(){
 
 		"page1": func() {
-			logger.Debug(logger.GUI, "View switched to Session Select: refreshing session list from CWD...")
+			logger.Debug(logger.GUI, "view switched to Session Select: refreshing session list from CWD...")
 			sc.scanForSessions()
 			sc.PopulateSessionList()
 		},
 		"page2": func() {
 			// TODO: refresh metrics if needed
-			logger.Debug(logger.GUI, "View switched to Session Status")
+			logger.Debug(logger.GUI, "view switched to Session Status")
 		},
 		"page3": func() {
 			// TODO: implement log view refresh if needed and scroll to bottom
-			logger.Debug(logger.GUI, "View switched to Session Log")
+			logger.Debug(logger.GUI, "view switched to Session Log")
 		},
 
 		"page4": func() {
-			logger.Debug(logger.GUI, "View switched to Session Editor")
+			logger.Debug(logger.GUI, "view switched to Session Editor")
 			// TODO: Populate sc.UI.Page4 fields from sc.SessionManager.GetConfig()
 		},
 	}

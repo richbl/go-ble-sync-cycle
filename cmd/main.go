@@ -43,11 +43,11 @@ var (
 
 func main() {
 
+	// Initialize the application
+	appBootstrap()
+
 	// Parse for command-line flags
 	parseCmdLine()
-
-	// Initialize the default logger until config is loaded
-	logger.Initialize("debug")
 
 	// Hello computer...
 	waveHello()
@@ -55,12 +55,14 @@ func main() {
 	// Check for help flag
 	checkForHelpFlag()
 
-	// Check for application mode (GUI or no-GUI)
-	if !checkForNoGUIFlag() {
-		logger.Info(logger.APP, "running in GUI mode: GUI features enabled")
+	// Check for application running mode (CLI or GUI)
+	if flags.IsCLIMode() {
+		logger.Info(logger.APP, "running in CLI mode")
+	} else {
+		logger.Info(logger.APP, "running in GUI mode")
 		ui.StartGUI()
 
-		return // Exit CLI logic to allow GUI to take over
+		return // Exit from CLI logic to allow GUI to take over
 	}
 
 	// Load configuration from TOML file
@@ -84,11 +86,24 @@ func main() {
 	waveGoodbye()
 }
 
+// appBootstrap defaults the logger and exit handler objects until later services start
+func appBootstrap() {
+
+	// Initialize the default logger until user configs are loaded
+	logger.Initialize("debug")
+
+	// Initialize the exit handler until the service manager is loaded
+	logger.SetExitHandler(func() {
+		waveGoodbye()
+	})
+
+}
+
 // parseCmdLine parses and validates command-line flags
 func parseCmdLine() {
 
 	if err := flags.ParseArgs(); err != nil {
-		logger.Fatal(logger.APP, "failed to parse command-line flags:", err.Error())
+		logger.Fatal(logger.APP, fmt.Sprintf("failed to parse command-line flags: %v", err))
 	}
 
 }
@@ -104,18 +119,12 @@ func checkForHelpFlag() {
 
 }
 
-// checkForNoGUIFlag checks for the no-gui flag passed on the command-line
-func checkForNoGUIFlag() bool {
-	clFlags := flags.GetFlags()
-	return clFlags.NoGUI
-}
-
 // loadConfig loads and validates the TOML configuration file
 func loadConfig(file string) *config.Config {
 
 	cfg, err := config.Load(file)
 	if err != nil {
-		logger.Fatal(logger.APP, "failed to load TOML configuration:", err.Error())
+		logger.Fatal(logger.APP, fmt.Sprintf("failed to load TOML configuration: %v", err))
 	}
 
 	return cfg
@@ -123,12 +132,12 @@ func loadConfig(file string) *config.Config {
 
 // waveHello outputs a welcome message
 func waveHello() {
-	logger.Info(logger.APP, "Starting", appName, appVersion)
+	logger.Info(logger.APP, fmt.Sprintf("%s %s starting...", appName, appVersion))
 }
 
 // waveGoodbye outputs a goodbye message and exits the program
 func waveGoodbye() {
-	logger.Info(logger.APP, appName, appVersion, "shutdown complete. Goodbye")
+	logger.Info(logger.APP, fmt.Sprintf("%s %s shutdown complete. Goodbye", appName, appVersion))
 	os.Exit(0)
 }
 
@@ -158,7 +167,7 @@ func initializeControllers(cfg *config.Config) *appControllers {
 
 	controllers, componentType, err := setupAppControllers(*cfg)
 	if err != nil {
-		logger.Fatal(componentType, "failed to create controllers:", err.Error())
+		logger.Fatal(componentType, fmt.Sprintf("failed to create controllers: %v", err))
 	}
 
 	return controllers
@@ -189,7 +198,7 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
 
 	if !errors.Is(err, context.Canceled) {
-		logger.Fatal(logger.BLE, msg+":", err.Error())
+		logger.Fatal(logger.BLE, fmt.Sprintf("%s: %v", msg, err))
 	}
 
 	// Time to go... so say goodbye
@@ -250,7 +259,8 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.bleController.GetBLEUpdates(ctx, controllers.speedController); err != nil {
-			logger.Error(logger.BLE, err.Error())
+			logger.Error(logger.BLE, fmt.Sprintf("failed to start BLE updates: %v", err))
+
 			return err
 		}
 
@@ -261,7 +271,7 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.videoPlayer.Start(ctx, controllers.speedController); err != nil {
-			logger.Error(logger.VIDEO, err.Error())
+			logger.Error(logger.VIDEO, fmt.Sprintf("failed to start video playback: %v", err))
 			return err
 		}
 

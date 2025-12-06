@@ -108,3 +108,8 @@ func ShowHelp() {
 func GetFlags() Flags {
 	return flags
 }
+
+// IsCLIMode checks if the user provided the flag to run in CLI-only mode
+func IsCLIMode() bool {
+	return flags.NoGUI
+}

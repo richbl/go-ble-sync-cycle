@@ -81,7 +81,7 @@ func (m *Manager) LoadSession(configPath string) error {
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		m.state = StateError
-		m.errorMsg = fmt.Sprintf("Failed to load session: %v", err)
+		m.errorMsg = fmt.Sprintf("failed to load session: %v", err)
 
 		return err
 	}
@@ -199,29 +199,29 @@ func (m *Manager) StartSession() error {
 		return err
 	}
 
-	logger.Debug(logger.APP, "Creating ShutdownManager")
+	logger.Debug(logger.APP, "creating ShutdownManager")
 	shutdownMgr := services.NewShutdownManager(30 * time.Second)
 	shutdownMgr.Start()
 
 	// store the shutdown manager reference
 	m.storeShutdownMgr(shutdownMgr)
 
-	logger.Debug(logger.APP, "Initializing controllers...")
+	logger.Debug(logger.APP, "initializing controllers...")
 
 	controllers, err := m.initializeControllers()
 	if err != nil {
-		logger.Error(logger.APP, "Controllers init failed:", err)
+		logger.Error(logger.APP, fmt.Sprintf("controllers init failed: %v", err))
 		m.cleanupStartFailure(shutdownMgr)
 
 		return fmt.Errorf("failed to initialize controllers: %w", err)
 	}
 
-	logger.Debug(logger.APP, "Controllers initialized OK")
-	logger.Debug(logger.APP, "Connecting BLE...")
+	logger.Debug(logger.APP, "controllers initialized OK")
+	logger.Debug(logger.APP, "connecting BLE...")
 
 	bleDevice, err := m.connectBLE(controllers, shutdownMgr)
 	if err != nil {
-		logger.Error(logger.APP, "BLE connect failed:", err)
+		logger.Error(logger.APP, fmt.Sprintf("BLE connect failed: %v", err))
 		m.cleanupStartFailure(shutdownMgr)
 
 		return fmt.Errorf("BLE connection failed: %w", err)
@@ -235,12 +235,12 @@ func (m *Manager) StartSession() error {
 	m.controllers = controllers
 	m.PendingStart = false
 	m.state = StateRunning
-	logger.Debug(logger.APP, "Set state=Running, PendingStart=false")
+	logger.Debug(logger.APP, "set state=Running, PendingStart=false")
 	m.mu.Unlock()
 
-	logger.Debug(logger.APP, "Starting services...")
+	logger.Debug(logger.APP, "starting services...")
 	m.startServices(controllers, shutdownMgr)
-	logger.Debug(logger.APP, "Services started")
+	logger.Debug(logger.APP, "services started")
 
 	return nil
 }
@@ -252,28 +252,28 @@ func (m *Manager) prepareStart() error {
 	defer m.mu.Unlock()
 
 	if m.config == nil {
-		logger.Debug(logger.APP, "Exiting: no config")
+		logger.Debug(logger.APP, "exiting: no config")
 		return fmt.Errorf("no session loaded")
 	}
 
 	if m.state == StateError {
-		logger.Debug(logger.APP, "Reset from Error state to Loaded state")
+		logger.Debug(logger.APP, "reset from Error state to Loaded state")
 		m.state = StateLoaded
 	}
 
 	if m.state != StateLoaded {
-		logger.Debug(logger.APP, "Exiting: invalid state for start:", m.state)
+		logger.Debug(logger.APP, fmt.Sprintf("exiting: invalid state for start: %s", m.state))
 		return fmt.Errorf("session already started or in invalid state: %s", m.state)
 	}
 
 	if m.controllers != nil {
-		logger.Debug(logger.APP, "Exiting: controllers already exist")
+		logger.Debug(logger.APP, "exiting: controllers already exist")
 		return fmt.Errorf("session already started")
 	}
 
 	m.PendingStart = true
 	m.state = StateConnecting
-	logger.Debug(logger.APP, "Set PendingStart=true, state=Connecting")
+	logger.Debug(logger.APP, "set PendingStart=true, state=Connecting")
 
 	return nil
 }
@@ -283,7 +283,7 @@ func (m *Manager) storeShutdownMgr(s *services.ShutdownManager) {
 
 	m.mu.Lock()
 	m.shutdownMgr = s
-	logger.Debug(logger.APP, "ShutdownMgr stored")
+	logger.Debug(logger.APP, "shutdownMgr stored")
 	m.mu.Unlock()
 
 }
@@ -346,7 +346,7 @@ func (m *Manager) StopSession() error {
 	defer ble.AdapterMu.Unlock()
 
 	if err := bluetooth.DefaultAdapter.StopScan(); err != nil {
-		logger.Warn(logger.BLE, "failed to stop ongoing scan:", err)
+		logger.Warn(logger.BLE, fmt.Sprintf("failed to stop current BLE scan: %v", err))
 	} else {
 		logger.Info(logger.BLE, "BLE scan stopped")
 	}
