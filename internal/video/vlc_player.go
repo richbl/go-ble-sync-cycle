@@ -30,7 +30,7 @@ func newVLCPlayer() (*vlcPlayer, error) {
 	if err != nil {
 
 		if releaseErr := vlc.Release(); releaseErr != nil {
-			logger.Error(logger.VIDEO, "failed to release VLC library:", releaseErr)
+			logger.Error(logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", releaseErr))
 		}
 
 		return nil, err
@@ -54,7 +54,7 @@ func (v *vlcPlayer) loadFile(path string) error {
 
 	defer func() {
 		if err := media.Release(); err != nil {
-			logger.Warn(logger.VIDEO, "failed to release VLC media:", err)
+			logger.Warn(logger.VIDEO, fmt.Sprintf("failed to release VLC media: %v", err))
 		}
 	}()
 
@@ -243,11 +243,11 @@ func (v *vlcPlayer) terminatePlayer() {
 	if v.player != nil {
 
 		if err := v.player.Stop(); err != nil {
-			logger.Warn(logger.VIDEO, "failed to stop VLC player:", err)
+			logger.Warn(logger.VIDEO, fmt.Sprintf("failed to stop VLC player: %v", err))
 		}
 
 		if err := v.player.Release(); err != nil {
-			logger.Warn(logger.VIDEO, "failed to release VLC player:", err)
+			logger.Warn(logger.VIDEO, fmt.Sprintf("failed to release VLC player: %v", err))
 		}
 
 		v.player = nil
@@ -255,7 +255,7 @@ func (v *vlcPlayer) terminatePlayer() {
 	}
 
 	if err := vlc.Release(); err != nil {
-		logger.Warn(logger.VIDEO, "failed to release VLC library:", err)
+		logger.Warn(logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", err))
 	}
 
 }

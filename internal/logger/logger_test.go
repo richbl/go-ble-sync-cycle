@@ -204,10 +204,10 @@ func TestFatal(t *testing.T) {
 	buf, testLogger := setupTest()
 	logger = testLogger
 
-	origExit := ExitFunc
+	origExit := exitFunc
 	exitCode := 0
-	ExitFunc = func(code int) { exitCode = code }
-	defer func() { ExitFunc = origExit }()
+	exitFunc = func(code int) { exitCode = code }
+	defer func() { exitFunc = origExit }()
 
 	Fatal(td.message)
 
