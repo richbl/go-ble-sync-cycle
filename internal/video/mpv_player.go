@@ -55,8 +55,8 @@ func (m *mpvPlayer) setPause(paused bool) error {
 	return m.player.SetProperty("pause", mpv.FormatFlag, paused)
 }
 
-// getTimeRemaining gets the remaining time of the video
-func (m *mpvPlayer) getTimeRemaining() (int64, error) {
+// timeRemaining gets the remaining time of the video
+func (m *mpvPlayer) timeRemaining() (int64, error) {
 
 	timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
 	if err != nil {

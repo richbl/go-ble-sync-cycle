@@ -71,8 +71,8 @@ func (v *vlcPlayer) setPause(paused bool) error {
 	return v.player.SetPause(paused)
 }
 
-// getTimeRemaining gets the remaining time of the video
-func (v *vlcPlayer) getTimeRemaining() (int64, error) {
+// timeRemaining gets the remaining time of the video
+func (v *vlcPlayer) timeRemaining() (int64, error) {
 
 	length, err := v.player.MediaLength()
 	if err != nil {

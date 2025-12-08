@@ -4,7 +4,14 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
+
+// init is called to set the log level for tests
+func init() {
+	logger.Initialize("debug")
+}
 
 // TestNewManager tests the creation of a new session manager
 func TestNewManager(t *testing.T) {
@@ -14,11 +21,11 @@ func TestNewManager(t *testing.T) {
 		t.Fatal("NewManager() returned nil")
 	}
 
-	if mgr.GetState() != StateIdle {
-		t.Errorf("NewManager() state = %v, want %v", mgr.GetState(), StateIdle)
+	if mgr.SessionState() != StateIdle {
+		t.Errorf("NewManager() state = %v, want %v", mgr.SessionState(), StateIdle)
 	}
 
-	if mgr.GetConfig() != nil {
+	if mgr.Config() != nil {
 		t.Error("NewManager() config should be nil")
 	}
 
@@ -40,12 +47,12 @@ func TestLoadSession(t *testing.T) {
 	}
 
 	// Verify state changed to Loaded
-	if mgr.GetState() != StateLoaded {
-		t.Errorf("LoadSession() state = %v, want %v", mgr.GetState(), StateLoaded)
+	if mgr.SessionState() != StateLoaded {
+		t.Errorf("LoadSession() state = %v, want %v", mgr.SessionState(), StateLoaded)
 	}
 
 	// Verify config is loaded
-	cfg := mgr.GetConfig()
+	cfg := mgr.Config()
 	if cfg == nil {
 		t.Fatal("LoadSession() config should not be nil")
 	}
@@ -53,8 +60,8 @@ func TestLoadSession(t *testing.T) {
 	// Verify path is stored
 	expectedPath := "../config/config_test.toml"
 
-	if mgr.GetConfigPath() != expectedPath {
-		t.Errorf("LoadSession() path = %v, want %v", mgr.GetConfigPath(), expectedPath)
+	if mgr.ConfigPath() != expectedPath {
+		t.Errorf("LoadSession() path = %v, want %v", mgr.ConfigPath(), expectedPath)
 	}
 
 	// Verify IsLoaded returns true
@@ -63,8 +70,8 @@ func TestLoadSession(t *testing.T) {
 	}
 
 	// Verify no error message
-	if mgr.GetError() != "" {
-		t.Errorf("LoadSession() error message should be empty, got: %v", mgr.GetError())
+	if mgr.Error() != "" {
+		t.Errorf("LoadSession() error message should be empty, got: %v", mgr.Error())
 	}
 
 }
@@ -81,17 +88,17 @@ func TestLoadSessionInvalidFile(t *testing.T) {
 	}
 
 	// Verify state changed to Error
-	if mgr.GetState() != StateError {
-		t.Errorf("LoadSession() state = %v, want %v", mgr.GetState(), StateError)
+	if mgr.SessionState() != StateError {
+		t.Errorf("LoadSession() state = %v, want %v", mgr.SessionState(), StateError)
 	}
 
 	// Verify error message is set
-	if mgr.GetError() == "" {
+	if mgr.Error() == "" {
 		t.Error("LoadSession() error message should not be empty")
 	}
 
 	// Verify config is still nil
-	if mgr.GetConfig() != nil {
+	if mgr.Config() != nil {
 		t.Error("LoadSession() config should be nil after failed load")
 	}
 
@@ -108,8 +115,8 @@ func TestStateTransitions(t *testing.T) {
 	for _, expected := range states {
 		mgr.SetState(expected)
 
-		if mgr.GetState() != expected {
-			t.Errorf("SetState() state = %v, want %v", mgr.GetState(), expected)
+		if mgr.SessionState() != expected {
+			t.Errorf("SetState() state = %v, want %v", mgr.SessionState(), expected)
 		}
 
 	}
@@ -125,19 +132,19 @@ func TestSetError(t *testing.T) {
 	testErr := fmt.Errorf("test error message")
 	mgr.SetError(testErr)
 
-	if mgr.GetState() != StateError {
-		t.Errorf("SetError() state = %v, want %v", mgr.GetState(), StateError)
+	if mgr.SessionState() != StateError {
+		t.Errorf("SetError() state = %v, want %v", mgr.SessionState(), StateError)
 	}
 
-	if mgr.GetError() != testErr.Error() {
-		t.Errorf("SetError() error = %v, want %v", mgr.GetError(), testErr.Error())
+	if mgr.Error() != testErr.Error() {
+		t.Errorf("SetError() error = %v, want %v", mgr.Error(), testErr.Error())
 	}
 
 	// Test with nil error (should not panic)
 	mgr.SetError(nil)
 
-	if mgr.GetState() != StateError {
-		t.Errorf("SetError(nil) state = %v, want %v", mgr.GetState(), StateError)
+	if mgr.SessionState() != StateError {
+		t.Errorf("SetError(nil) state = %v, want %v", mgr.SessionState(), StateError)
 	}
 
 }
@@ -162,22 +169,22 @@ func TestReset(t *testing.T) {
 	mgr.Reset()
 
 	// Verify state is Idle
-	if mgr.GetState() != StateIdle {
-		t.Errorf("Reset() state = %v, want %v", mgr.GetState(), StateIdle)
+	if mgr.SessionState() != StateIdle {
+		t.Errorf("Reset() state = %v, want %v", mgr.SessionState(), StateIdle)
 	}
 
 	// Verify config is cleared
-	if mgr.GetConfig() != nil {
+	if mgr.Config() != nil {
 		t.Error("Reset() config should be nil")
 	}
 
 	// Verify path is cleared
-	if mgr.GetConfigPath() != "" {
+	if mgr.ConfigPath() != "" {
 		t.Error("Reset() path should be empty")
 	}
 
 	// Verify error message is cleared
-	if mgr.GetError() != "" {
+	if mgr.Error() != "" {
 		t.Error("Reset() error message should be empty")
 	}
 
@@ -206,10 +213,10 @@ func TestConcurrentAccess(t *testing.T) {
 	for range 10 {
 		wg.Go(func() {
 			for j := 0; j < iterations; j++ {
-				_ = mgr.GetState()
-				_ = mgr.GetConfig()
-				_ = mgr.GetConfigPath()
-				_ = mgr.GetError()
+				_ = mgr.SessionState()
+				_ = mgr.Config()
+				_ = mgr.ConfigPath()
+				_ = mgr.Error()
 				_ = mgr.IsLoaded()
 			}
 		})
@@ -267,7 +274,7 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 		t.Fatalf("LoadSession() first load failed: %v", err)
 	}
 
-	firstPath := mgr.GetConfigPath()
+	firstPath := mgr.ConfigPath()
 
 	// Load second session (same file, but simulates switching)
 	err = mgr.LoadSession("../config/config_test.toml")
@@ -275,7 +282,7 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 		t.Fatalf("LoadSession() second load failed: %v", err)
 	}
 
-	secondPath := mgr.GetConfigPath()
+	secondPath := mgr.ConfigPath()
 
 	// Verify both loads succeeded
 	if firstPath != secondPath {
@@ -283,8 +290,8 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	}
 
 	// Verify state is still Loaded
-	if mgr.GetState() != StateLoaded {
-		t.Errorf("State after second load = %v, want %v", mgr.GetState(), StateLoaded)
+	if mgr.SessionState() != StateLoaded {
+		t.Errorf("State after second load = %v, want %v", mgr.SessionState(), StateLoaded)
 	}
 
 }

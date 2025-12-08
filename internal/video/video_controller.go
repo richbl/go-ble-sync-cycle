@@ -189,7 +189,7 @@ func (p *PlaybackController) handlePlayerEvents() error {
 // updateSpeedFromController manages updates from the speedController component
 func (p *PlaybackController) updateSpeedFromController(speedController *speed.Controller) error {
 
-	p.speedState.current = speedController.GetSmoothedSpeed()
+	p.speedState.current = speedController.SmoothedSpeed()
 	p.logDebugInfo(speedController)
 
 	if p.speedState.current == 0 {
@@ -270,7 +270,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 
 	if p.osdConfig.displayTimeRemaining {
 
-		if timeRemaining, err := p.getTimeRemaining(); err == nil {
+		if timeRemaining, err := p.timeRemaining(); err == nil {
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", formatSeconds(timeRemaining))
 		} else {
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", "????")
@@ -282,15 +282,15 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 	return p.player.showOSDText(osdText.String())
 }
 
-// getTimeRemaining calculates the time remaining in the video
-func (p *PlaybackController) getTimeRemaining() (int64, error) {
-	return p.player.getTimeRemaining()
+// timeRemaining calculates the time remaining in the video
+func (p *PlaybackController) timeRemaining() (int64, error) {
+	return p.player.timeRemaining()
 }
 
 // logDebugInfo logs debug information about current speeds
 func (p *PlaybackController) logDebugInfo(speedController *speed.Controller) {
 
-	logger.Debug(logger.VIDEO, fmt.Sprintf("sensor speed buffer: [%s]", strings.Join(speedController.GetSpeedBuffer(), " ")))
+	logger.Debug(logger.VIDEO, fmt.Sprintf("sensor speed buffer: [%s]", strings.Join(speedController.SpeedBuffer(), " ")))
 	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"smoothed sensor speed: %.2f %s", p.speedState.current, p.speedConfig.SpeedUnits))
 	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"last playback speed: %.2f %s", p.speedState.last, p.speedConfig.SpeedUnits))
 	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"sensor speed delta: %.2f %s", math.Abs(p.speedState.current-p.speedState.last), p.speedConfig.SpeedUnits))

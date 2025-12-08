@@ -82,7 +82,7 @@ var (
 // Load loads the configuration from a TOML file using the provided flags
 func Load(configFile string) (*Config, error) {
 
-	clFlags := flags.GetFlags()
+	clFlags := flags.Flags()
 
 	if clFlags.Config != "" {
 		configFile = clFlags.Config
@@ -116,7 +116,7 @@ func readConfigFile(path string, cfg *Config) (*Config, error) {
 }
 
 // setSeekToPosition validates and then sets the seek position based on the command-line flag
-func setSeekToPosition(cfg *Config, clFlags flags.Flags) error {
+func setSeekToPosition(cfg *Config, clFlags flags.CLIFlags) error {
 
 	if clFlags.Seek != "" {
 		if !validateTimeFormat(clFlags.Seek) {

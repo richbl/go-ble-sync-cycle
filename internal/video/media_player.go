@@ -46,7 +46,7 @@ type mediaPlayer interface {
 	loadFile(path string) error
 	setSpeed(speed float64) error
 	setPause(paused bool) error
-	getTimeRemaining() (int64, error)
+	timeRemaining() (int64, error)
 
 	// Configuration methods
 	setFullscreen(fullscreen bool) error

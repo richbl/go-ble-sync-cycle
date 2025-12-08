@@ -80,8 +80,8 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 	sc.state.timestamp = time.Now()
 }
 
-// GetSmoothedSpeed returns the current smoothed speed measurement
-func (sc *Controller) GetSmoothedSpeed() float64 {
+// SmoothedSpeed returns the current smoothed speed measurement
+func (sc *Controller) SmoothedSpeed() float64 {
 
 	// Lock the mutex to protect the fields
 	sc.mu.RLock()
@@ -90,8 +90,8 @@ func (sc *Controller) GetSmoothedSpeed() float64 {
 	return sc.state.smoothedSpeed
 }
 
-// GetSpeedBuffer returns the current speed buffer
-func (sc *Controller) GetSpeedBuffer() []string {
+// SpeedBuffer returns the current speed buffer
+func (sc *Controller) SpeedBuffer() []string {
 
 	// Lock the mutex to protect the fields
 	sc.mu.RLock()

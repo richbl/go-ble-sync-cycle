@@ -44,26 +44,25 @@ var (
 func main() {
 
 	// Initialize the application
-	appBootstrap()
-
-	// Parse for command-line flags
-	parseCmdLine()
+	appInitialize()
 
 	// Hello computer...
 	waveHello()
 
-	// Check for help flag
+	// Parse for command-line flags
+	parseCLIFlags()
 	checkForHelpFlag()
 
-	// Check for application running mode (CLI or GUI)
-	if flags.IsCLIMode() {
-		logger.Info(logger.APP, "running in CLI mode")
-	} else {
-		logger.Info(logger.APP, "running in GUI mode")
+	// Check for application mode (CLI or GUI)
+	if !flags.IsCLIMode() {
+		logger.Info(logger.APP, "Running in GUI mode")
 		ui.StartGUI()
 
-		return // Exit from CLI logic to allow GUI to take over
+		return
 	}
+
+	// Continue running in CLI mode
+	logger.Info(logger.APP, "Running in CLI mode")
 
 	// Load configuration from TOML file
 	cfg := loadConfig(configFile)
@@ -76,7 +75,7 @@ func main() {
 
 	// BLE peripheral discovery and CSC scanning
 	bleDevice := controllers.bleScanAndConnect(*mgr.Context(), mgr)
-	controllers.bleGetServicesAndCharacteristics(*mgr.Context(), bleDevice, mgr)
+	controllers.bleServicesAndCharacteristics(*mgr.Context(), bleDevice, mgr)
 
 	// Start services
 	controllers.startServiceRunners(mgr)
@@ -86,21 +85,21 @@ func main() {
 	waveGoodbye()
 }
 
-// appBootstrap defaults the logger and exit handler objects until later services start
-func appBootstrap() {
+// appInitialize defaults the logger and exit handler objects until later services start
+func appInitialize() {
 
-	// Initialize the default logger until user configs are loaded
+	// Initialize the default logger until user-specified config file is loaded
 	logger.Initialize("debug")
 
-	// Initialize the exit handler until the service manager is loaded
+	// Initialize the fatal log events exit handler until the service manager is loaded
 	logger.SetExitHandler(func() {
 		waveGoodbye()
 	})
 
 }
 
-// parseCmdLine parses and validates command-line flags
-func parseCmdLine() {
+// parseCLIFlags parses and validates command-line flags
+func parseCLIFlags() {
 
 	if err := flags.ParseArgs(); err != nil {
 		logger.Fatal(logger.APP, fmt.Sprintf("failed to parse command-line flags: %v", err))
@@ -111,7 +110,8 @@ func parseCmdLine() {
 // checkForHelpFlag checks for the help flag passed on the command-line
 func checkForHelpFlag() {
 
-	clFlags := flags.GetFlags()
+	clFlags := flags.Flags()
+
 	if clFlags.Help {
 		flags.ShowHelp()
 		waveGoodbye()
@@ -137,8 +137,11 @@ func waveHello() {
 
 // waveGoodbye outputs a goodbye message and exits the program
 func waveGoodbye() {
+
+	logger.ClearCLILine()
 	logger.Info(logger.APP, fmt.Sprintf("%s %s shutdown complete. Goodbye", appName, appVersion))
 	os.Exit(0)
+
 }
 
 // initializeUtilityServices initializes the core components of the application, including the
@@ -224,29 +227,29 @@ func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *s
 	return connectResult
 }
 
-// bleGetServicesAndCharacteristics retrieves BLE services and characteristics
-func (controllers *appControllers) bleGetServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *services.ShutdownManager) {
+// bleServicesAndCharacteristics retrieves BLE services and characteristics
+func (controllers *appControllers) bleServicesAndCharacteristics(ctx context.Context, connectResult bluetooth.Device, mgr *services.ShutdownManager) {
 
 	var serviceResult []ble.CharacteristicDiscoverer
 	var err error
 
 	// Get the battery service
-	if serviceResult, err = controllers.bleController.GetBatteryService(ctx, &connectResult); err != nil {
+	if serviceResult, err = controllers.bleController.BatteryService(ctx, &connectResult); err != nil {
 		logBLESetupError(err, "failed to acquire battery service", mgr)
 	}
 
 	// Get the battery level
-	if err = controllers.bleController.GetBatteryLevel(ctx, serviceResult); err != nil {
+	if err = controllers.bleController.BatteryLevel(ctx, serviceResult); err != nil {
 		logBLESetupError(err, "failed to acquire battery level", mgr)
 	}
 
 	// Get the CSC services
-	if serviceResult, err = controllers.bleController.GetCSCServices(ctx, &connectResult); err != nil {
+	if serviceResult, err = controllers.bleController.CSCServices(ctx, &connectResult); err != nil {
 		logBLESetupError(err, "failed to acquire BLE services", mgr)
 	}
 
 	// Get the CSC characteristics
-	if err = controllers.bleController.GetCSCCharacteristics(ctx, serviceResult); err != nil {
+	if err = controllers.bleController.CSCCharacteristics(ctx, serviceResult); err != nil {
 		logBLESetupError(err, "failed to acquire BLE characteristics", mgr)
 	}
 
@@ -258,7 +261,7 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	// Run the BLE service
 	mgr.Run(func(ctx context.Context) error {
 
-		if err := controllers.bleController.GetBLEUpdates(ctx, controllers.speedController); err != nil {
+		if err := controllers.bleController.BLEUpdates(ctx, controllers.speedController); err != nil {
 			logger.Error(logger.BLE, fmt.Sprintf("failed to start BLE updates: %v", err))
 
 			return err

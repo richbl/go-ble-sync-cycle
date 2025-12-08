@@ -91,8 +91,8 @@ type serviceTestConfig struct {
 	name               string
 	serviceUUID        bluetooth.UUID
 	characteristicUUID bluetooth.UUID
-	getServiceFunc     func(*Controller, context.Context, ServiceDiscoverer) ([]CharacteristicDiscoverer, error)
-	getCharFunc        func(*Controller, context.Context, []CharacteristicDiscoverer) error
+	serviceFunc        func(*Controller, context.Context, ServiceDiscoverer) ([]CharacteristicDiscoverer, error)
+	charFunc           func(*Controller, context.Context, []CharacteristicDiscoverer) error
 	expectedNoSvcErr   error
 	expectedNoCharErr  error
 }
@@ -103,8 +103,8 @@ var testConfigs = []serviceTestConfig{
 		name:               "Battery",
 		serviceUUID:        batteryServiceUUID,
 		characteristicUUID: batteryCharacteristicUUID,
-		getServiceFunc:     (*Controller).GetBatteryService,
-		getCharFunc:        (*Controller).GetBatteryLevel,
+		serviceFunc:        (*Controller).BatteryService,
+		charFunc:           (*Controller).BatteryLevel,
 		expectedNoSvcErr:   ErrNoBatteryServices,
 		expectedNoCharErr:  ErrNoBatteryCharacteristics,
 	},
@@ -112,8 +112,8 @@ var testConfigs = []serviceTestConfig{
 		name:               "CSC",
 		serviceUUID:        cscServiceUUID,
 		characteristicUUID: cscCharacteristicUUID,
-		getServiceFunc:     (*Controller).GetCSCServices,
-		getCharFunc:        (*Controller).GetCSCCharacteristics,
+		serviceFunc:        (*Controller).CSCServices,
+		charFunc:           (*Controller).CSCCharacteristics,
 		expectedNoSvcErr:   ErrNoCSCServices,
 		expectedNoCharErr:  ErrNoCSCCharacteristics,
 	},
@@ -172,7 +172,7 @@ func TestServiceDiscoverySuccess(t *testing.T) {
 				return []bluetooth.DeviceService{{}}, nil
 			})
 
-			services, err := cfg.getServiceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, context.Background(), mock)
 
 			assert.NoError(t, err)
 			assert.Len(t, services, 1)
@@ -192,7 +192,7 @@ func TestServiceDiscoveryNoServicesFound(t *testing.T) {
 				return nil, nil
 			})
 
-			services, err := cfg.getServiceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, context.Background(), mock)
 
 			assert.Error(t, err)
 			assert.ErrorIs(t, err, cfg.expectedNoSvcErr)
@@ -213,7 +213,7 @@ func TestServiceDiscoveryError(t *testing.T) {
 				return nil, errServiceDiscoveryFailed
 			})
 
-			services, err := cfg.getServiceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, context.Background(), mock)
 
 			assert.Error(t, err)
 			assert.ErrorIs(t, err, errServiceDiscoveryFailed)
@@ -248,7 +248,7 @@ func TestCharacteristicsDiscoverySuccess(t *testing.T) {
 				return []CharacteristicReader{mockChar}, nil
 			})
 
-			err := cfg.getCharFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
 			assert.NoError(t, err)
 		})
 	}
@@ -266,7 +266,7 @@ func TestCharacteristicsDiscoveryNoCharacteristicsFound(t *testing.T) {
 				return []CharacteristicReader{}, nil
 			})
 
-			err := cfg.getCharFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
 
 			assert.Error(t, err)
 			assert.ErrorIs(t, err, cfg.expectedNoCharErr)
@@ -286,7 +286,7 @@ func TestCharacteristicsDiscoveryError(t *testing.T) {
 				return nil, errCharacteristicsDiscoveryFailed
 			})
 
-			err := cfg.getCharFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
 
 			assert.Error(t, err)
 			assert.ErrorIs(t, err, errCharacteristicsDiscoveryFailed)
@@ -302,7 +302,7 @@ func TestCharacteristicsEmptyServicesList(t *testing.T) {
 		t.Run(cfg.name+" Characteristics Empty Services List", func(t *testing.T) {
 			controller := createTestBLEController(t)
 
-			err := cfg.getCharFunc(controller, context.Background(), []CharacteristicDiscoverer{})
+			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{})
 
 			assert.Error(t, err)
 			assert.ErrorIs(t, err, ErrNoServicesProvided)
@@ -311,8 +311,8 @@ func TestCharacteristicsEmptyServicesList(t *testing.T) {
 
 }
 
-// TestGetBatteryLevelReadError tests the scenario where reading the battery characteristic fails
-func TestGetBatteryLevelReadError(t *testing.T) {
+// TestBatteryLevelReadError tests the scenario where reading the battery characteristic fails
+func TestBatteryLevelReadError(t *testing.T) {
 
 	controller := createTestBLEController(t)
 
@@ -329,7 +329,7 @@ func TestGetBatteryLevelReadError(t *testing.T) {
 		return []CharacteristicReader{mockChar}, nil
 	})
 
-	err := controller.GetBatteryLevel(context.Background(), []CharacteristicDiscoverer{mockService})
+	err := controller.BatteryLevel(context.Background(), []CharacteristicDiscoverer{mockService})
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, errCharReadFailed)
 
@@ -358,14 +358,22 @@ func TestServiceConfigErrorTypes(t *testing.T) {
 
 }
 
-// TestGetBatteryServiceWithCancel tests that GetBatteryService respects context cancellation
-func TestGetBatteryServiceWithCancel(t *testing.T) {
+// TestBatteryServiceWithCancel tests that BatteryService respects context cancellation
+func TestBatteryServiceWithCancel(t *testing.T) {
 
 	controller := createTestBLEController(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	_, err := controller.GetBatteryService(ctx, &mockServiceDiscoverer{})
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+	// Create a mock that will block until the context is canceled
+	mock := &mockServiceDiscoverer{
+		discoverServicesFunc: func(_ []bluetooth.UUID) ([]bluetooth.DeviceService, error) {
+			<-ctx.Done() // Wait for the context to be done
+			return nil, ctx.Err()
+		},
+	}
+
+	_, err := controller.BatteryService(ctx, mock)
+	require.ErrorIs(t, err, ErrScanTimeout)
 
 }

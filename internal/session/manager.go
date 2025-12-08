@@ -92,11 +92,16 @@ func (m *Manager) LoadSession(configPath string) error {
 	m.state = StateLoaded
 	m.errorMsg = ""
 
+	// Set logging level
+	if cfg.App.LogLevel != "" {
+		logger.SetLogLevel(cfg.App.LogLevel)
+	}
+
 	return nil
 }
 
-// GetState returns the current session state (thread-safe)
-func (m *Manager) GetState() State {
+// SessionState returns the current session state (thread-safe)
+func (m *Manager) SessionState() State {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -104,8 +109,8 @@ func (m *Manager) GetState() State {
 	return m.state
 }
 
-// GetConfig returns a copy of the current configuration (thread-safe)
-func (m *Manager) GetConfig() *config.Config {
+// Config returns a copy of the current configuration (thread-safe)
+func (m *Manager) Config() *config.Config {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -118,8 +123,8 @@ func (m *Manager) GetConfig() *config.Config {
 	return m.config
 }
 
-// GetConfigPath returns the path to the loaded configuration file
-func (m *Manager) GetConfigPath() string {
+// ConfigPath returns the path to the loaded configuration file
+func (m *Manager) ConfigPath() string {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -127,8 +132,8 @@ func (m *Manager) GetConfigPath() string {
 	return m.configPath
 }
 
-// GetError returns the last error message if state is StateError
-func (m *Manager) GetError() string {
+// Error returns the last error message if state is StateError
+func (m *Manager) Error() string {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -288,9 +293,7 @@ func (m *Manager) storeShutdownMgr(s *services.ShutdownManager) {
 
 }
 
-// cleanupStartFailure handles cleaning manager state when startup fails clearing PendingStart,
-// resets state to Loaded, clears controllers and the shutdown manager pointer, and ensures
-// the passed shutdownMgr is shutdown
+// cleanupStartFailure handles cleaning manager state when session startup fails
 func (m *Manager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
 
 	m.mu.Lock()
@@ -321,7 +324,7 @@ func (m *Manager) StopSession() error {
 		return fmt.Errorf("no active session to stop")
 	}
 
-	// Emulate CLI signal: Clear echo and log interrupt-like message
+	// Emulate CLI signal: clear echo and log interrupt-like message
 	fmt.Print("\r")
 
 	if wasPending {
@@ -341,7 +344,7 @@ func (m *Manager) StopSession() error {
 	m.shutdownMgr = nil
 	m.mu.Unlock()
 
-	// Emulate CLI cleanup: Stop any ongoing scan under mutex
+	// Emulate CLI cleanup: stop any ongoing scan under mutex
 	ble.AdapterMu.Lock()
 	defer ble.AdapterMu.Unlock()
 
@@ -412,24 +415,24 @@ func (m *Manager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownMa
 	m.mu.Unlock()
 
 	// Get battery service
-	batteryServices, err := ctrl.bleController.GetBatteryService(ctx, &device)
+	batteryServices, err := ctrl.bleController.BatteryService(ctx, &device)
 	if err != nil {
 		return bluetooth.Device{}, fmt.Errorf("failed to get battery service: %w", err)
 	}
 
 	// Get battery level
-	if err := ctrl.bleController.GetBatteryLevel(ctx, batteryServices); err != nil {
+	if err := ctrl.bleController.BatteryLevel(ctx, batteryServices); err != nil {
 		return bluetooth.Device{}, fmt.Errorf("failed to get battery level: %w", err)
 	}
 
 	// Get CSC services
-	cscServices, err := ctrl.bleController.GetCSCServices(ctx, &device)
+	cscServices, err := ctrl.bleController.CSCServices(ctx, &device)
 	if err != nil {
 		return bluetooth.Device{}, fmt.Errorf("failed to get CSC services: %w", err)
 	}
 
 	// Get CSC characteristics
-	if err := ctrl.bleController.GetCSCCharacteristics(ctx, cscServices); err != nil {
+	if err := ctrl.bleController.CSCCharacteristics(ctx, cscServices); err != nil {
 		return bluetooth.Device{}, fmt.Errorf("failed to get CSC characteristics: %w", err)
 	}
 
@@ -443,7 +446,7 @@ func (m *Manager) BatteryLevel() byte {
 	defer m.mu.RUnlock()
 
 	if m.controllers != nil && m.controllers.bleController != nil {
-		return m.controllers.bleController.BatteryLevel()
+		return m.controllers.bleController.BatteryLevelLast()
 	}
 
 	return 0 // Unknown (0%)
@@ -454,7 +457,7 @@ func (m *Manager) startServices(ctrl *controllers, shutdownMgr *services.Shutdow
 
 	// Run BLE service
 	shutdownMgr.Run(func(ctx context.Context) error {
-		return ctrl.bleController.GetBLEUpdates(ctx, ctrl.speedController)
+		return ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
 	})
 
 	// Run video service

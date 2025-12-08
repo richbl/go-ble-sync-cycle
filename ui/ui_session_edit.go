@@ -15,7 +15,7 @@ func (sc *SessionController) setupSessionEditSignals() {
 
 		if sc.UI.ViewStack.VisibleChildName() == "page4" {
 			logger.Debug(logger.GUI, "Session Edit: load session config into fields")
-			// TODO: Populate sc.UI.Page4 fields from sc.SessionManager.GetConfig()
+			// TODO: Populate sc.UI.Page4 fields from sc.SessionManager.Config()
 		}
 
 	})

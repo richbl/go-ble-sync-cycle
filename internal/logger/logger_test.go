@@ -3,7 +3,6 @@ package logger
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -18,6 +17,14 @@ type testData struct {
 	defaultOpts slog.Level
 }
 
+// testCase represents a generic test case
+type testCase struct {
+	name     string
+	level    slog.Level
+	want     bool
+	setLevel slog.Level
+}
+
 // Define test data
 var td = testData{
 	message:     testMessage,
@@ -25,24 +32,7 @@ var td = testData{
 	defaultOpts: slog.LevelDebug,
 }
 
-// testCase represents a generic test case
-type testCase struct {
-	name     string
-	level    slog.Level
-	want     any
-	setLevel slog.Level
-}
-
-// Define variables
-var (
-	testMessage        = "test message"
-	errUnsupportedType = fmt.Errorf("unsupported type")
-)
-
-// Error formats
-const (
-	errTypeFormat = "%w: %T"
-)
+var testMessage = "test message"
 
 // setupTest creates a new test logger with buffer
 func setupTest() (*bytes.Buffer, *slog.Logger) {
@@ -53,12 +43,14 @@ func setupTest() (*bytes.Buffer, *slog.Logger) {
 	return buf, slog.New(handler)
 }
 
-// validateLogOutput checks if log output matches expected format
+// validateLogOutput checks if log output matches expected format (ANSI tolerant)
 func validateLogOutput(t *testing.T, output, expectedLevel string) {
 
 	t.Helper()
 
-	timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}`
+	// Matches optional ANSI-formatted start color, time, optional reset color
+	timestampRegex := `^(\x1b\[[0-9;]*m)?\d{2}:\d{2}:\d{2}(\x1b\[[0-9;]*m)?`
+
 	if !regexp.MustCompile(timestampRegex).MatchString(output) {
 		t.Errorf("invalid timestamp format in output: %q", output)
 	}
@@ -86,7 +78,7 @@ func TestInitialize(t *testing.T) {
 		{"info level", "info", slog.LevelInfo},
 		{"warn level", "warn", slog.LevelWarn},
 		{"error level", "error", slog.LevelError},
-		{"invalid level", "invalid", slog.LevelInfo}, // defaults to info
+		{"invalid level", "invalid", slog.LevelInfo},
 	}
 
 	// Run tests
@@ -98,13 +90,9 @@ func TestInitialize(t *testing.T) {
 				t.Fatal("logger is nil")
 			}
 
-			h, ok := logger.Handler().(*CustomTextHandler)
-			if !ok {
-				t.Fatal("invalid handler type")
-			}
-
-			if h.level != tt.wantLevel {
-				t.Error(fmt.Errorf(errTypeFormat, errUnsupportedType, h))
+			// Verify the logging level was updated correctly
+			if logLevelVar.Level() != tt.wantLevel {
+				t.Errorf("Initialize(%s) set level to %v, want %v", tt.level, logLevelVar.Level(), tt.wantLevel)
 			}
 
 		})
@@ -112,7 +100,7 @@ func TestInitialize(t *testing.T) {
 
 }
 
-// TestCustomTextHandler tests the custom text handler
+// TestCustomTextHandler tests the custom text handler formatting and colors
 func TestCustomTextHandler(t *testing.T) {
 
 	// Define test cases
@@ -121,10 +109,11 @@ func TestCustomTextHandler(t *testing.T) {
 		level    slog.Level
 		expected string
 	}{
-		{"debug", slog.LevelDebug, Blue + "[DBG]"},
+		// Expect ANSI color codes in the output
+		{"debug", slog.LevelDebug, Cyan + "[DBG]"},
 		{"info", slog.LevelInfo, Green + "[INF]"},
 		{"warn", slog.LevelWarn, Yellow + "[WRN]"},
-		{"error", slog.LevelError, Magenta + "[ERR]"},
+		{"error", slog.LevelError, Red + "[ERR]"},
 	}
 
 	// Run tests
@@ -134,15 +123,17 @@ func TestCustomTextHandler(t *testing.T) {
 
 			buf := &bytes.Buffer{}
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+
+			// Create a log record
 			r := slog.NewRecord(time.Now(), tt.level, testMessage, 0)
 
+			// Handle the log record
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
 			assertOutput(t, buf.String(), tt.expected, testMessage)
 		})
-
 	}
 
 }
@@ -152,25 +143,25 @@ func assertOutput(t *testing.T, output, expectedLevel, expectedMessage string) {
 
 	t.Helper()
 
-	// Check timestamp
-	timestampRegex := `^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} `
+	// Check timestamp (ANSI tolerant)
+	// Logic: optional ANSI -> Digits -> Optional ANSI -> Space
+	timestampRegex := `^(\x1b\[[0-9;]*m)?\d{2}:\d{2}:\d{2}(\x1b\[[0-9;]*m)? `
+
 	if !regexp.MustCompile(timestampRegex).MatchString(output) {
-		t.Errorf("output does not start with a valid timestamp")
+		t.Errorf("output does not start with a valid timestamp format. Got: %q", output)
 	}
 
-	// Check level
 	if !strings.Contains(output, expectedLevel) {
 		t.Errorf("output %q does not contain expected level %q", output, expectedLevel)
 	}
 
-	// Check message
 	if !strings.Contains(output, expectedMessage) {
 		t.Errorf("output %q does not contain message %q", output, expectedMessage)
 	}
 
 }
 
-// TestLogLevels tests the log level functions
+// TestLogLevels tests the log level wrapper functions
 func TestLogLevels(t *testing.T) {
 
 	// Define test cases
@@ -187,9 +178,14 @@ func TestLogLevels(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
 			buf, testLogger := setupTest()
+
+			// Inject the test logger
+			originalLogger := logger
 			logger = testLogger
+			defer func() { logger = originalLogger }()
 
 			tt.logFunc(td.message)
 			validateLogOutput(t, buf.String(), tt.level)
@@ -202,23 +198,33 @@ func TestLogLevels(t *testing.T) {
 func TestFatal(t *testing.T) {
 
 	buf, testLogger := setupTest()
-	logger = testLogger
 
-	origExit := exitFunc
+	// Inject test logger
+	originalLogger := logger
+	logger = testLogger
+	defer func() { logger = originalLogger }()
+
+	// Mock ExitFunc
+	origExit := ExitFunc
 	exitCode := 0
-	exitFunc = func(code int) { exitCode = code }
-	defer func() { exitFunc = origExit }()
+	ExitFunc = func(code int) { exitCode = code }
+	defer func() { ExitFunc = origExit }()
 
 	Fatal(td.message)
 
-	if exitCode != 0 {
+	// Fatal should exit with code 1
+	if exitCode != 1 {
 		t.Errorf("got exit code %d, want 1", exitCode)
 	}
 
-	validateLogOutput(t, buf.String(), "FTL")
+	// Check for Fatal level string (Magenta + [FTL])
+	if !strings.Contains(buf.String(), "[FTL]") {
+		t.Errorf("output missing fatal level tag")
+	}
+
 }
 
-// TestEnabled tests the Enabled function
+// TestEnabled tests the Enabled function behavior
 func TestEnabled(t *testing.T) {
 
 	// Define test cases
@@ -234,6 +240,7 @@ func TestEnabled(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
+			// We pass the level via Options, which CustomTextHandler respects
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
 
 			if got := h.Enabled(context.Background(), tt.level); got != tt.want {
