@@ -70,17 +70,17 @@ func TestUpdateSpeed(t *testing.T) {
 		controller.UpdateSpeed(speed)
 	}
 
-	got := controller.GetSmoothedSpeed()
+	got := controller.SmoothedSpeed()
 	want := calculateAverage(td.speeds)
 
 	if got != want {
-		t.Errorf("GetSmoothedSpeed() = %f, want %f", got, want)
+		t.Errorf("SmoothedSpeed() = %f, want %f", got, want)
 	}
 
 }
 
-// TestGetSmoothedSpeed tests the GetSmoothedSpeed method of Controller
-func TestGetSmoothedSpeed(t *testing.T) {
+// TestSmoothedSpeed tests the SmoothedSpeed method of Controller
+func TestSmoothedSpeed(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
@@ -101,8 +101,8 @@ func TestGetSmoothedSpeed(t *testing.T) {
 				controller.UpdateSpeed(speed)
 			}
 
-			if got := controller.GetSmoothedSpeed(); got != tt.expected {
-				t.Errorf("GetSmoothedSpeed() = %f, want %f", got, tt.expected)
+			if got := controller.SmoothedSpeed(); got != tt.expected {
+				t.Errorf("SmoothedSpeed() = %f, want %f", got, tt.expected)
 			}
 
 		})
@@ -110,8 +110,8 @@ func TestGetSmoothedSpeed(t *testing.T) {
 
 }
 
-// TestGetSpeedBuffer tests the GetSpeedBuffer method of Controller
-func TestGetSpeedBuffer(t *testing.T) {
+// TestSpeedBuffer tests the SpeedBuffer method of Controller
+func TestSpeedBuffer(t *testing.T) {
 
 	// Define test cases
 	controller := NewSpeedController(td.window)
@@ -124,12 +124,12 @@ func TestGetSpeedBuffer(t *testing.T) {
 	}
 
 	// Verify buffer
-	got := controller.GetSpeedBuffer()
+	got := controller.SpeedBuffer()
 
 	for i, val := range want {
 
 		if got[i] != val {
-			t.Errorf("GetSpeedBuffer()[%d] = %s, want %s", i, got[i], val)
+			t.Errorf("SpeedBuffer()[%d] = %s, want %s", i, got[i], val)
 		}
 
 	}
@@ -157,8 +157,8 @@ func TestConcurrency(t *testing.T) {
 
 	wg.Wait()
 
-	if got := controller.GetSmoothedSpeed(); got == 0 {
-		t.Error("GetSmoothedSpeed() = 0, want non-zero value after concurrent updates")
+	if got := controller.SmoothedSpeed(); got == 0 {
+		t.Error("SmoothedSpeed() = 0, want non-zero value after concurrent updates")
 	}
 
 }

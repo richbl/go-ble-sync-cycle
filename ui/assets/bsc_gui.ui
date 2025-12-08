@@ -347,9 +347,10 @@
                             <child>
                               <object class="GtkScrolledWindow" id="logging_scroll_window">
                                 <property name="has-frame">True</property>
-                                <property name="hscrollbar-policy">never</property>
                                 <property name="min-content-height">400</property>
                                 <property name="vexpand">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="vscrollbar-policy">always</property>
                                 <child>
                                   <object class="GtkTextView" id="logging_view">
                                     <property name="cursor-visible">False</property>

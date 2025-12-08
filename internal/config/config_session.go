@@ -17,7 +17,6 @@ type SessionMetadata struct {
 }
 
 // LoadSessionMetadata loads and validates a TOML config file, extracting only the session title
-// This is a lightweight operation for GUI session discovery
 func LoadSessionMetadata(filePath string) (*SessionMetadata, error) {
 
 	metadata := &SessionMetadata{
@@ -32,7 +31,6 @@ func LoadSessionMetadata(filePath string) (*SessionMetadata, error) {
 		return metadata, fmt.Errorf("failed to load session metadata from %s: %w", filePath, err)
 	}
 
-	// Config is valid
 	metadata.IsValid = true
 
 	// Extract session title or use filename as fallback
@@ -48,7 +46,6 @@ func LoadSessionMetadata(filePath string) (*SessionMetadata, error) {
 }
 
 // loadAndValidateConfig loads a config file without applying command-line flag overrides
-// This is an internal helper for session discovery
 func loadAndValidateConfig(filePath string) (*Config, error) {
 
 	cfg := &Config{}

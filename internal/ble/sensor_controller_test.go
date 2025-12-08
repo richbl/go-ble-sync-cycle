@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	speedUnitsKMH        = "kph"
+	speedUnitsKMH        = "km/h"
 	sensorTestBDAddr     = "test-bd-addr"
 	initialScanDelay     = 2 * time.Second
 	wheelCircumferenceMM = 2000
@@ -105,10 +105,11 @@ func TestScanCancel(t *testing.T) {
 	if ctrl == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
+
 	_, err := ctrl.ScanForBLEPeripheral(ctx)
-	assert.ErrorIs(t, err, context.DeadlineExceeded) // Should cancel early
+	assert.ErrorIs(t, err, ErrScanTimeout) // Should cancel early
 
 }
 
@@ -121,8 +122,9 @@ func TestScanForBLEPeripheralWithCancel(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond) // Short for test
 	defer cancel()
+
 	_, err := controller.ScanForBLEPeripheral(ctx)
-	require.ErrorIs(t, err, context.DeadlineExceeded, "Should cancel early via ctx")
+	require.ErrorIs(t, err, ErrScanTimeout, "Should cancel early via ctx")
 	// If device present, would connect but timeout forces cancel
 
 }

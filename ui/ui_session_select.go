@@ -216,7 +216,7 @@ func (sc *SessionController) setupLoadButtonSignals() {
 					return
 				}
 
-				logger.Debug(logger.GUI, fmt.Sprintf("session loaded successfully. State: %s", sc.SessionManager.GetState()))
+				logger.Debug(logger.GUI, fmt.Sprintf("session loaded successfully. State: %s", sc.SessionManager.SessionState()))
 
 				// Update Page 2 with session info
 				sc.updatePage2WithSession(selectedSession)

@@ -151,8 +151,8 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 	return typedResult, nil
 }
 
-// BatteryLevel returns the last read battery level (0-100%)
-func (m *Controller) BatteryLevel() byte {
+// BatteryLevelLast returns the last read battery level (0-100%)
+func (m *Controller) BatteryLevelLast() byte {
 	return m.blePeripheralDetails.batteryLevel
 }
 

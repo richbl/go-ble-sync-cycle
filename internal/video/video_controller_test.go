@@ -14,23 +14,23 @@ import (
 
 // mockMediaPlayer is a mock implementation of the mediaPlayer interface for testing
 type mockMediaPlayer struct {
-	mu                  sync.Mutex
-	calls               map[string]int
-	lastShowText        string
-	lastSpeed           float64
-	lastPauseState      bool
-	loadFileErr         error
-	setupEventsErr      error
-	setFullscreenErr    error
-	setKeepOpenErr      error
-	SetOSDErr           error
-	seekErr             error
-	setSpeedErr         error
-	setPauseErr         error
-	showTextErr         error
-	getRemainingTime    int64
-	getRemainingTimeErr error
-	eventChan           chan *playerEvent
+	mu               sync.Mutex
+	calls            map[string]int
+	lastShowText     string
+	lastSpeed        float64
+	lastPauseState   bool
+	loadFileErr      error
+	setupEventsErr   error
+	setFullscreenErr error
+	setKeepOpenErr   error
+	SetOSDErr        error
+	seekErr          error
+	setSpeedErr      error
+	setPauseErr      error
+	showTextErr      error
+	remainingTime    int64
+	remainingTimeErr error
+	eventChan        chan *playerEvent
 }
 
 // updateSpeedTestCase defines a test case for updateSpeedFromController
@@ -201,11 +201,11 @@ func (m *mockMediaPlayer) showOSDText(text string) error {
 	return m.showTextErr
 }
 
-// getTimeRemaining gets the remaining time of the video
-func (m *mockMediaPlayer) getTimeRemaining() (int64, error) {
+// timeRemaining gets the remaining time of the video
+func (m *mockMediaPlayer) timeRemaining() (int64, error) {
 
-	m.recordCall("getTimeRemaining")
-	return m.getRemainingTime, m.getRemainingTimeErr
+	m.recordCall("timeRemaining")
+	return m.remainingTime, m.remainingTimeErr
 
 }
 
@@ -512,7 +512,7 @@ func TestUpdateDisplay(t *testing.T) {
 
 	t.Run("active display", func(t *testing.T) {
 
-		mockPlayer.getRemainingTime = 125 // 00:02:05
+		mockPlayer.remainingTime = 125 // 00:02:05
 		err := controller.updateDisplay(15.5, 1.55)
 		if err != nil {
 			t.Fatalf("updateDisplay failed: %v", err)

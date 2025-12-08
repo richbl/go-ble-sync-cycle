@@ -46,8 +46,8 @@ func initSpeedData(wheelCircumferenceMM int, speedUnitMultiplier float64) *speed
 	}
 }
 
-// GetBLEUpdates starts the real-time monitoring of BLE sensor notifications
-func (m *Controller) GetBLEUpdates(ctx context.Context, speedController *speed.Controller) error {
+// BLEUpdates starts the real-time monitoring of BLE sensor notifications
+func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Controller) error {
 
 	logger.Info(logger.BLE, "starting the monitoring for BLE sensor notifications...")
 

@@ -14,7 +14,7 @@ const (
 // TestParseArgs tests the ParseArgs function
 func TestParseArgs(t *testing.T) {
 
-	testCases := getTestCases()
+	testCases := testCases()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -24,42 +24,42 @@ func TestParseArgs(t *testing.T) {
 
 }
 
-// getTestCases returns a slice of test cases for the ParseArgs function
-func getTestCases() []struct {
+// testCases returns a slice of test cases for the ParseArgs function
+func testCases() []struct {
 	name     string
 	args     []string
 	wantErr  bool
-	expected Flags
+	expected CLIFlags
 } {
 	return []struct {
 		name     string
 		args     []string
 		wantErr  bool
-		expected Flags
+		expected CLIFlags
 	}{
 		{
 			name:     "no flags",
 			args:     []string{},
 			wantErr:  false,
-			expected: Flags{Config: "", Seek: "", Help: false},
+			expected: CLIFlags{Config: "", Seek: "", Help: false},
 		},
 		{
 			name:     "all flags with long names",
 			args:     []string{"--config", TestConfigFile, "--seek", TestSeekPosition, "--help"},
 			wantErr:  false,
-			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
+			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:     "all flags with short names",
 			args:     []string{"-c", TestConfigFile, "-s", TestSeekPosition, "-h"},
 			wantErr:  false,
-			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
+			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:     "mixed short and long names",
 			args:     []string{"-c", TestConfigFile, "--seek", TestSeekPosition, "-h"},
 			wantErr:  false,
-			expected: Flags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
+			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
 		},
 		{
 			name:    "invalid flag",
@@ -75,9 +75,9 @@ func runTestCase(t *testing.T, tc struct {
 	name     string
 	args     []string
 	wantErr  bool
-	expected Flags
+	expected CLIFlags
 }) {
-	flags = Flags{} // Reset flags
+	flags = CLIFlags{} // Reset flags
 
 	origArgs := os.Args
 	defer func() { os.Args = origArgs }()
@@ -97,11 +97,11 @@ func runTestCase(t *testing.T, tc struct {
 
 }
 
-// TestGetFlags tests the GetFlags function
-func TestGetFlags(t *testing.T) {
+// TestFlags tests the Flags function
+func TestFlags(t *testing.T) {
 
 	// Set up test flags
-	testFlags := Flags{
+	testFlags := CLIFlags{
 		Config: TestConfigFile,
 		Seek:   TestSeekPosition,
 		Help:   true,
@@ -110,11 +110,11 @@ func TestGetFlags(t *testing.T) {
 	// Set the package-level flags variable
 	flags = testFlags
 
-	// Test GetFlags
-	result := GetFlags()
+	// Test Flags
+	result := Flags()
 
 	if !reflect.DeepEqual(result, testFlags) {
-		t.Errorf("GetFlags() = %v, want %v", result, testFlags)
+		t.Errorf("Flags() = %v, want %v", result, testFlags)
 	}
 
 }

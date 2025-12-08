@@ -165,8 +165,8 @@ func (m *Controller) executeAction(ctx context.Context, logMessage string, actio
 	return m.performBLEAction(params)
 }
 
-// GetBatteryService discovers and returns available battery services from the BLE peripheral
-func (m *Controller) GetBatteryService(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
+// BatteryService discovers and returns available battery services from the BLE peripheral
+func (m *Controller) BatteryService(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
 	result, err := m.executeAction(
 		ctx,
@@ -189,8 +189,8 @@ func (m *Controller) GetBatteryService(ctx context.Context, device ServiceDiscov
 	return typedResult, nil
 }
 
-// GetBatteryLevel reads and logs the current battery level (0-100%) from the BLE peripheral
-func (m *Controller) GetBatteryLevel(ctx context.Context, services []CharacteristicDiscoverer) error {
+// BatteryLevel reads and logs the current battery level (0-100%) from the BLE peripheral
+func (m *Controller) BatteryLevel(ctx context.Context, services []CharacteristicDiscoverer) error {
 
 	opts := charDiscoveryOptions{
 		cfg:            batteryServiceConfig,
@@ -222,8 +222,8 @@ func (m *Controller) GetBatteryLevel(ctx context.Context, services []Characteris
 	return nil
 }
 
-// GetCSCServices discovers and returns available CSC services from the BLE peripheral
-func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
+// CSCServices discovers and returns available CSC services from the BLE peripheral
+func (m *Controller) CSCServices(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
 	result, err := m.executeAction(
 		ctx,
@@ -246,8 +246,8 @@ func (m *Controller) GetCSCServices(ctx context.Context, device ServiceDiscovere
 	return typedResult, nil
 }
 
-// GetCSCCharacteristics discovers and stores the CSC measurement characteristic from the BLE peripheral
-func (m *Controller) GetCSCCharacteristics(ctx context.Context, services []CharacteristicDiscoverer) error {
+// CSCCharacteristics discovers and stores the CSC measurement characteristic from the BLE peripheral
+func (m *Controller) CSCCharacteristics(ctx context.Context, services []CharacteristicDiscoverer) error {
 
 	opts := charDiscoveryOptions{
 		cfg:            cscServiceConfig,

@@ -26,7 +26,7 @@ func (sc *SessionController) setupSessionStatusSignals() {
 // handleSessionControl processes clicks on the session control button
 func (sc *SessionController) handleSessionControl() {
 
-	currentState := sc.SessionManager.GetState()
+	currentState := sc.SessionManager.SessionState()
 
 	logger.Debug(logger.GUI, fmt.Sprintf("button clicked: State=%s", currentState))
 
@@ -99,7 +99,7 @@ func (sc *SessionController) startSessionGoroutine() {
 			logger.Debug(logger.GUI, "updating UI post-start")
 
 			// Re-toggle to Start if success/error, but only if stopped
-			if sc.SessionManager.GetState() == session.StateLoaded {
+			if sc.SessionManager.SessionState() == session.StateLoaded {
 				sc.updateSessionControlButton(false)
 			}
 
@@ -155,7 +155,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	sc.UI.Page2.SessionNameRow.SetTitle(sess.Title)
 
 	// Get config from SessionManager
-	cfg := sc.SessionManager.GetConfig()
+	cfg := sc.SessionManager.Config()
 	if cfg == nil {
 		return
 	}

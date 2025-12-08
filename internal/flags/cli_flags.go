@@ -16,8 +16,8 @@ type FlagInfo struct {
 	Usage     string // Usage description (used for help)
 }
 
-// Flags holds a list of available command-line flags
-type Flags struct {
+// CLIFlags holds a list of available command-line flags
+type CLIFlags struct {
 	NoGUI  bool
 	Config string
 	Seek   string
@@ -25,7 +25,8 @@ type Flags struct {
 }
 
 var (
-	flags     Flags
+	flags CLIFlags
+
 	flagInfos = []FlagInfo{
 		{
 			Result:    &flags.NoGUI,
@@ -58,7 +59,7 @@ var (
 	}
 )
 
-// ParseArgs parses the command-line flags and returns an error if an undefined flag is used
+// ParseArgs parses the command-line flags and returns an error if an undefined flag is found
 func ParseArgs() error {
 
 	// Create a custom FlagSet
@@ -70,9 +71,11 @@ func ParseArgs() error {
 	for _, fi := range flagInfos {
 
 		switch v := fi.Result.(type) {
+
 		case *string:
 			fs.StringVar(v, fi.Name, fi.Value, fi.Usage)
 			fs.StringVar(v, fi.ShortName, fi.Value, fi.Usage)
+
 		case *bool:
 			fs.BoolVar(v, fi.Name, fi.Value == "true", fi.Usage)
 			fs.BoolVar(v, fi.ShortName, fi.Value == "true", fi.Usage)
@@ -104,8 +107,8 @@ func ShowHelp() {
 	fmt.Println("")
 }
 
-// GetFlags returns the parsed flags
-func GetFlags() Flags {
+// Flags returns the parsed flags
+func Flags() CLIFlags {
 	return flags
 }
 
