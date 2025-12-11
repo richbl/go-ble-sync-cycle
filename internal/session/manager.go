@@ -466,3 +466,48 @@ func (m *Manager) startServices(ctrl *controllers, shutdownMgr *services.Shutdow
 	})
 
 }
+
+// CurrentSpeed returns the current smoothed speed from the speed controller
+func (m *Manager) CurrentSpeed() (float64, string) {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Guard against nil controllers (session stopped or not started)
+	if m.controllers == nil || m.controllers.speedController == nil || m.config == nil {
+		return 0.0, ""
+	}
+
+	return m.controllers.speedController.SmoothedSpeed(), m.config.Speed.SpeedUnits
+}
+
+// VideoTimeRemaining returns the formatted time remaining string (HH:MM:SS)
+func (m *Manager) VideoTimeRemaining() string {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers == nil || m.controllers.videoPlayer == nil {
+		return "--:--:--"
+	}
+
+	timeStr, err := m.controllers.videoPlayer.TimeRemaining()
+	if err != nil {
+		return "--:--:--"
+	}
+
+	return timeStr
+}
+
+// VideoPlaybackRate returns the current video playback multiplier (e.g. 1.0x)
+func (m *Manager) VideoPlaybackRate() float64 {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers == nil || m.controllers.videoPlayer == nil {
+		return 0.0
+	}
+
+	return m.controllers.videoPlayer.PlaybackSpeed()
+}

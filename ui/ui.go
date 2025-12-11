@@ -79,6 +79,7 @@ type PageSessionEditor struct {
 	VideoFileButton *gtk.Button
 	StartTimeEntry  *adw.EntryRow
 	WindowScale     *adw.SpinRow
+	UpdateInterval  *adw.SpinRow
 	SpeedMultiplier *adw.SpinRow
 
 	// OSD
@@ -90,6 +91,7 @@ type PageSessionEditor struct {
 	MarginTop           *adw.SpinRow
 
 	// Save Actions
+	SaveRow      *adw.ActionRow
 	SaveButton   *gtk.Button
 	SaveAsButton *gtk.Button
 }
@@ -233,6 +235,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		VideoFileButton:     objGTK(builder, "video_file_button").Cast().(*gtk.Button),
 		StartTimeEntry:      objGTK(builder, "start_time_entry_row").Cast().(*adw.EntryRow),
 		WindowScale:         objGTK(builder, "edit_window_scale_factor_spin").Cast().(*adw.SpinRow),
+		UpdateInterval:      objGTK(builder, "edit_update_interval_spin").Cast().(*adw.SpinRow),
 		SpeedMultiplier:     objGTK(builder, "edit_speed_multiplier_spin").Cast().(*adw.SpinRow),
 		SwitchCycleSpeed:    objGTK(builder, "display_cycle_speed_switch").Cast().(*adw.SwitchRow),
 		SwitchPlaybackSpeed: objGTK(builder, "display_playback_speed_switch").Cast().(*adw.SwitchRow),
@@ -240,6 +243,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		FontSize:            objGTK(builder, "display_font_size_spin").Cast().(*adw.SpinRow),
 		MarginLeft:          objGTK(builder, "pixel_offset_left_spin").Cast().(*adw.SpinRow),
 		MarginTop:           objGTK(builder, "pixel_offset_top_spin").Cast().(*adw.SpinRow),
+		SaveRow:             objGTK(builder, "edit_save_row").Cast().(*adw.ActionRow),
 		SaveButton:          objGTK(builder, "save_button").Cast().(*gtk.Button),
 		SaveAsButton:        objGTK(builder, "save_as_button").Cast().(*gtk.Button),
 	}

@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -68,7 +69,8 @@ type SessionController struct {
 	UI             *AppUI
 	Sessions       []Session
 	SessionManager *session.Manager
-	starting       atomic.Bool // To prevent multiple concurrent starts
+	starting       atomic.Bool
+	metricsLoop    glib.SourceHandle
 }
 
 // NewSessionController creates the controller

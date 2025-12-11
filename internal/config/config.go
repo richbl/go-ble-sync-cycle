@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -102,6 +103,24 @@ func Load(configFile string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// Save writes the configuration to the specified file path
+func Save(filePath string, cfg *Config) error {
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create config file: %w", err)
+	}
+
+	defer f.Close()
+
+	encoder := toml.NewEncoder(f)
+	if err := encoder.Encode(cfg); err != nil {
+		return fmt.Errorf("failed to encode config: %w", err)
+	}
+
+	return nil
 }
 
 // readConfigFile reads the configuration file
