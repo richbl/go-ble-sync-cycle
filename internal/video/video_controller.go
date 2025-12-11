@@ -108,6 +108,27 @@ func (p *PlaybackController) Start(ctx context.Context, speedController *speed.C
 	return nil
 }
 
+// TimeRemaining is a thread-safe wrapper to get the video time remaining
+func (p *PlaybackController) TimeRemaining() (string, error) {
+
+	seconds, err := p.player.timeRemaining()
+	if err != nil {
+		return "--:--:--", err
+	}
+
+	return formatSeconds(seconds), nil
+}
+
+// PlaybackSpeed returns the current calculated playback rate multiplier
+func (p *PlaybackController) PlaybackSpeed() float64 {
+
+	if p.speedState == nil {
+		return 0.0
+	}
+
+	return p.speedState.current * p.speedUnitMultiplier
+}
+
 // configurePlayback sets up the player window based on configuration
 func (p *PlaybackController) configurePlayback() error {
 
@@ -228,7 +249,7 @@ func (p *PlaybackController) shouldUpdateSpeed() bool {
 func (p *PlaybackController) updateSpeed() error {
 
 	// Update the playback speed based on current speed and unit multiplier
-	playbackSpeed := p.speedState.current * p.speedUnitMultiplier
+	playbackSpeed := p.PlaybackSpeed()
 
 	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
 

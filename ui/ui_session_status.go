@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
@@ -52,6 +53,11 @@ func (sc *SessionController) handleStop() {
 		logger.Debug(logger.GUI, "updating UI for stop")
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
+
+		// Reset metrics to zero/default
+		sc.UI.Page2.SpeedLabel.SetLabel("0.0")
+		sc.UI.Page2.PlaybackSpeedLabel.SetLabel("0.00x")
+		sc.UI.Page2.TimeRemainingLabel.SetLabel("--:--:--")
 	})
 
 }
@@ -122,6 +128,8 @@ func (sc *SessionController) startSessionGoroutine() {
 		logger.Debug(logger.GUI, "updating UI for successful start")
 		battery := fmt.Sprintf("%d%%", sc.SessionManager.BatteryLevel())
 		sc.updatePage2Status(StatusConnected, StatusConnected, battery)
+
+		sc.startMetricsLoop() // Start metrics loop
 	})
 
 }
@@ -221,4 +229,30 @@ func (sc *SessionController) updateSessionControlButton(isRunning bool) {
 		sc.UI.Page2.SessionControlBtnContent.SetIconName("media-playback-start-symbolic")
 	}
 
+}
+
+// startMetricsLoop initiates a GLib timeout to poll the SessionManager for real-time data
+func (sc *SessionController) startMetricsLoop() {
+
+	// Poll every 250ms
+	sc.metricsLoop = glib.TimeoutAdd(250, func() bool {
+
+		// If session isn't running, stop the loop (return false)
+		if sc.SessionManager.SessionState() != session.StateRunning {
+			return false
+		}
+
+		// Get Data from Manager
+		speed, _ := sc.SessionManager.CurrentSpeed()
+		timeRem := sc.SessionManager.VideoTimeRemaining()
+		rate := sc.SessionManager.VideoPlaybackRate()
+
+		// Update widget labels
+		sc.UI.Page2.SpeedLabel.SetLabel(fmt.Sprintf("%.1f", speed))
+		sc.UI.Page2.PlaybackSpeedLabel.SetLabel(fmt.Sprintf("%.2fx", rate))
+		sc.UI.Page2.TimeRemainingLabel.SetLabel(timeRem)
+
+		// Return true to keep the loop running
+		return true
+	})
 }

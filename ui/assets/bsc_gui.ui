@@ -609,6 +609,24 @@
                               </object>
                             </child>
                             <child>
+                              <object class="AdwSpinRow" id="edit_update_interval_spin">
+                                <property name="adjustment">
+                                  <object class="GtkAdjustment" id="update_interval_adjustment">
+                                    <property name="lower">0.10</property>
+                                    <property name="page-increment">.50</property>
+                                    <property name="step-increment">.10</property>
+                                    <property name="upper">3.00</property>
+                                    <property name="value">0.25</property>
+                                  </object>
+                                </property>
+                                <property name="digits">2</property>
+                                <property name="subtitle">seconds</property>
+                                <property name="title">Update Interval</property>
+                                <property name="tooltip-text" translatable="yes">Frequency that the video player is sent speed updates (0.10-3.00 seconds)</property>
+                                <property name="sensitive">False</property>
+                              </object>
+                            </child>
+                            <child>
                               <object class="AdwSpinRow" id="edit_speed_multiplier_spin">
                                 <property name="adjustment">
                                   <object class="GtkAdjustment" id="speed_multiplier_adjustment">
@@ -713,7 +731,7 @@
                             <child>
                               <object class="AdwActionRow" id="edit_save_row">
                                 <property name="activatable">False</property>
-                                <property name="sensitive">False</property>
+                                <property name="sensitive">True</property>
                                 <child type="suffix">
                                   <object class="GtkBox" id="save_button_box">
                                     <property name="halign">end</property>
@@ -722,6 +740,7 @@
                                     <property name="margin-top">12</property>
                                     <property name="orientation">horizontal</property>
                                     <property name="spacing">12</property>
+                                    <property name="sensitive">True</property>
                                     <child>
                                       <object class="GtkButton" id="save_as_button">
                                         <property name="sensitive">False</property>
@@ -733,6 +752,7 @@
                                     </child>
                                     <child>
                                       <object class="GtkButton" id="save_button">
+                                        <property name="sensitive">False</property>
                                         <property name="label" translatable="yes">Save</property>
                                         <style>
                                           <class name="suggested-action" />
