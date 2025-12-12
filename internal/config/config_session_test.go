@@ -1,13 +1,19 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-// TestLoadSessionMetadata_Success tests the successful loading of session metadata
-func TestLoadSessionMetadata_Success(t *testing.T) {
+// Error messages
+var (
+	errFailedToCreateTempFile = errors.New("Failed to create temp config file: %v")
+)
+
+// TestLoadSessionMetadataSuccess tests the successful loading of session metadata
+func TestLoadSessionMetadataSuccess(t *testing.T) {
 	t.Run("valid config with session title", func(t *testing.T) {
 		configFile := "config_test.toml"
 		expectedTitle := "Session Title"
@@ -36,8 +42,8 @@ func TestLoadSessionMetadata_Success(t *testing.T) {
 	})
 }
 
-// TestLoadSessionMetadata_Errors tests error handling in LoadSessionMetadata
-func TestLoadSessionMetadata_Errors(t *testing.T) {
+// TestLoadSessionMetadataErrors tests error handling in LoadSessionMetadata
+func TestLoadSessionMetadataErrors(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
@@ -121,7 +127,7 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
 
 	err := os.WriteFile(tempFile, []byte(configContent), 0644)
 	if err != nil {
-		t.Fatalf("Failed to create temp config file: %v", err)
+		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
 
 	// Test loading the config
@@ -184,7 +190,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
 
 	err := os.WriteFile(tempFile, []byte(configContent), 0644)
 	if err != nil {
-		t.Fatalf("Failed to create temp config file: %v", err)
+		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
 
 	// Test loading the config
@@ -243,7 +249,7 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
 
 	err := os.WriteFile(tempFile, []byte(configContent), 0644)
 	if err != nil {
-		t.Fatalf("Failed to create temp config file: %v", err)
+		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
 
 	// Test loading the invalid config

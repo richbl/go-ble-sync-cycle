@@ -46,21 +46,33 @@ type StatusPresentation struct {
 	Icon    string
 }
 
+const (
+	// BLE icons
+	iconBLEConnected    = "bluetooth-symbolic"
+	iconBLENotConnected = "bluetooth-disconnected-symbolic"
+	iconBLEConnecting   = "bluetooth-acquiring-symbolic"
+
+	// Battery icons
+	iconBatteryConnected    = "battery-good-symbolic"
+	iconBatteryNotConnected = "battery-symbolic"
+	iconBatteryConnecting   = "battery-symbolic"
+)
+
 // statusTable centralizes all mappings of (object, status) -> UI data
 var statusTable = map[ObjectKind]map[Status]StatusPresentation{
 	ObjectBLE: {
-		StatusConnected:    {Display: "Connected", Icon: "bluetooth-symbolic"},
-		StatusNotConnected: {Display: "Not Connected", Icon: "bluetooth-disconnected-symbolic"},
-		StatusStopped:      {Display: "Stopped", Icon: "bluetooth-disconnected-symbolic"},
-		StatusConnecting:   {Display: "Connecting...", Icon: "bluetooth-acquiring-symbolic"},
-		StatusFailed:       {Display: "Failed", Icon: "bluetooth-disconnected-symbolic"},
+		StatusConnected:    {Display: "Connected", Icon: iconBLEConnected},
+		StatusNotConnected: {Display: "Not Connected", Icon: iconBLENotConnected},
+		StatusStopped:      {Display: "Stopped", Icon: iconBLENotConnected},
+		StatusConnecting:   {Display: "Connecting...", Icon: iconBLEConnecting},
+		StatusFailed:       {Display: "Failed", Icon: iconBLENotConnected},
 	},
 	ObjectBattery: {
-		StatusConnected:    {Display: "Connected", Icon: "battery-good-symbolic"},
-		StatusNotConnected: {Display: "Unknown", Icon: "battery-symbolic"},
-		StatusStopped:      {Display: "Unknown", Icon: "battery-symbolic"},
-		StatusConnecting:   {Display: "Connecting...", Icon: "battery-symbolic"},
-		StatusFailed:       {Display: "Unknown", Icon: "battery-symbolic"},
+		StatusConnected:    {Display: "Connected", Icon: iconBatteryConnected},
+		StatusNotConnected: {Display: "Unknown", Icon: iconBatteryNotConnected},
+		StatusStopped:      {Display: "Unknown", Icon: iconBatteryNotConnected},
+		StatusConnecting:   {Display: "Connecting...", Icon: iconBatteryConnecting},
+		StatusFailed:       {Display: "Unknown", Icon: iconBatteryNotConnected},
 	},
 }
 

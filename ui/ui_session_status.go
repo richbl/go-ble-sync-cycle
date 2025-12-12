@@ -54,10 +54,8 @@ func (sc *SessionController) handleStop() {
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
 
-		// Reset metrics to zero/default
-		sc.UI.Page2.SpeedLabel.SetLabel("0.0")
-		sc.UI.Page2.PlaybackSpeedLabel.SetLabel("0.00x")
-		sc.UI.Page2.TimeRemainingLabel.SetLabel("--:--:--")
+		// Reset metrics
+		sc.resetMetrics()
 	})
 
 }
@@ -172,9 +170,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, "Unknown")
 
 	// Reset metrics
-	sc.UI.Page2.SpeedLabel.SetLabel("0.0")
-	sc.UI.Page2.PlaybackSpeedLabel.SetLabel("0.00x")
-	sc.UI.Page2.TimeRemainingLabel.SetLabel("--:--:--")
+	sc.resetMetrics()
 
 	// Set button to start mode
 	sc.updateSessionControlButton(false)
@@ -182,6 +178,15 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	// Enable the button now that session is loaded
 	sc.UI.Page2.SessionControlBtn.SetSensitive(true)
 	logger.Debug(logger.GUI, fmt.Sprintf("page 2 updated with session: %s", sess.Title))
+
+}
+
+// resetMetrics resets the metrics on Page 2
+func (sc *SessionController) resetMetrics() {
+
+	sc.UI.Page2.SpeedLabel.SetLabel("0.0")
+	sc.UI.Page2.PlaybackSpeedLabel.SetLabel("0.00x")
+	sc.UI.Page2.TimeRemainingLabel.SetLabel("--:--:--")
 
 }
 
