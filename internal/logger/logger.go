@@ -54,12 +54,13 @@ type (
 )
 
 var (
-	logger      *slog.Logger
-	ExitFunc    = os.Exit
-	exitHandler ExitHandler
-	exitOnce    sync.Once
-	logOutput   *syncMultiWriter
-	logLevelVar = new(slog.LevelVar)
+	logger       *slog.Logger
+	ExitFunc     = os.Exit
+	exitHandler  ExitHandler
+	exitOnce     sync.Once
+	logOutput    *syncMultiWriter
+	logLevelVar  = new(slog.LevelVar)
+	outputFormat = "%s%s%s "
 )
 
 // Initialize sets up the logger
@@ -241,7 +242,7 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	var buf bytes.Buffer
 
 	// Set the timestamp
-	fmt.Fprintf(&buf, "%s%s%s ", White, r.Time.Format("15:04:05"), Reset)
+	fmt.Fprintf(&buf, outputFormat, White, r.Time.Format("15:04:05"), Reset)
 
 	// Set the log level
 	h.appendLevel(&buf, r.Level)
@@ -250,7 +251,7 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	component, otherAttrs := h.extractComponentAndAttrs(r)
 
 	if component != "" {
-		fmt.Fprintf(&buf, "%s%s%s ", Blue, component, Reset)
+		fmt.Fprintf(&buf, outputFormat, Blue, component, Reset)
 	}
 
 	// Set the message in the buffer
@@ -292,7 +293,7 @@ func (h *CustomTextHandler) appendLevel(buf *bytes.Buffer, level slog.Level) {
 		levelColor = White
 	}
 
-	fmt.Fprintf(buf, "%s%s%s ", levelColor, levelName, Reset)
+	fmt.Fprintf(buf, outputFormat, levelColor, levelName, Reset)
 
 }
 

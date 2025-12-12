@@ -1,12 +1,16 @@
 package session
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
+
+var configPath = "../config/config_test.toml"
+var errLoadSession = errors.New("LoadSession() unexpected error: %v")
 
 // init is called to set the log level for tests
 func init() {
@@ -41,9 +45,9 @@ func TestLoadSession(t *testing.T) {
 	mgr := NewManager()
 
 	// Test loading a valid config
-	err := mgr.LoadSession("../config/config_test.toml")
+	err := mgr.LoadSession(configPath)
 	if err != nil {
-		t.Fatalf("LoadSession() unexpected error: %v", err)
+		t.Fatalf(errLoadSession.Error(), err)
 	}
 
 	// Verify state changed to Loaded
@@ -58,7 +62,7 @@ func TestLoadSession(t *testing.T) {
 	}
 
 	// Verify path is stored
-	expectedPath := "../config/config_test.toml"
+	expectedPath := configPath
 
 	if mgr.ConfigPath() != expectedPath {
 		t.Errorf("LoadSession() path = %v, want %v", mgr.ConfigPath(), expectedPath)
@@ -155,9 +159,9 @@ func TestReset(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	err := mgr.LoadSession("../config/config_test.toml")
+	err := mgr.LoadSession(configPath)
 	if err != nil {
-		t.Fatalf("LoadSession() unexpected error: %v", err)
+		t.Fatalf(errLoadSession.Error(), err)
 	}
 
 	// Verify session is loaded
@@ -201,9 +205,9 @@ func TestConcurrentAccess(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	err := mgr.LoadSession("../config/config_test.toml")
+	err := mgr.LoadSession(configPath)
 	if err != nil {
-		t.Fatalf("LoadSession() unexpected error: %v", err)
+		t.Fatalf(errLoadSession.Error(), err)
 	}
 
 	var wg sync.WaitGroup
@@ -269,7 +273,7 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	mgr := NewManager()
 
 	// Load first session
-	err := mgr.LoadSession("../config/config_test.toml")
+	err := mgr.LoadSession(configPath)
 	if err != nil {
 		t.Fatalf("LoadSession() first load failed: %v", err)
 	}
@@ -277,7 +281,7 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	firstPath := mgr.ConfigPath()
 
 	// Load second session (same file, but simulates switching)
-	err = mgr.LoadSession("../config/config_test.toml")
+	err = mgr.LoadSession(configPath)
 	if err != nil {
 		t.Fatalf("LoadSession() second load failed: %v", err)
 	}

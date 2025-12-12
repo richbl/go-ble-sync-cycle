@@ -14,7 +14,7 @@ import (
 
 // smContext represents the cancellation context for ShutdownManager
 type smContext struct {
-	ctx    context.Context
+	ctx    context.Context // fixme --> sharing contexts in a struct is bad chicken
 	cancel context.CancelFunc
 }
 
