@@ -157,7 +157,7 @@ func TestConcurrency(t *testing.T) {
 
 	wg.Wait()
 
-	if got := controller.SmoothedSpeed(); got == 0 {
+	if controller.SmoothedSpeed() == 0.0 {
 		t.Error("SmoothedSpeed() = 0, want non-zero value after concurrent updates")
 	}
 

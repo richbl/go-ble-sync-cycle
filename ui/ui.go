@@ -29,11 +29,6 @@ type AppUI struct {
 	exitDialog *adw.AlertDialog
 }
 
-// sensitiveWidget is an interface for any widget that has a SetSensitive method.
-type sensitiveWidget interface {
-	SetSensitive(sensitive bool)
-}
-
 // PageSessionSelect holds widgets for the Session Selection tab (Page 1)
 type PageSessionSelect struct {
 	ListBox    *gtk.ListBox
