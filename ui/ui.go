@@ -10,6 +10,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/flags"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
@@ -18,12 +20,18 @@ var uiXML string
 
 // AppUI serves as the central controller for the GUI
 type AppUI struct {
-	Window    *adw.ApplicationWindow
-	ViewStack *adw.ViewStack
-	Page1     *PageSessionSelect
-	Page2     *PageSessionStatus
-	Page3     *PageSessionLog
-	Page4     *PageSessionEditor
+	Window     *adw.ApplicationWindow
+	ViewStack  *adw.ViewStack
+	Page1      *PageSessionSelect
+	Page2      *PageSessionStatus
+	Page3      *PageSessionLog
+	Page4      *PageSessionEditor
+	exitDialog *adw.AlertDialog
+}
+
+// sensitiveWidget is an interface for any widget that has a SetSensitive method.
+type sensitiveWidget interface {
+	SetSensitive(sensitive bool)
 }
 
 // PageSessionSelect holds widgets for the Session Selection tab (Page 1)
@@ -36,11 +44,16 @@ type PageSessionSelect struct {
 // PageSessionStatus holds widgets for the Session Status tab (Page 2)
 type PageSessionStatus struct {
 	SessionNameRow           *adw.ActionRow
+	SessionFileLocationRow   *adw.ActionRow
 	SensorStatusRow          *adw.ActionRow
 	SensorBatteryRow         *adw.ActionRow
+	SpeedRow                 *adw.ActionRow
 	SpeedLabel               *gtk.Label
+	PlaybackSpeedRow         *adw.ActionRow
 	PlaybackSpeedLabel       *gtk.Label
 	TimeRemainingLabel       *gtk.Label
+	TimeRemainingRow         *adw.ActionRow
+	SessionControlRow        *adw.ActionRow
 	SessionControlBtn        *gtk.Button
 	SessionControlBtnContent *adw.ButtonContent
 	SensorConnIcon           *gtk.Image
@@ -57,6 +70,9 @@ type PageSessionLog struct {
 // PageSessionEditor holds widgets for the Session Edit tab (Page 4)
 type PageSessionEditor struct {
 
+	// Scrolled window
+	ScrolledWindow *adw.PreferencesPage
+
 	// Session Details
 	TitleEntry *adw.EntryRow
 	LogLevel   *adw.ComboRow
@@ -64,8 +80,6 @@ type PageSessionEditor struct {
 	// BLE Sensor
 	BTAddressEntry *adw.EntryRow
 	ScanTimeout    *adw.SpinRow
-	SensorStatus   *adw.ActionRow
-	ScanButton     *gtk.Button
 
 	// Speed Settings
 	WheelCircumference *adw.SpinRow
@@ -116,7 +130,7 @@ func objGTK(builder *gtk.Builder, id string) *glib.Object {
 
 	obj := builder.GetObject(id)
 	if obj == nil {
-		logger.Fatal(logger.GUI, fmt.Sprintf("Widget ID '%s' not found in XML design file", id))
+		logger.Fatal(logger.GUI, fmt.Sprintf("widget ID '%s' not found in XML design file", id))
 	}
 
 	return obj
@@ -137,11 +151,16 @@ func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 
 	return &PageSessionStatus{
 		SessionNameRow:           objGTK(builder, "session_name_row").Cast().(*adw.ActionRow),
+		SessionFileLocationRow:   objGTK(builder, "session_file_location_row").Cast().(*adw.ActionRow),
 		SensorStatusRow:          objGTK(builder, "sensor_status_row").Cast().(*adw.ActionRow),
 		SensorBatteryRow:         objGTK(builder, "battery_level_row").Cast().(*adw.ActionRow),
+		SpeedRow:                 objGTK(builder, "speed_row").Cast().(*adw.ActionRow),
 		SpeedLabel:               objGTK(builder, "speed_large_label").Cast().(*gtk.Label),
 		PlaybackSpeedLabel:       objGTK(builder, "playback_speed_large_label").Cast().(*gtk.Label),
+		PlaybackSpeedRow:         objGTK(builder, "playback_speed_row").Cast().(*adw.ActionRow),
 		TimeRemainingLabel:       objGTK(builder, "time_remaining_large_label").Cast().(*gtk.Label),
+		TimeRemainingRow:         objGTK(builder, "time_remaining_row").Cast().(*adw.ActionRow),
+		SessionControlRow:        objGTK(builder, "session_control_row").Cast().(*adw.ActionRow),
 		SessionControlBtn:        objGTK(builder, "session_control_button").Cast().(*gtk.Button),
 		SessionControlBtnContent: objGTK(builder, "session_control_button_content").Cast().(*adw.ButtonContent),
 		SensorConnIcon:           objGTK(builder, "connection_status_icon").Cast().(*gtk.Image),
@@ -152,16 +171,16 @@ func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 // hydrateSessionLog constructs the PageSessionLog from the GTK-Builder GUI file (bsc_gui.ui)
 func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 
-	page := &PageSessionLog{
+	sessionLog := &PageSessionLog{
 		LogLevelRow: objGTK(builder, "logging_level_row").Cast().(*adw.ActionRow),
 		TextView:    objGTK(builder, "logging_view").Cast().(*gtk.TextView),
 	}
 
 	// Display logging level
-	page.LogLevelRow.SetTitle(logger.LogLevel())
+	sessionLog.LogLevelRow.SetTitle(logger.LogLevel())
 
 	// Configure TextView for logging
-	tv := page.TextView
+	tv := sessionLog.TextView
 	tv.SetMonospace(true)
 	tv.SetEditable(false)
 	tv.SetCursorVisible(false)
@@ -189,13 +208,19 @@ func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 
 	})
 
-	// Set up logging bridge
-	page.LogWriter = NewGuiLogWriter(tv)
-	logger.AddWriter(page.LogWriter)
+	// Set up logging bridge (permits logger GUI output)
+	sessionLog.LogWriter = NewGuiLogWriter(tv)
 
-	logger.Info(logger.GUI, "Session Log bridge established")
+	// Enable logging to the console in GUI mode if requested
+	if flags.IsGUIConsoleLogging() {
+		logger.AddWriter(sessionLog.LogWriter)
+		logger.Info(logger.GUI, "logging via Session Log started with added console/CLI output")
+	} else {
+		logger.UseGUIWriterOnly(sessionLog.LogWriter)
+		logger.Info(logger.GUI, "logging via Session Log started")
+	}
 
-	return page
+	return sessionLog
 }
 
 // applyLogStyles injects a CSS provider to style the log view specifically
@@ -222,6 +247,7 @@ func applyLogStyles() {
 func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 
 	return &PageSessionEditor{
+		ScrolledWindow:      objGTK(builder, "session_editor_page").Cast().(*adw.PreferencesPage),
 		TitleEntry:          objGTK(builder, "session_title_entry_row").Cast().(*adw.EntryRow),
 		LogLevel:            objGTK(builder, "log_level_combo").Cast().(*adw.ComboRow),
 		BTAddressEntry:      objGTK(builder, "bt_address_entry_row").Cast().(*adw.EntryRow),
@@ -272,6 +298,7 @@ func setupAllSignals(sc *SessionController) {
 
 		"page4": func() {
 			logger.Debug(logger.GUI, "view switched to Session Editor")
+			sc.UI.Page4.ScrolledWindow.ScrollToTop()
 		},
 	}
 
@@ -287,6 +314,7 @@ func setupAllSignals(sc *SessionController) {
 }
 
 // StartGUI initializes and runs the GTK4/Adwaita application
+// StartGUI initializes and runs the GTK4/Adwaita application
 func StartGUI() {
 
 	// Initialize the application
@@ -297,18 +325,47 @@ func StartGUI() {
 		adw.Init()
 		builder := gtk.NewBuilderFromString(uiXML)
 		ui := NewAppUI(builder)
-		aboutWindow := objGTK(builder, "about_window").Cast().(*adw.AboutDialog)
 
-		// Create the "About" action handler
+		// Create the "About" menu item action handler
 		aboutAction := gio.NewSimpleAction("about", nil)
 		aboutAction.ConnectActivate(func(_ *glib.Variant) {
+			// Create a fresh About dialog each time to ensure clean state
+			aboutDialog := adw.NewAboutDialog()
+			aboutDialog.SetApplicationIcon("bsc_logo")
+			aboutDialog.SetApplicationName("BLE Sync Cycle")
+			aboutDialog.SetVersion(fmt.Sprintf("v%s", config.GetVersion()))
+			aboutDialog.SetCopyright("Copyright © 2025 Rich Bloch")
+			aboutDialog.SetDevelopers([]string{"Rich Bloch"})
+			aboutDialog.SetIssueURL("https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md")
+			aboutDialog.SetLicenseType(gtk.LicenseMITX11)
+			aboutDialog.SetWebsite("https://github.com/richbl/go-ble-sync-cycle")
+
 			var transientParent gtk.Widgetter = ui.Window
-			aboutWindow.Present(transientParent)
+			aboutDialog.Present(transientParent)
 		})
 
 		app.AddAction(aboutAction)
 
-		// Create SessionController and initialize
+		// Create the "Exit" menu item action handler
+		exitAction := gio.NewSimpleAction("exit", nil)
+		exitAction.ConnectActivate(func(_ *glib.Variant) {
+			logger.Info(logger.GUI, "Exit action triggered from app menu item")
+			ui.createExitDialog()
+		})
+		app.AddAction(exitAction)
+
+		// Set up close request handler (system-level exit via the [x] button)
+		ui.Window.ConnectCloseRequest(func() bool {
+
+			glib.IdleAdd(func() {
+				logger.Debug(logger.GUI, "Exit action triggered from window manager close button")
+				ui.createExitDialog()
+			})
+
+			return true
+		})
+
+		// Create SessionController and initialize (Page 1)
 		sessionCtrl := NewSessionController(ui)
 		sessionCtrl.scanForSessions()
 		sessionCtrl.PopulateSessionList()
@@ -319,7 +376,7 @@ func StartGUI() {
 	})
 
 	// Run the GUI application... fly and be free!
-	if code := app.Run(os.Args); code > 0 {
+	if code := app.Run(nil); code > 0 {
 		os.Exit(code)
 	}
 

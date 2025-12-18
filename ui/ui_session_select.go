@@ -83,6 +83,7 @@ type SessionController struct {
 	SessionManager *session.Manager
 	starting       atomic.Bool
 	metricsLoop    glib.SourceHandle
+	saveFileDialog *gtk.FileDialog
 }
 
 // NewSessionController creates the controller
@@ -177,13 +178,15 @@ func (sc *SessionController) PopulateSessionList() {
 	for _, s := range sc.Sessions {
 		row := adw.NewActionRow()
 		row.SetTitle(s.Title)
-		row.SetSubtitle(fmt.Sprintf("config: %s", s.ConfigPath))
 		sc.UI.Page1.ListBox.Append(row)
 	}
 
-	// Ensure buttons are disabled if no row is selected
-	sc.UI.Page1.EditButton.SetSensitive(false)
-	sc.UI.Page1.LoadButton.SetSensitive(false)
+	// Set focus on first element
+	sc.UI.Page1.ListBox.SelectRow(sc.UI.Page1.ListBox.RowAtIndex(0))
+
+	// With session selection made, enable buttons
+	sc.UI.Page1.EditButton.SetSensitive(true)
+	sc.UI.Page1.LoadButton.SetSensitive(true)
 
 }
 
@@ -200,7 +203,7 @@ func (sc *SessionController) setupListBoxSignals() {
 			idx := row.Index()
 			if idx >= 0 && idx < len(sc.Sessions) {
 				selectedSession := sc.Sessions[idx]
-				logger.Debug(logger.GUI, fmt.Sprintf("selected Session: %s (config file: %s)", selectedSession.Title, selectedSession.ConfigPath))
+				logger.Debug(logger.GUI, fmt.Sprintf("selected session: %s (config file: %s)", selectedSession.Title, selectedSession.ConfigPath))
 			}
 
 		}

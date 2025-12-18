@@ -73,6 +73,7 @@ func Initialize(logLevel string) *slog.Logger {
 	logOutput = &syncMultiWriter{
 		writers: []io.Writer{os.Stdout},
 	}
+
 	handler := NewCustomTextHandler(logOutput, &slog.HandlerOptions{Level: logLevelVar})
 	logger = slog.New(handler)
 	slog.SetDefault(logger)
@@ -95,7 +96,7 @@ func SetLogLevel(levelStr string) {
 	newLevel := parseLogLevel(levelStr)
 	logLevelVar.Set(newLevel)
 
-	Debug(APP, fmt.Sprintf("Logging level changed to %s", newLevel.String()))
+	Debug(APP, fmt.Sprintf("logging level changed to %s", newLevel.String()))
 
 }
 
@@ -338,4 +339,11 @@ func (h *CustomTextHandler) appendAttrs(buf *bytes.Buffer, attrs []slog.Attr) {
 
 	}
 
+}
+
+// UseGUIWriterOnly replaces all writers with only the GUI writer (used in GUI mode).
+func UseGUIWriterOnly(w io.Writer) {
+	logOutput.mu.Lock()
+	defer logOutput.mu.Unlock()
+	logOutput.writers = []io.Writer{w}
 }

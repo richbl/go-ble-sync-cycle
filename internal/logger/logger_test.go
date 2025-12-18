@@ -47,8 +47,6 @@ func setupTest() (*bytes.Buffer, *slog.Logger) {
 func validateLogOutput(t *testing.T, output, expectedLevel string) {
 
 	t.Helper()
-
-	// Matches optional ANSI-formatted start color, time, optional reset color
 	timestampRegex := `^(\x1b\[[0-9;]*m)?\d{2}:\d{2}:\d{2}(\x1b\[[0-9;]*m)?`
 
 	if !regexp.MustCompile(timestampRegex).MatchString(output) {
@@ -68,7 +66,6 @@ func validateLogOutput(t *testing.T, output, expectedLevel string) {
 // TestInitialize tests the initialization of the logger
 func TestInitialize(t *testing.T) {
 
-	// Define test cases
 	tests := []struct {
 		name      string
 		level     string
@@ -81,16 +78,14 @@ func TestInitialize(t *testing.T) {
 		{"invalid level", "invalid", slog.LevelInfo},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Initialize(tt.level)
 
+			Initialize(tt.level)
 			if logger == nil {
 				t.Fatal("logger is nil")
 			}
 
-			// Verify the logging level was updated correctly
 			if logLevelVar.Level() != tt.wantLevel {
 				t.Errorf("Initialize(%s) set level to %v, want %v", tt.level, logLevelVar.Level(), tt.wantLevel)
 			}
@@ -100,40 +95,93 @@ func TestInitialize(t *testing.T) {
 
 }
 
+// TestUseGUIWriterOnly verifies replacing the output writer (for GUI mode)
+func TestUseGUIWriterOnly(t *testing.T) {
+
+	// Setup
+	initialBuf := &bytes.Buffer{}
+	secondBuf := &bytes.Buffer{}
+
+	Initialize("debug")
+
+	// Force set the initial output
+	UseGUIWriterOnly(initialBuf)
+	Info("Message 1")
+
+	// Verify Message 1 is in initialBuf
+	if !strings.Contains(initialBuf.String(), "Message 1") {
+		t.Error("Initial buffer failed to receive log")
+	}
+
+	// Switch output
+	UseGUIWriterOnly(secondBuf)
+	Info("Message 2")
+
+	// Verify Message 2 is ONLY in secondBuf
+	if strings.Contains(initialBuf.String(), "Message 2") {
+		t.Error("Initial buffer received message after UseGUIWriterOnly was called (Replace failed)")
+	}
+
+	if !strings.Contains(secondBuf.String(), "Message 2") {
+		t.Error("New buffer failed to receive log after UseGUIWriterOnly")
+	}
+
+}
+
+// TestAddWriter verifies adding a secondary writer (for dual output)
+func TestAddWriter(t *testing.T) {
+
+	primaryBuf := &bytes.Buffer{}
+	secondaryBuf := &bytes.Buffer{}
+
+	Initialize("debug")
+
+	// Reset to a known state (only primaryBuf)
+	UseGUIWriterOnly(primaryBuf)
+
+	// Add a second writer
+	AddWriter(secondaryBuf)
+	Info("Broadcast Message")
+
+	// Verify both received it
+	if !strings.Contains(primaryBuf.String(), "Broadcast Message") {
+		t.Error("Primary buffer missing broadcast message")
+	}
+
+	if !strings.Contains(secondaryBuf.String(), "Broadcast Message") {
+		t.Error("Secondary buffer missing broadcast message")
+	}
+
+}
+
 // TestCustomTextHandler tests the custom text handler formatting and colors
 func TestCustomTextHandler(t *testing.T) {
 
-	// Define test cases
 	tests := []struct {
 		name     string
 		level    slog.Level
 		expected string
 	}{
-		// Expect ANSI color codes in the output
 		{"debug", slog.LevelDebug, Cyan + "[DBG]"},
 		{"info", slog.LevelInfo, Green + "[INF]"},
 		{"warn", slog.LevelWarn, Yellow + "[WRN]"},
 		{"error", slog.LevelError, Red + "[ERR]"},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-
 			buf := &bytes.Buffer{}
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-
-			// Create a log record
 			r := slog.NewRecord(time.Now(), tt.level, testMessage, 0)
 
-			// Handle the log record
 			if err := h.Handle(context.Background(), r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
 			assertOutput(t, buf.String(), tt.expected, testMessage)
 		})
+
 	}
 
 }
@@ -142,9 +190,6 @@ func TestCustomTextHandler(t *testing.T) {
 func assertOutput(t *testing.T, output, expectedLevel, expectedMessage string) {
 
 	t.Helper()
-
-	// Check timestamp (ANSI tolerant)
-	// Logic: optional ANSI -> Digits -> Optional ANSI -> Space
 	timestampRegex := `^(\x1b\[[0-9;]*m)?\d{2}:\d{2}:\d{2}(\x1b\[[0-9;]*m)? `
 
 	if !regexp.MustCompile(timestampRegex).MatchString(output) {
@@ -164,7 +209,6 @@ func assertOutput(t *testing.T, output, expectedLevel, expectedMessage string) {
 // TestLogLevels tests the log level wrapper functions
 func TestLogLevels(t *testing.T) {
 
-	// Define test cases
 	tests := []struct {
 		name    string
 		logFunc func(any, ...any)
@@ -176,20 +220,17 @@ func TestLogLevels(t *testing.T) {
 		{"Error", Error, "ERR"},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
 			buf, testLogger := setupTest()
-
-			// Inject the test logger
 			originalLogger := logger
 			logger = testLogger
 			defer func() { logger = originalLogger }()
-
 			tt.logFunc(td.message)
 			validateLogOutput(t, buf.String(), tt.level)
 		})
+
 	}
 
 }
@@ -227,7 +268,6 @@ func TestFatal(t *testing.T) {
 // TestEnabled tests the Enabled function behavior
 func TestEnabled(t *testing.T) {
 
-	// Define test cases
 	tests := []testCase{
 		{"debug enabled", slog.LevelDebug, true, slog.LevelDebug},
 		{"info disabled", slog.LevelInfo, false, slog.LevelError},
@@ -235,12 +275,9 @@ func TestEnabled(t *testing.T) {
 		{"fatal enabled", LevelFatal, true, slog.LevelDebug},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-
-			// We pass the level via Options, which CustomTextHandler respects
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
 
 			if got := h.Enabled(context.Background(), tt.level); got != tt.want {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	ble "github.com/richbl/go-ble-sync-cycle/internal/ble"
@@ -21,8 +20,6 @@ import (
 
 // Application constants
 const (
-	appName    = "BLE Sync Cycle"
-	appVersion = "0.13.0"
 	configFile = "config.toml"
 	errFormat  = "%v: %w"
 )
@@ -47,7 +44,7 @@ func main() {
 	appInitialize()
 
 	// Hello computer...
-	waveHello()
+	services.WaveHello()
 
 	// Parse for command-line flags
 	parseCLIFlags()
@@ -55,14 +52,14 @@ func main() {
 
 	// Check for application mode (CLI or GUI)
 	if !flags.IsCLIMode() {
-		logger.Info(logger.APP, "Running in GUI mode")
+		logger.Info(logger.APP, "now running in GUI mode...")
 		ui.StartGUI()
 
 		return
 	}
 
 	// Continue running in CLI mode
-	logger.Info(logger.APP, "Running in CLI mode")
+	logger.Info(logger.APP, "running in CLI mode")
 
 	// Load configuration from TOML file
 	cfg := loadConfig(configFile)
@@ -82,7 +79,7 @@ func main() {
 
 	// Wait patiently for shutdown and then wave goodbye
 	mgr.Wait()
-	waveGoodbye()
+	services.WaveGoodbye()
 }
 
 // appInitialize defaults the logger and exit handler objects until later services start
@@ -93,7 +90,7 @@ func appInitialize() {
 
 	// Initialize the fatal log events exit handler until the service manager is loaded
 	logger.SetExitHandler(func() {
-		waveGoodbye()
+		services.WaveGoodbye()
 	})
 
 }
@@ -110,11 +107,9 @@ func parseCLIFlags() {
 // checkForHelpFlag checks for the help flag passed on the command-line
 func checkForHelpFlag() {
 
-	clFlags := flags.Flags()
-
-	if clFlags.Help {
+	if flags.IsHelpFlag() {
 		flags.ShowHelp()
-		waveGoodbye()
+		services.WaveGoodbye()
 	}
 
 }
@@ -128,20 +123,6 @@ func loadConfig(file string) *config.Config {
 	}
 
 	return cfg
-}
-
-// waveHello outputs a welcome message
-func waveHello() {
-	logger.Info(logger.APP, fmt.Sprintf("%s %s starting...", appName, appVersion))
-}
-
-// waveGoodbye outputs a goodbye message and exits the program
-func waveGoodbye() {
-
-	logger.ClearCLILine()
-	logger.Info(logger.APP, fmt.Sprintf("%s %s shutdown complete. Goodbye", appName, appVersion))
-	os.Exit(0)
-
 }
 
 // initializeUtilityServices initializes the core components of the application, including the
@@ -158,7 +139,7 @@ func initializeUtilityServices(cfg *config.Config) *services.ShutdownManager {
 	// Set the exit handler for fatal log events
 	logger.SetExitHandler(func() {
 		mgr.Shutdown()
-		waveGoodbye()
+		services.WaveGoodbye()
 	})
 
 	return mgr
@@ -205,8 +186,8 @@ func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
 	}
 
 	// Time to go... so say goodbye
-	mgr.HandleExit()
-	waveGoodbye()
+	mgr.Shutdown()
+	services.WaveGoodbye()
 }
 
 // bleScanAndConnect scans for a BLE peripheral and connects to it

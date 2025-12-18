@@ -3,6 +3,8 @@ package ui
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -65,6 +67,7 @@ func (sc *SessionController) setupSessionEditSignals() {
 		// Navigate to the Editor (Page 4)
 		logger.Debug(logger.GUI, "navigating to Session Editor (page 4)...")
 		sc.UI.ViewStack.SetVisibleChildName("page4")
+
 	})
 
 }
@@ -119,30 +122,22 @@ func (sc *SessionController) populateEditor() {
 // toggleSensitive enables or disables widgets
 func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 
-	p4.TitleEntry.SetSensitive(enabled)
-	p4.LogLevel.SetSensitive(enabled)
-	p4.BTAddressEntry.SetSensitive(enabled)
-	p4.ScanTimeout.SetSensitive(enabled)
-	p4.WheelCircumference.SetSensitive(enabled)
-	p4.SpeedUnits.SetSensitive(enabled)
-	p4.SpeedThreshold.SetSensitive(enabled)
-	p4.SpeedSmoothing.SetSensitive(enabled)
-	p4.MediaPlayer.SetSensitive(enabled)
-	p4.VideoFileRow.SetSensitive(enabled)
-	p4.VideoFileButton.SetSensitive(enabled)
-	p4.StartTimeEntry.SetSensitive(enabled)
-	p4.WindowScale.SetSensitive(enabled)
-	p4.UpdateInterval.SetSensitive(enabled)
-	p4.SpeedMultiplier.SetSensitive(enabled)
-	p4.SwitchCycleSpeed.SetSensitive(enabled)
-	p4.SwitchPlaybackSpeed.SetSensitive(enabled)
-	p4.SwitchTimeRemaining.SetSensitive(enabled)
-	p4.FontSize.SetSensitive(enabled)
-	p4.MarginLeft.SetSensitive(enabled)
-	p4.MarginTop.SetSensitive(enabled)
-	p4.SaveRow.SetSensitive(enabled)
-	p4.SaveButton.SetSensitive(enabled)
-	p4.SaveAsButton.SetSensitive(enabled)
+	// Use reflection to iterate through the widgets and set their sensitivity
+	v := reflect.ValueOf(p4).Elem()
+
+	for i := 0; i < v.NumField(); i++ {
+
+		field := v.Field(i)
+		if field.CanInterface() {
+			widget, ok := field.Interface().(interface{ SetSensitive(bool) })
+
+			if ok {
+				widget.SetSensitive(enabled)
+			}
+
+		}
+
+	}
 
 }
 
@@ -227,63 +222,75 @@ func (sc *SessionController) openVideoFilePicker() {
 
 }
 
-// saveSession handles the saving logic
+// saveSession handles the session Save/Save As... logic
 func (sc *SessionController) saveSession(saveAs bool) {
 
+	// Harvest the data from the UI widgets
 	newConfig := sc.harvestEditor()
 	currentPath := sc.SessionManager.ConfigPath()
 
-	// Helper to perform the actual write
-	performSave := func(path string) {
+	// Perform Save or Save As... action
+	if saveAs || currentPath == "" {
+		sc.openSaveAsDialog(newConfig)
+	} else {
+		glib.IdleAdd(func() {
+			sc.performSessionSave(currentPath, newConfig)
+		})
+	}
+}
 
-		if err := config.Save(path, newConfig); err != nil {
-			logger.Error(logger.GUI, fmt.Sprintf("failed to save config: %v", err))
+// openSaveAsDialog handles the lifecycle of the file chooser
+func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 
-			// IdleAdd() to avoid blocking the main thread
-			glib.IdleAdd(func() {
-				displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
-			})
+	// Load the dialog if it's not already loaded
+	if sc.saveFileDialog == nil {
+		sc.saveFileDialog = gtk.NewFileDialog()
+		sc.saveFileDialog.SetTitle("Save Session Configuration")
+		sc.saveFileDialog.SetModal(true)
+	}
 
+	// Update dialog properties
+	newFilename := fmt.Sprintf("%s.toml", convertSessionTitle(cfg.App.SessionTitle))
+	sc.saveFileDialog.SetInitialName(newFilename)
+
+	// Define the callback used to handle the file chooser
+	cb := func(res gio.AsyncResulter) {
+
+		file, err := sc.saveFileDialog.SaveFinish(res)
+		if err != nil {
 			return
 		}
 
-		logger.Info(logger.GUI, fmt.Sprintf("session saved to %s", path))
+		filePath := file.Path()
 
+		// Perform the actual save
 		glib.IdleAdd(func() {
-
-			if err := sc.SessionManager.LoadSession(path); err != nil {
-				logger.Error(logger.GUI, fmt.Sprintf("failed to reload session after save: %v", err))
-				return
-			}
-
-			// Update Page 1 List (in case title/filename changed)
-			sc.scanForSessions()
-			sc.PopulateSessionList()
+			sc.performSessionSave(filePath, cfg)
 		})
-
 	}
 
-	if saveAs || currentPath == "" {
-		fileDialog := gtk.NewFileDialog()
-		fileDialog.SetTitle("Save Session Configuration")
-		fileDialog.SetInitialName("my_bsc_session.toml")
+	// Launch the dialog
+	sc.saveFileDialog.Save(context.TODO(), &sc.UI.Window.Window, cb)
+}
 
-		// Define callback
-		cb := func(res gio.AsyncResulter) {
-			file, err := fileDialog.SaveFinish(res)
-			if err != nil {
-				return
-			}
-			performSave(file.Path())
-		}
+// performSessionSave handles I/O, Error reporting, and UI Refresh
+func (sc *SessionController) performSessionSave(path string, cfg *config.Config) {
 
-		// Launch dialog
-		fileDialog.Save(context.TODO(), &sc.UI.Window.Window, cb)
+	logger.Debug(logger.GUI, fmt.Sprintf("attempting to save session to: %s", path))
 
-	} else {
-		// Save to existing path
-		performSave(currentPath)
+	// Perform file I/O
+	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
+		logger.Error(logger.GUI, fmt.Sprintf("failed to save config: %v", err))
+		displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
+
+		return
 	}
+
+	logger.Info(logger.GUI, fmt.Sprintf("session saved to %s", path))
+
+	// Refresh the Session List (Page 1) to show new session(s)
+	sc.scanForSessions()
+	sc.PopulateSessionList()
 
 }
 
@@ -297,4 +304,15 @@ func indexOf(element string, data []string) uint {
 	}
 
 	return 0
+}
+
+// convertSessionTitle converts a session title into a string for use as a filename
+func convertSessionTitle(sessionTitle string) string {
+
+	if sessionTitle != "" {
+		return strings.ReplaceAll(sessionTitle, " ", "_")
+	}
+
+	return "BSC_session"
+
 }
