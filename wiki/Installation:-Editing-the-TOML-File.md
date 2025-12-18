@@ -9,8 +9,8 @@ With the exception of updating `sensor_bd_addr` to the actual sensor ID to be us
 The default `config.toml` file is shown below:
 
 ```toml
-# BLE Sync Cycle TOML configuration
-# 0.13.0
+# BLE Sync Cycle Configuration
+# v0.13.0
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters)

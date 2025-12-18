@@ -10,6 +10,11 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
 
+// setupSessionStatusSignals wires up event listeners for the session status tab (Page 2)
+func (sc *SessionController) setupSessionStatusSignals() {
+	sc.setupSessionControlSignals()
+}
+
 // setupSessionControlSignals wires up event listeners for the session control button
 func (sc *SessionController) setupSessionControlSignals() {
 
@@ -17,11 +22,6 @@ func (sc *SessionController) setupSessionControlSignals() {
 		sc.handleSessionControl()
 	})
 
-}
-
-// setupSessionStatusSignals wires up event listeners for the session status tab (Page 2)
-func (sc *SessionController) setupSessionStatusSignals() {
-	sc.setupSessionControlSignals()
 }
 
 // handleSessionControl processes clicks on the session control button
@@ -37,26 +37,6 @@ func (sc *SessionController) handleSessionControl() {
 	}
 
 	sc.handleStart()
-
-}
-
-// handleStop processes stopping the session
-func (sc *SessionController) handleStop() {
-
-	logger.Debug(logger.GUI, "stop branch entered")
-
-	sc.SessionManager.StopSession()
-
-	logger.Debug(logger.GUI, "stop session returned")
-
-	safeUpdateUI(func() {
-		logger.Debug(logger.GUI, "updating UI for stop")
-		sc.updateSessionControlButton(false)
-		sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
-
-		// Reset metrics
-		sc.resetMetrics()
-	})
 
 }
 
@@ -87,6 +67,48 @@ func (sc *SessionController) handleStart() {
 
 	// Launch goroutine to start session
 	go sc.startSessionGoroutine()
+
+}
+
+// handleStartError processes errors from StartSession
+func (sc *SessionController) handleStartError(err error) {
+
+	logger.Error(logger.GUI, fmt.Sprintf("start session error: %v", err))
+
+	safeUpdateUI(func() {
+
+		logger.Debug(logger.GUI, "updating UI for error")
+
+		sc.updateSessionControlButton(false)
+		if errors.Is(err, context.Canceled) {
+			sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
+			return
+		}
+
+		// Show error state in UI
+		sc.updatePage2Status(StatusFailed, StatusNotConnected, "Unknown")
+		displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
+	})
+
+}
+
+// handleStop processes stopping the session
+func (sc *SessionController) handleStop() {
+
+	logger.Debug(logger.GUI, "stop branch entered")
+
+	sc.SessionManager.StopSession()
+
+	logger.Debug(logger.GUI, "stop session returned")
+
+	safeUpdateUI(func() {
+		logger.Debug(logger.GUI, "updating UI for stop")
+		sc.updateSessionControlButton(false)
+		sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
+
+		// Reset metrics
+		sc.resetMetrics()
+	})
 
 }
 
@@ -132,51 +154,34 @@ func (sc *SessionController) startSessionGoroutine() {
 
 }
 
-// handleStartError processes errors from StartSession
-func (sc *SessionController) handleStartError(err error) {
-
-	logger.Error(logger.GUI, fmt.Sprintf("start session error: %v", err))
-
-	safeUpdateUI(func() {
-
-		logger.Debug(logger.GUI, "updating UI for error")
-
-		sc.updateSessionControlButton(false)
-		if errors.Is(err, context.Canceled) {
-			sc.updatePage2Status(StatusStopped, StatusNotConnected, "Unknown")
-			return
-		}
-
-		// Show error state in UI
-		sc.updatePage2Status(StatusFailed, StatusNotConnected, "Unknown")
-		displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
-	})
-
-}
-
 // updatePage2WithSession refreshes Page 2 UI elements with the given session data
 func (sc *SessionController) updatePage2WithSession(sess Session) {
 
-	// Update session name
-	sc.UI.Page2.SessionNameRow.SetTitle(sess.Title)
-
-	// Get config from SessionManager
-	cfg := sc.SessionManager.Config()
-	if cfg == nil {
-		return
-	}
+	// Update session name and file location
+	sc.UI.Page2.SessionNameRow.SetSubtitle(sess.Title)
+	sc.UI.Page2.SessionFileLocationRow.SetSensitive(true)
+	sc.UI.Page2.SessionFileLocationRow.SetSubtitle(sess.ConfigPath)
+	sc.UI.Page2.SessionNameRow.SetSensitive(true)
 
 	// Initial state: BLE not connected, Battery unknown
 	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, "Unknown")
-
-	// Reset metrics
 	sc.resetMetrics()
+
+	// Enable BLE section controls
+	sc.UI.Page2.SensorStatusRow.SetSensitive(true)
+	sc.UI.Page2.SensorBatteryRow.SetSensitive(true)
+
+	// Enable session metrics controls
+	sc.UI.Page2.SpeedRow.SetSensitive(true)
+	sc.UI.Page2.PlaybackSpeedRow.SetSensitive(true)
+	sc.UI.Page2.TimeRemainingRow.SetSensitive(true)
 
 	// Set button to start mode
 	sc.updateSessionControlButton(false)
 
 	// Enable the button now that session is loaded
-	sc.UI.Page2.SessionControlBtn.SetSensitive(true)
+	sc.UI.Page2.SessionControlRow.SetSensitive(true)
+
 	logger.Debug(logger.GUI, fmt.Sprintf("page 2 updated with session: %s", sess.Title))
 
 }

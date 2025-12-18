@@ -4,6 +4,8 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
 // safeUpdateUI helper for main-thread GUI calls
@@ -36,5 +38,41 @@ func displayAlertDialog(window *adw.ApplicationWindow, title, message string) {
 	dialog.SetResponseAppearance("ok", adw.ResponseSuggested)
 	dialog.SetCloseResponse("ok")
 	dialog.Present(gtk.Widgetter(window))
+
+}
+
+// createExitDialog creates the application exit confirmation dialog
+func (ui *AppUI) createExitDialog() {
+
+	ui.exitDialog = adw.NewAlertDialog(
+		"Exit BLE Sync Cycle?",
+		"Are you sure you want to exit?",
+	)
+
+	// Set dialog properties
+	ui.exitDialog.SetCloseResponse("no")
+	ui.exitDialog.SetDefaultResponse("no")
+
+	// Add response buttons in the recommended order for GTK4/Adwaita
+	ui.exitDialog.AddResponse("no", "No")
+	ui.exitDialog.AddResponse("yes", "Yes")
+
+	// Style the Yes button as destructive
+	ui.exitDialog.SetResponseAppearance("yes", adw.ResponseDestructive)
+
+	// Connect response signal
+	ui.exitDialog.ConnectResponse(func(response string) {
+
+		if response == "yes" {
+			logger.Info(logger.GUI, "user confirmed exit")
+			services.WaveGoodbye()
+			ui.Window.Close()
+		} else {
+			logger.Debug(logger.GUI, "user cancelled exit")
+		}
+
+	})
+
+	ui.exitDialog.Present(ui.Window)
 
 }

@@ -7,21 +7,31 @@ import (
 	"os"
 )
 
+// ModeType represents the current mode of operation for the application
+type ModeType int
+
+const (
+	CLI ModeType = iota
+	GUI
+)
+
 // FlagInfo holds structural information about a flag
 type FlagInfo struct {
-	Result    any    // Pointer to the resulting value
-	Name      string // Name of the flag, e.g., "config"
-	ShortName string // Short name of the flag, e.g., "c"
-	Value     string // Default value
-	Usage     string // Usage description (used for help)
+	Result    any      // Pointer to the resulting value
+	Name      string   // Name of the flag, e.g., "config"
+	ShortName string   // Short name of the flag, e.g., "c"
+	Value     string   // Default value
+	Usage     string   // Usage description (used for help)
+	Mode      ModeType // Mode of operation (CLI or GUI)
 }
 
 // CLIFlags holds a list of available command-line flags
 type CLIFlags struct {
-	NoGUI  bool
-	Config string
-	Seek   string
-	Help   bool
+	Logging bool
+	NoGUI   bool
+	Config  string
+	Seek    string
+	Help    bool
 }
 
 var (
@@ -29,11 +39,20 @@ var (
 
 	flagInfos = []FlagInfo{
 		{
+			Result:    &flags.Logging,
+			Name:      "log-console",
+			ShortName: "l",
+			Value:     "false",
+			Usage:     "Enable logging to the console",
+			Mode:      GUI,
+		},
+		{
 			Result:    &flags.NoGUI,
 			Name:      "no-gui",
 			ShortName: "n",
 			Value:     "false",
 			Usage:     "Run the application without a graphical user interface (GUI)",
+			Mode:      CLI,
 		},
 		{
 			Result:    &flags.Config,
@@ -41,6 +60,7 @@ var (
 			ShortName: "c",
 			Value:     "",
 			Usage:     "Path to the configuration file ('path/to/config.toml')",
+			Mode:      CLI,
 		},
 		{
 			Result:    &flags.Seek,
@@ -48,6 +68,7 @@ var (
 			ShortName: "s",
 			Value:     "",
 			Usage:     "Seek to a specific time in the video ('MM:SS')",
+			Mode:      CLI,
 		},
 		{
 			Result:    &flags.Help,
@@ -55,6 +76,7 @@ var (
 			ShortName: "h",
 			Value:     "false",
 			Usage:     "Display this help message",
+			Mode:      CLI,
 		},
 	}
 )
@@ -97,11 +119,23 @@ func ShowHelp() {
 	fmt.Println("")
 	fmt.Println("Usage: ble-sync-cycle [flags]")
 	fmt.Println("")
-	fmt.Println("The following flags are available:")
+	fmt.Println("The following flags are available when running in console/CLI mode:")
 	fmt.Println("")
 
 	for _, fi := range flagInfos {
-		fmt.Printf("-%s | --%s:\t%s\n", fi.ShortName, fi.Name, fi.Usage)
+		if fi.Mode == CLI {
+			fmt.Printf("  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
+		}
+	}
+
+	fmt.Println("")
+	fmt.Println("The following flags are available when running in GUI mode:")
+	fmt.Println("")
+
+	for _, fi := range flagInfos {
+		if fi.Mode == GUI {
+			fmt.Printf("  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
+		}
 	}
 
 	fmt.Println("")
@@ -115,4 +149,14 @@ func Flags() CLIFlags {
 // IsCLIMode checks if the user provided the flag to run in CLI-only mode
 func IsCLIMode() bool {
 	return flags.NoGUI
+}
+
+// IsHelpFlag checks if the user provided the flag to display help
+func IsHelpFlag() bool {
+	return flags.Help
+}
+
+// IsGUIConsoleLogging returns true/false to enable CLI logging while running in GUI mode
+func IsGUIConsoleLogging() bool {
+	return flags.Logging
 }

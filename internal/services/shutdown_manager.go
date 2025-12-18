@@ -3,18 +3,20 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // smContext represents the cancellation context for ShutdownManager
 type smContext struct {
-	ctx    context.Context // fixme --> sharing contexts in a struct is bad chicken
+	ctx    context.Context
 	cancel context.CancelFunc
 }
 
@@ -130,7 +132,16 @@ func (sm *ShutdownManager) Wait() {
 
 }
 
-// HandleExit handles an exit signal and shuts down the shutdown manager
-func (sm *ShutdownManager) HandleExit() {
-	sm.Shutdown()
+// WaveHello outputs a welcome message
+func WaveHello() {
+	logger.Info(logger.APP, fmt.Sprintf("%s starting...", config.GetFullVersion()))
+}
+
+// WaveGoodbye outputs a goodbye message and exits the program
+func WaveGoodbye() {
+
+	logger.ClearCLILine()
+	logger.Info(logger.APP, fmt.Sprintf("%s shutdown complete. Goodbye", config.GetFullVersion()))
+	os.Exit(0)
+
 }

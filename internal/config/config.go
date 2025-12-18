@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -22,8 +21,8 @@ type Config struct {
 
 // AppConfig defines application-wide settings
 type AppConfig struct {
-	LogLevel     string `toml:"logging_level"`
 	SessionTitle string `toml:"session_title"`
+	LogLevel     string `toml:"logging_level"`
 }
 
 // ValidationType, used for config validation, is a type that can be either an int or a float64
@@ -103,24 +102,6 @@ func Load(configFile string) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-// Save writes the configuration to the specified file path
-func Save(filePath string, cfg *Config) error {
-
-	f, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
-	}
-
-	defer f.Close()
-
-	encoder := toml.NewEncoder(f)
-	if err := encoder.Encode(cfg); err != nil {
-		return fmt.Errorf("failed to encode config: %w", err)
-	}
-
-	return nil
 }
 
 // readConfigFile reads the configuration file

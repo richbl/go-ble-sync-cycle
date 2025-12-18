@@ -6,10 +6,10 @@ import (
 
 // SpeedConfig defines speed calculation and measurement settings from the TOML config file
 type SpeedConfig struct {
-	SmoothingWindow      int     `toml:"smoothing_window"`
-	SpeedThreshold       float64 `toml:"speed_threshold"`
 	WheelCircumferenceMM int     `toml:"wheel_circumference_mm"`
 	SpeedUnits           string  `toml:"speed_units"`
+	SpeedThreshold       float64 `toml:"speed_threshold"`
+	SmoothingWindow      int     `toml:"smoothing_window"`
 }
 
 // validate checks SpeedConfig for valid settings

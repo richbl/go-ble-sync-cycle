@@ -100,6 +100,7 @@
                                     <child>
                                       <object class="AdwActionRow" id="session_action_row">
                                         <property name="activatable">False</property>
+                                        <property name="focusable">false</property>
                                         <child type="suffix">
                                           <object class="GtkBox" id="session_action_box">
                                             <property name="halign">end</property>
@@ -176,10 +177,21 @@
                         </child>
                         <child>
                           <object class="AdwPreferencesGroup" id="session_info_group">
-                            <property name="title">Session Title</property>
+                            <property name="title">Session Details</property>
+                            <property name="can-focus">false</property>
+                            <property name="focusable">false</property>
                             <child>
                               <object class="AdwActionRow" id="session_name_row">
-                                <property name="title">n/a</property>
+                                <property name="title">Session Title</property>
+                                <property name="subtitle">n/a</property>
+                                <property name="sensitive">False</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwActionRow" id="session_file_location_row">
+                                <property name="title">File Location</property>
+                                <property name="subtitle">n/a</property>
+                                <property name="sensitive">False</property>
                               </object>
                             </child>
                           </object>
@@ -187,10 +199,13 @@
                         <child>
                           <object class="AdwPreferencesGroup" id="sensor_info_group">
                             <property name="title">BLE Sensor Connection</property>
+                            <property name="can-focus">false</property>
+                            <property name="focusable">false</property>
                             <child>
                               <object class="AdwActionRow" id="sensor_status_row">
                                 <property name="subtitle">Disconnected</property>
                                 <property name="title">Connection</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="connection_status_icon">
                                     <property name="icon-name">bluetooth-disconnected-symbolic</property>
@@ -203,6 +218,7 @@
                               <object class="AdwActionRow" id="battery_level_row">
                                 <property name="subtitle">Unknown</property>
                                 <property name="title">Battery Level</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="battery_icon">
                                     <property name="icon-name">battery-symbolic</property>
@@ -216,10 +232,13 @@
                         <child>
                           <object class="AdwPreferencesGroup" id="metrics_group">
                             <property name="title">Session Metrics</property>
+                            <property name="can-focus">false</property>
+                            <property name="focusable">false</property>
                             <child>
                               <object class="AdwActionRow" id="speed_row">
                                 <property name="subtitle">mph</property>
                                 <property name="title">Current Speed</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="speed_large_label">
                                     <property name="label">0.0</property>
@@ -234,6 +253,7 @@
                             <child>
                               <object class="AdwActionRow" id="playback_speed_row">
                                 <property name="title">Playback Speed</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="playback_speed_large_label">
                                     <property name="label">1.00x</property>
@@ -248,6 +268,7 @@
                             <child>
                               <object class="AdwActionRow" id="time_remaining_row">
                                 <property name="title">Time Remaining</property>
+                                <property name="sensitive">False</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="time_remaining_large_label">
                                     <property name="label">--:--:--</property>
@@ -266,6 +287,8 @@
                             <child>
                               <object class="AdwActionRow" id="session_control_row">
                                 <property name="activatable">False</property>
+                                <property name="sensitive">False</property>
+                                <property name="focusable">false</property>
                                 <child type="suffix">
                                   <object class="GtkBox" id="session_control_box">
                                     <property name="halign">end</property>
@@ -274,9 +297,10 @@
                                     <property name="margin-top">12</property>
                                     <property name="orientation">horizontal</property>
                                     <property name="spacing">12</property>
+                                    <property name="sensitive">True</property>
                                     <child>
                                       <object class="GtkButton" id="session_control_button">
-                                        <property name="sensitive">False</property>
+                                        <property name="sensitive">True</property>
                                         <property name="child">
                                           <object class="AdwButtonContent" id="session_control_button_content">
                                             <property name="icon-name">media-playback-start-symbolic</property>
@@ -338,6 +362,8 @@
                             <child>
                               <object class="AdwActionRow" id="logging_level_row">
                                 <property name="title">Debug</property>
+                                <property name="can-focus">false</property>
+                                <property name="focusable">false</property>
                               </object>
                             </child>
                           </object>
@@ -411,7 +437,7 @@
                             <child>
                               <object class="AdwEntryRow" id="session_title_entry_row">
                                 <property name="show-apply-button">True</property>
-                                <property name="text">BSC Session</property>
+                                <property name="text">n/a</property>
                                 <property name="title" translatable="yes">Session Title</property>
                                 <property name="tooltip-text">Short description of the current cycling session (0-200 characters)</property>
                                 <property name="sensitive">False</property>
@@ -731,7 +757,8 @@
                             <child>
                               <object class="AdwActionRow" id="edit_save_row">
                                 <property name="activatable">False</property>
-                                <property name="sensitive">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="focusable">false</property>
                                 <child type="suffix">
                                   <object class="GtkBox" id="save_button_box">
                                     <property name="halign">end</property>
@@ -789,18 +816,21 @@
         </child>
       </object>
     </property>
-    <property name="default-height">816</property>
+    <property name="default-height">860</property>
     <property name="default-width">600</property>
     <property name="title">BLE Sync Cycle</property>
   </object>
 
-  <object class="AdwAboutDialog" id="about_window">
+  <!-- <object class="AdwAboutDialog" id="about_window">
     <property name="application-icon">bsc_logo</property>
     <property name="application-name" translatable="yes">BLE Sync Cycle</property>
     <property name="copyright" translatable="yes">Copyright © 2025 Rich Bloch</property>
-    <property name="developer-name" translatable="yes">Rich Bloch</property>
+    <property name="developers">Rich Bloch</property>
+    <property name="issue-url">https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md</property>
     <property name="license">MIT</property>
-    <property name="version">v0.1.0-alpha</property>
+    <property name="license-type">mit-x11</property>
+    <property name="version"></property>
     <property name="website">https://github.com/richbl/go-ble-sync-cycle</property>
-  </object>
+  </object> -->
+
 </interface>

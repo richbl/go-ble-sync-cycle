@@ -5,7 +5,7 @@
 After starting `ble-sync-cycle`, you should see the following output. Note that the output below was generated when `logging_level` was set to `debug` in the `config.toml` file.
 
 ```console
-2025/10/26 13:11:27 ----- ----- Starting BLE Sync Cycle 0.13.0
+2025/10/26 13:11:27 ----- ----- Starting BLE Sync Cycle v0.13.0
 2025/10/26 13:11:27 [INF] [BLE] created new BLE central controller
 2025/10/26 13:11:27 [DBG] [BLE] scanning for BLE peripheral BD_ADDR FA:46:1D:77:C8:E1
 2025/10/26 13:11:27 [INF] [BLE] found BLE peripheral FA:46:1D:77:C8:E1
@@ -13,13 +13,13 @@ After starting `ble-sync-cycle`, you should see the following output. Note that 
 2025/10/26 13:11:27 [INF] [BLE] BLE peripheral device connected
 2025/10/26 13:11:27 [DBG] [BLE] discovering CSC service 00001816-0000-1000-8000-00805f9b34fb
 2025/10/26 13:11:32 [FTL] [BLE] failed to acquire BLE services: scanning time limit reached (30s)
-2025/10/26 13:11:32 ----- ----- BLE Sync Cycle 0.13.0 shutdown complete. Goodbye
+2025/10/26 13:11:32 ----- ----- BLE Sync Cycle v0.13.0 shutdown complete. Goodbye
 ```
 
 In this first example (above), while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out. Depending on the BLE peripheral, it may take some time before a BLE peripheral advertises both its services and characteristics. If the peripheral is not responding, you may need to increase the timeout in the `config.toml` file. In most cases however, rerunning the application will resolve the issue.
 
 ```console
-2025/10/26 13:11:37 ----- ----- Starting BLE Sync Cycle 0.13.0
+2025/10/26 13:11:37 ----- ----- Starting BLE Sync Cycle v0.13.0
 2025/10/26 13:11:38 [INF] [BLE] created new BLE central controller
 2025/10/26 13:11:38 [DBG] [BLE] scanning for BLE peripheral BD_ADDR FA:46:1D:77:C8:E1
 2025/10/26 13:11:38 [INF] [BLE] found BLE peripheral FA:46:1D:77:C8:E1
@@ -119,5 +119,5 @@ In this last example, **BLE Sync Cycle** is coordinating with both the BLE perip
 2025/10/26 13:18:22 [DBG] [VID] updating video playback speed to 0.90x
 2025/10/26 13:18:22 [INF] [VID] interrupt detected, stopping MPV video playback...
 2025/10/26 13:18:22 [INF] [BLE] interrupt detected, stopping the monitoring for BLE sensor notifications...
-2025/10/26 13:18:22 ----- ----- BLE Sync Cycle 0.13.0 shutdown complete. Goodbye
+2025/10/26 13:18:22 ----- ----- BLE Sync Cycle v0.13.0 shutdown complete. Goodbye
 ```

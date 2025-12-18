@@ -9,8 +9,8 @@ import (
 type VideoConfig struct {
 	MediaPlayer       string         `toml:"media_player"`
 	FilePath          string         `toml:"file_path"`
-	WindowScaleFactor float64        `toml:"window_scale_factor"`
 	SeekToPosition    string         `toml:"seek_to_position"`
+	WindowScaleFactor float64        `toml:"window_scale_factor"`
 	UpdateIntervalSec float64        `toml:"update_interval_secs"`
 	SpeedMultiplier   float64        `toml:"speed_multiplier"`
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
@@ -18,10 +18,10 @@ type VideoConfig struct {
 
 // VideoOSDConfig defines on-screen display settings for video playback from the TOML config file
 type VideoOSDConfig struct {
-	FontSize             int  `toml:"font_size"`
 	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
 	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
 	DisplayTimeRemaining bool `toml:"display_time_remaining"`
+	FontSize             int  `toml:"font_size"`
 	MarginX              int  `toml:"margin_left"`
 	MarginY              int  `toml:"margin_top"`
 	ShowOSD              bool // Computed field based on display settings
