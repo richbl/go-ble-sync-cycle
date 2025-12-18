@@ -106,23 +106,25 @@ func TestUseGUIWriterOnly(t *testing.T) {
 
 	// Force set the initial output
 	UseGUIWriterOnly(initialBuf)
-	Info("Message 1")
+	message := "Message 1"
+	Info(message)
 
 	// Verify Message 1 is in initialBuf
-	if !strings.Contains(initialBuf.String(), "Message 1") {
+	if !strings.Contains(initialBuf.String(), message) {
 		t.Error("Initial buffer failed to receive log")
 	}
 
 	// Switch output
 	UseGUIWriterOnly(secondBuf)
-	Info("Message 2")
+	message = "Message 2"
+	Info(message)
 
 	// Verify Message 2 is ONLY in secondBuf
-	if strings.Contains(initialBuf.String(), "Message 2") {
+	if strings.Contains(initialBuf.String(), message) {
 		t.Error("Initial buffer received message after UseGUIWriterOnly was called (Replace failed)")
 	}
 
-	if !strings.Contains(secondBuf.String(), "Message 2") {
+	if !strings.Contains(secondBuf.String(), message) {
 		t.Error("New buffer failed to receive log after UseGUIWriterOnly")
 	}
 
@@ -141,14 +143,15 @@ func TestAddWriter(t *testing.T) {
 
 	// Add a second writer
 	AddWriter(secondaryBuf)
-	Info("Broadcast Message")
+	message := "Broadcast Message"
+	Info(message)
 
 	// Verify both received it
-	if !strings.Contains(primaryBuf.String(), "Broadcast Message") {
+	if !strings.Contains(primaryBuf.String(), message) {
 		t.Error("Primary buffer missing broadcast message")
 	}
 
-	if !strings.Contains(secondaryBuf.String(), "Broadcast Message") {
+	if !strings.Contains(secondaryBuf.String(), message) {
 		t.Error("Secondary buffer missing broadcast message")
 	}
 
