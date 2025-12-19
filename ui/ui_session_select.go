@@ -120,8 +120,8 @@ func (sc *SessionController) scanForSessions() {
 	}
 
 	// Check if any files were actually found
-	if files == nil || len(files) == 0 {
-		logger.Debug(logger.GUI, "no session configuration files found")
+	if len(files) == 0 {
+		logger.Info(logger.GUI, "no session configuration files found")
 		displayAlertDialog(sc.UI.Window, "Session Selection Failed", "No BSC session configuration files found in the current directory")
 
 		return
@@ -161,7 +161,7 @@ func (sc *SessionController) PopulateSessionList() {
 	// Clear existing rows
 	sc.UI.Page1.ListBox.RemoveAll()
 
-	if sc.Sessions == nil || len(sc.Sessions) == 0 {
+	if len(sc.Sessions) == 0 {
 		logger.Debug(logger.GUI, "no sessions to populate in the list")
 
 		row := adw.NewActionRow()
@@ -171,6 +171,9 @@ func (sc *SessionController) PopulateSessionList() {
 
 		return
 	}
+
+	// Enable the list of sessions
+	sc.UI.Page1.ListBox.SetSensitive(true)
 
 	logger.Debug(logger.GUI, fmt.Sprintf("populating session list with %d session(s)...", len(sc.Sessions)))
 
@@ -194,7 +197,6 @@ func (sc *SessionController) PopulateSessionList() {
 func (sc *SessionController) setupListBoxSignals() {
 
 	sc.UI.Page1.ListBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
-
 		hasSelection := (row != nil)
 		sc.UI.Page1.EditButton.SetSensitive(hasSelection)
 		sc.UI.Page1.LoadButton.SetSensitive(hasSelection)

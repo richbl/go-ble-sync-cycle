@@ -117,6 +117,8 @@ func ParseArgs() error {
 func ShowHelp() {
 
 	fmt.Println("")
+	fmt.Println("-----------------------------------------------------------------------------------")
+	fmt.Println("")
 	fmt.Println("Usage: ble-sync-cycle [flags]")
 	fmt.Println("")
 	fmt.Println("The following flags are available when running in console/CLI mode:")
@@ -137,7 +139,8 @@ func ShowHelp() {
 			fmt.Printf("  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
 		}
 	}
-
+	fmt.Println("")
+	fmt.Println("-----------------------------------------------------------------------------------")
 	fmt.Println("")
 }
 

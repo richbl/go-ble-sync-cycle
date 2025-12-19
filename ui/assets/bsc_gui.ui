@@ -87,6 +87,7 @@
                                     <property name="title">Select a BSC Session</property>
                                     <child>
                                       <object class="GtkListBox" id="session_listbox">
+                                        <property name="sensitive">False</property>
                                         <property name="selection-mode">single</property>
                                         <style>
                                           <class name="boxed-list" />
