@@ -12,17 +12,17 @@ import (
 
 // state holds the current speed measurement, smoothed speed, and timestamp
 type state struct {
+	timestamp     time.Time
 	currentSpeed  float64
 	smoothedSpeed float64
-	timestamp     time.Time
 }
 
 // Controller manages speed measurements with smoothing over a specified time window
 type Controller struct {
-	mu     sync.RWMutex // protects all fields
 	speeds *ring.Ring
-	window int
 	state  state
+	window int
+	mu     sync.RWMutex
 }
 
 // Error definitions
@@ -69,6 +69,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 		value, ok := x.(float64)
 		if !ok {
 			logger.Error(logger.BLE, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
+
 			return
 		}
 
@@ -104,6 +105,7 @@ func (sc *Controller) SpeedBuffer() []string {
 			value, ok := x.(float64)
 			if !ok {
 				logger.Error(logger.SPEED, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
+
 				return
 			}
 

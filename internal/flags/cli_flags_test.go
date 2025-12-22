@@ -27,15 +27,15 @@ func TestParseArgs(t *testing.T) {
 // testCases returns a slice of test cases for the ParseArgs function
 func testCases() []struct {
 	name     string
+	expected CLIFlags
 	args     []string
 	wantErr  bool
-	expected CLIFlags
 } {
 	return []struct {
 		name     string
+		expected CLIFlags
 		args     []string
 		wantErr  bool
-		expected CLIFlags
 	}{
 		{
 			name:     "no flags",
@@ -73,10 +73,12 @@ func testCases() []struct {
 // runTestCase runs a single test case for the ParseArgs function
 func runTestCase(t *testing.T, tc struct {
 	name     string
+	expected CLIFlags
 	args     []string
 	wantErr  bool
-	expected CLIFlags
 }) {
+
+	t.Helper()
 	flags = CLIFlags{} // Reset flags
 
 	origArgs := os.Args
@@ -88,6 +90,7 @@ func runTestCase(t *testing.T, tc struct {
 
 	if (err != nil) != tc.wantErr {
 		t.Errorf("ParseArgs() error = %v, wantErr %v", err, tc.wantErr)
+
 		return
 	}
 
@@ -143,9 +146,9 @@ func TestFlagInfosConfiguration(t *testing.T) {
 
 	// Define test cases
 	tests := []struct {
+		wantType any
 		name     string
 		flagInfo FlagInfo
-		wantType any
 	}{
 		{
 			name:     "logger flag",

@@ -1,26 +1,56 @@
 version: "2"
 linters:
   enable:
-    - decorder
-    - dogsled
-    - dupword
-    - err113
-    - exhaustive
-    - exhaustruct
-    - forbidigo
-    - funlen
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - godox
-    - gosec
-    - ireturn
-    - nestif
-    - nilerr
-    - nilnil
-    - nlreturn
-    - revive
+  # - containedctx
+  # - contextcheck
+  - copyloopvar
+  - cyclop
+  - decorder
+  - dupl
+  - dupword
+  - err113
+  - errcheck
+  - errname
+  - errorlint
+  - exhaustive
+  - exptostd
+  - fatcontext
+  - forbidigo
+  - forcetypeassert
+  - funcorder
+  - funlen
+  - gocheckcompilerdirectives
+  - gocognit
+  - goconst
+  - gocritic
+  - godox
+  - gosec
+  - govet
+  - iface
+  - inamedparam
+  - ineffassign
+  - intrange
+  - ireturn
+  - loggercheck
+  - maintidx
+  - modernize
+  - musttag
+  - nestif
+  - nilerr
+  - nilnil
+  - nlreturn
+  - nonamedreturns
+  - perfsprint
+  - revive
+  - staticcheck
+  - testifylint
+  - thelper
+  - unconvert
+  - unparam
+  - unused
+  - usestdlibvars
+  - wastedassign
+  - wrapcheck
   settings:
     errcheck:
       disable-default-exclusions: true
@@ -30,12 +60,6 @@ linters:
         - io/ioutil.ReadFile
         - io.Copy(*bytes.Buffer)
         - io.Copy(os.Stdout)
-    exhaustruct:
-      include:
-        - .+\.Test
-        - example\.com/package\.ExampleStruct[\d]{1,2}
-      exclude:
-        - .+/cobra\.Command$
     forbidigo:
       forbid:
         - pattern: ^print(ln)?$
@@ -44,58 +68,40 @@ linters:
           pkg: ^example.com/pkg/api/v1$
       exclude-godoc-examples: false
       analyze-types: true
+    funcorder:
+      # Checks that constructors are placed after the structure declaration.
+      # Default: true
+      constructor: true
+      # Checks if the exported methods of a structure are placed before the non-exported ones.
+      # Default: true
+      struct-method: false
+      # Checks if the constructors and/or structure methods are sorted alphabetically.
+      # Default: false
+      alphabetical: true
     gocognit:
-      min-complexity: 20
-    goconst:
-      match-constant: false
-      min-len: 3
-      min-occurrences: 3
-      numbers: false
-      min: 2
-      max: 2
-      ignore-calls: false
-      ignore-strings: foo.+
-    gocyclo:
-      min-complexity: 20
+      min-complexity: 15
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+    ineffassign:
+      check-escaping-errors: true
     ireturn:
       allow:
-        - anon
-        - (or|er)$
-      reject:
-        - github.com\/user\/package\/v4\.Type
-    nestif:
-      min-complexity: 4
+        - generic
+        - error
+        - stdlib
     nilnil:
       detect-opposite: true
-      checked-types:
-        - chan
-        - func
-        - iface
-        - map
-        - ptr
-        - uintptr
-        - unsafeptr
-    nlreturn:
-      block-size: 2
-    wsl:
-      strict-append: false
-      allow-assign-and-call: false
-      allow-assign-and-anything: true
-      allow-multiline-assign: false
-      force-case-trailing-whitespace: 1
-      allow-trailing-comment: true
-      allow-separated-leading-comment: true
-      allow-cuddle-declarations: true
-      allow-cuddle-with-calls:
-        - Foo
-        - Bar
-      allow-cuddle-with-rhs:
-        - Foo
-        - Bar
-      force-err-cuddling: true
-      error-variable-names:
-        - foo
-      force-short-decl-cuddling: true
+    testifylint:
+      enable-all: true
+    unconvert:
+      # Remove conversions that force intermediate rounding.
+      # Default: false
+      fast-math: true
+      # Be more conservative (experimental)
+      # Default: false
+      safe: true
   exclusions:
     generated: lax
     presets:

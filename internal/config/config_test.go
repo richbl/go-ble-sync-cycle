@@ -133,10 +133,10 @@ func TestSpeedConfigValidate(t *testing.T) {
 		expectError        bool
 	}{
 		{"valid config", 10, 5.0, 1000, SpeedUnitsKMH, false},
+		{"invalid speed units", 10, 5.0, 1000, "invalid", true},
 		{"invalid smoothing window", 0, 5.0, 1000, SpeedUnitsKMH, true},
 		{"invalid speed threshold", 10, 11.0, 1000, SpeedUnitsKMH, true},
 		{"invalid wheel circumference", 10, 5.0, 49, SpeedUnitsKMH, true},
-		{"invalid speed units", 10, 5.0, 1000, "invalid", true},
 	}
 
 	// Run tests
@@ -255,10 +255,10 @@ func TestValidateField(t *testing.T) {
 		max         any
 		expectError bool
 	}{
-		{"valid int", 10, 1, 20, false},
 		{"invalid int", 0, 1, 20, true},
 		{"valid float64", 1.5, 1.0, 2.0, false},
 		{"invalid float64", 0.5, 1.0, 2.0, true},
+		{"valid int", 10, 1, 20, false},
 		{"unsupported type", "invalid", 1, 20, true},
 	}
 

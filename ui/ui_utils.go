@@ -13,6 +13,7 @@ func safeUpdateUI(fn func()) {
 
 	glib.IdleAdd(func() bool {
 		fn()
+
 		return false
 	})
 
@@ -44,21 +45,26 @@ func displayAlertDialog(window *adw.ApplicationWindow, title, message string) {
 // createExitDialog creates the application exit confirmation dialog
 func (ui *AppUI) createExitDialog() {
 
+	const (
+		yes = "yes"
+		no  = "no"
+	)
+
 	ui.exitDialog = adw.NewAlertDialog(
 		"Exit BLE Sync Cycle?",
 		"Are you sure you want to exit?",
 	)
 
 	// Set dialog properties
-	ui.exitDialog.SetCloseResponse("no")
-	ui.exitDialog.SetDefaultResponse("no")
+	ui.exitDialog.SetCloseResponse(no)
+	ui.exitDialog.SetDefaultResponse(no)
 
 	// Add response buttons in the recommended order for GTK4/Adwaita
-	ui.exitDialog.AddResponse("no", "No")
-	ui.exitDialog.AddResponse("yes", "Yes")
+	ui.exitDialog.AddResponse(no, "No")
+	ui.exitDialog.AddResponse(yes, "Yes")
 
 	// Style the Yes button as destructive
-	ui.exitDialog.SetResponseAppearance("yes", adw.ResponseDestructive)
+	ui.exitDialog.SetResponseAppearance(yes, adw.ResponseDestructive)
 
 	// Connect response signal
 	ui.exitDialog.ConnectResponse(func(response string) {

@@ -8,7 +8,7 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
-// Regex to find ANSI escape sequences (e.g. \x1b[31m)
+// Regex to find ANSI escape sequences
 var ansiSplitRegex = regexp.MustCompile(`(\x1b\[[0-9;]*m)`)
 
 // Map ANSI codes to human-readable GTK Tag names
@@ -51,34 +51,8 @@ func NewGuiLogWriter(tv *gtk.TextView) *GuiLogWriter {
 	return w
 }
 
-// initTags defines the color styles in the buffer's tag table
-func (w *GuiLogWriter) initTags() {
-
-	// Get the tag table
-	table := w.buffer.TagTable()
-
-	// Helper to create tags if they don't exist
-	createTag := func(name, colorHex string) {
-		if table.Lookup(name) == nil {
-			tag := gtk.NewTextTag(name)
-			tag.SetObjectProperty("foreground", colorHex)
-			table.Add(tag)
-		}
-	}
-
-	// Pretty colors
-	createTag("red", "#ff5555")
-	createTag("green", "#50fa7b")
-	createTag("yellow", "#f1fa8c")
-	createTag("blue", "#8be9fd")
-	createTag("magenta", "#ff79c6")
-	createTag("cyan", "#8be9fd")
-	createTag("white", "#f8f8f2")
-
-}
-
 // Write satisfies the io.Writer interface, parsing ANSI codes and inserts styled text
-func (w *GuiLogWriter) Write(p []byte) (n int, err error) {
+func (w *GuiLogWriter) Write(p []byte) (int, error) {
 
 	fullText := string(p)
 
@@ -94,7 +68,7 @@ func (w *GuiLogWriter) processAnsiAndInsert(text string) {
 
 	// Get the end iterator
 	endIter := w.buffer.EndIter()
-	var currentTag *gtk.TextTag = nil
+	var currentTag *gtk.TextTag
 
 	matchesIdx := ansiSplitRegex.FindAllStringIndex(text, -1)
 	cursor := 0
@@ -133,6 +107,7 @@ func (w *GuiLogWriter) insertWithTag(iter *gtk.TextIter, text string, tag *gtk.T
 
 	if tag == nil {
 		w.buffer.Insert(iter, text)
+
 		return
 	}
 
@@ -140,5 +115,31 @@ func (w *GuiLogWriter) insertWithTag(iter *gtk.TextIter, text string, tag *gtk.T
 	w.buffer.Insert(iter, text)
 	startIter := w.buffer.IterAtOffset(startOffset)
 	w.buffer.ApplyTag(tag, startIter, iter)
+
+}
+
+// initTags defines the color styles in the buffer's tag table
+func (w *GuiLogWriter) initTags() {
+
+	// Get the tag table
+	table := w.buffer.TagTable()
+
+	// Helper to create tags if they don't exist
+	createTag := func(name, colorHex string) {
+		if table.Lookup(name) == nil {
+			tag := gtk.NewTextTag(name)
+			tag.SetObjectProperty("foreground", colorHex)
+			table.Add(tag)
+		}
+	}
+
+	// Pretty colors
+	createTag("red", "#ff5555")
+	createTag("green", "#50fa7b")
+	createTag("yellow", "#f1fa8c")
+	createTag("blue", "#8be9fd")
+	createTag("magenta", "#ff79c6")
+	createTag("cyan", "#8be9fd")
+	createTag("white", "#f8f8f2")
 
 }

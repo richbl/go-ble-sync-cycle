@@ -22,7 +22,7 @@ func newVLCPlayer() (*vlcPlayer, error) {
 
 	// Initialize VLC library
 	if err := vlc.Init("--no-video-title-show", "--quiet"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errFormat, "failed to initialize VLC library", err)
 	}
 
 	// Create player
@@ -33,7 +33,7 @@ func newVLCPlayer() (*vlcPlayer, error) {
 			logger.Error(logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", releaseErr))
 		}
 
-		return nil, err
+		return nil, fmt.Errorf(errFormat, "failed to create VLC player", err)
 	}
 
 	return &vlcPlayer{
@@ -49,7 +49,7 @@ func (v *vlcPlayer) loadFile(path string) error {
 
 	media, err := v.player.LoadMediaFromPath(path)
 	if err != nil {
-		return err
+		return fmt.Errorf(errFormat, "failed to load video file", err)
 	}
 
 	defer func() {
@@ -58,17 +58,17 @@ func (v *vlcPlayer) loadFile(path string) error {
 		}
 	}()
 
-	return v.player.Play()
+	return wrapError("failed to play video", v.player.Play())
 }
 
 // setSpeed sets the playback speed of the video
 func (v *vlcPlayer) setSpeed(speed float64) error {
-	return v.player.SetPlaybackRate(float32(speed))
+	return wrapError("failed to set video playback speed", v.player.SetPlaybackRate(float32(speed)))
 }
 
 // setPause sets the pause state of the video
 func (v *vlcPlayer) setPause(paused bool) error {
-	return v.player.SetPause(paused)
+	return wrapError("failed to pause video", v.player.SetPause(paused))
 }
 
 // timeRemaining gets the remaining time of the video
@@ -81,7 +81,7 @@ func (v *vlcPlayer) timeRemaining() (int64, error) {
 
 	currentTime, err := v.player.MediaTime()
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
 	}
 
 	return (int64)((length - currentTime) / 1000), nil // Convert ms to seconds
@@ -89,12 +89,7 @@ func (v *vlcPlayer) timeRemaining() (int64, error) {
 
 // setFullscreen toggles fullscreen mode
 func (v *vlcPlayer) setFullscreen(fullscreen bool) error {
-
-	if err := v.player.SetFullScreen(fullscreen); err != nil {
-		return fmt.Errorf(errFormat, "failed to set fullscreen", err)
-	}
-
-	return nil
+	return wrapError("failed to set fullscreen", v.player.SetFullScreen(fullscreen))
 }
 
 // Stub: setKeepOpen is not supported in VLC
@@ -164,7 +159,7 @@ func (v *vlcPlayer) seek(position string) error {
 		return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
 	}
 
-	return v.player.SetMediaTime(timeMs)
+	return wrapError("failed to seek to specified position in media player", v.player.SetMediaTime(timeMs))
 }
 
 // setOSD configures the On-Screen Display (OSD)
@@ -224,12 +219,7 @@ func (v *vlcPlayer) waitEvent(timeout float64) *playerEvent {
 
 // showOSDText displays text on the video using VLC's marquee feature
 func (v *vlcPlayer) showOSDText(text string) error {
-
-	if err := v.marquee.SetText(text); err != nil {
-		return fmt.Errorf(errFormat, "failed to set marquee text", err)
-	}
-
-	return nil
+	return wrapError("failed to set marquee text", v.marquee.SetText(text))
 }
 
 // terminatePlayer cleans up VLC resources

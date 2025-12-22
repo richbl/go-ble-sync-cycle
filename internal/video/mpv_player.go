@@ -34,7 +34,7 @@ func newMpvPlayer() (*mpvPlayer, error) {
 	}
 
 	if err := m.player.Initialize(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errFormat, "failed to initialize mpv player", err)
 	}
 
 	return m, nil
@@ -42,17 +42,17 @@ func newMpvPlayer() (*mpvPlayer, error) {
 
 // loadFile loads a video file into the mpv player
 func (m *mpvPlayer) loadFile(path string) error {
-	return m.player.Command([]string{"loadfile", path})
+	return wrapError("failed to load video file", m.player.Command([]string{"loadfile", path}))
 }
 
 // setSpeed sets the playback speed of the video
 func (m *mpvPlayer) setSpeed(speed float64) error {
-	return m.player.SetProperty("speed", mpv.FormatDouble, speed)
+	return wrapError("failed to set video playback speed", m.player.SetProperty("speed", mpv.FormatDouble, speed))
 }
 
 // setPause sets the pause state of the video
 func (m *mpvPlayer) setPause(paused bool) error {
-	return m.player.SetProperty("pause", mpv.FormatFlag, paused)
+	return wrapError("failed to pause video", m.player.SetProperty("pause", mpv.FormatFlag, paused))
 }
 
 // timeRemaining gets the remaining time of the video
@@ -60,7 +60,7 @@ func (m *mpvPlayer) timeRemaining() (int64, error) {
 
 	timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf(errFormat, "failed to get video time remaining", err)
 	}
 
 	timeRemainingInt, ok := timeRemaining.(int64)
@@ -75,26 +75,32 @@ func (m *mpvPlayer) timeRemaining() (int64, error) {
 // setFullscreen toggles fullscreen mode
 func (m *mpvPlayer) setFullscreen(fullscreen bool) error {
 
+	context := "failed to disable fullscreen"
+	value := "no"
+
 	if fullscreen {
-		return m.player.SetOptionString("fullscreen", "yes")
+		context = "failed to enable fullscreen"
+		value = "yes"
 	}
 
-	return m.player.SetOptionString("fullscreen", "no")
+	return wrapError(context, m.player.SetOptionString("fullscreen", value))
 }
 
 // setKeepOpen configures the player to keep the window open after playback completes
 func (m *mpvPlayer) setKeepOpen(keepOpen bool) error {
 
+	value := "no"
+
 	if keepOpen {
-		return m.player.SetOptionString("keep-open", "yes")
+		value = "yes"
 	}
 
-	return m.player.SetOptionString("keep-open", "no")
+	return wrapError("failed to set keep-open media player option", m.player.SetOptionString("keep-open", value))
 }
 
 // seek moves the playback position to the specified time position
 func (m *mpvPlayer) seek(position string) error {
-	return m.player.SetOptionString("start", position)
+	return wrapError("failed to seek to specified position in media player", m.player.SetOptionString("start", position))
 }
 
 // setOSD configures the On-Screen Display (OSD)
@@ -117,7 +123,7 @@ func (m *mpvPlayer) setOSD(options osdConfig) error {
 
 // setupEvents prepares the player to listen for the end-of-file event
 func (m *mpvPlayer) setupEvents() error {
-	return m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag)
+	return wrapError("failed to setup end-of-file observe event", m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag))
 }
 
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
@@ -145,7 +151,7 @@ func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
 // showOSDText displays text on the OSD
 func (m *mpvPlayer) showOSDText(text string) error {
-	return m.player.SetOptionString("osd-msg1", text)
+	return wrapError("failed to show OSD text", m.player.SetOptionString("osd-msg1", text))
 }
 
 // terminatePlayer terminates the mpv player instance and cleans up resources

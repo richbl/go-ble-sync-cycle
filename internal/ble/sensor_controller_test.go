@@ -33,8 +33,8 @@ func createTestController(speedUnits string) (*Controller, error) {
 	}
 
 	speedConfig := config.SpeedConfig{
-		SpeedUnits:           speedUnits,
 		WheelCircumferenceMM: wheelCircumferenceMM,
+		SpeedUnits:           speedUnits,
 	}
 
 	return NewBLEController(bleConfig, speedConfig)
@@ -49,15 +49,18 @@ func waitForScanReset() {
 func controllersIntegrationTest() (*Controller, error) {
 
 	waitForScanReset()
+
 	return createTestController(speedUnitsKMH)
 }
 
 // setupTestBLEController creates a test BLE controller
 func setupTestBLEController(t *testing.T) *Controller {
 
+	t.Helper()
 	controller, err := controllersIntegrationTest()
 	if err != nil {
 		t.Skip("Skipping test as BLE adapter is not available")
+
 		return nil
 	}
 

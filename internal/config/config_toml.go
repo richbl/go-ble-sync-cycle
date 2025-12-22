@@ -76,7 +76,7 @@ func Save(filePath string, cfg *Config, version string) error {
 	// Create the template data
 	templateData := tomlContent{
 		Config:  cfg,
-		Version: fmt.Sprintf("v%s", version),
+		Version: "v" + version,
 	}
 
 	// Merge the data with the template

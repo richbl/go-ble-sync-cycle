@@ -130,6 +130,7 @@ func (m *mockMediaPlayer) terminatePlayer() {
 func (m *mockMediaPlayer) loadFile(_ string) error {
 
 	m.recordCall("loadFile")
+
 	return m.loadFileErr
 
 }
@@ -138,6 +139,7 @@ func (m *mockMediaPlayer) loadFile(_ string) error {
 func (m *mockMediaPlayer) setupEvents() error {
 
 	m.recordCall("setupEvents")
+
 	return m.setupEventsErr
 
 }
@@ -146,6 +148,7 @@ func (m *mockMediaPlayer) setupEvents() error {
 func (m *mockMediaPlayer) setFullscreen(_ bool) error {
 
 	m.recordCall("setFullscreen")
+
 	return m.setFullscreenErr
 
 }
@@ -154,6 +157,7 @@ func (m *mockMediaPlayer) setFullscreen(_ bool) error {
 func (m *mockMediaPlayer) setKeepOpen(_ bool) error {
 
 	m.recordCall("setKeepOpen")
+
 	return m.setKeepOpenErr
 
 }
@@ -162,6 +166,7 @@ func (m *mockMediaPlayer) setKeepOpen(_ bool) error {
 func (m *mockMediaPlayer) setOSD(_ osdConfig) error {
 
 	m.recordCall("setOSD")
+
 	return m.SetOSDErr
 
 }
@@ -170,6 +175,7 @@ func (m *mockMediaPlayer) setOSD(_ osdConfig) error {
 func (m *mockMediaPlayer) seek(_ string) error {
 
 	m.recordCall("seek")
+
 	return m.seekErr
 
 }
@@ -177,7 +183,7 @@ func (m *mockMediaPlayer) seek(_ string) error {
 // setSpeed sets the playback speed of the video
 func (m *mockMediaPlayer) setSpeed(speed float64) error {
 
-	m.recordCall("setSpeed")
+	m.recordCall(setSpeed)
 	m.lastSpeed = speed
 
 	return m.setSpeedErr
@@ -186,7 +192,7 @@ func (m *mockMediaPlayer) setSpeed(speed float64) error {
 // setPause sets the pause state of the video
 func (m *mockMediaPlayer) setPause(pause bool) error {
 
-	m.recordCall("setPause")
+	m.recordCall(setPause)
 	m.lastPauseState = pause
 
 	return m.setPauseErr
@@ -205,6 +211,7 @@ func (m *mockMediaPlayer) showOSDText(text string) error {
 func (m *mockMediaPlayer) timeRemaining() (int64, error) {
 
 	m.recordCall("timeRemaining")
+
 	return m.remainingTime, m.remainingTimeErr
 
 }
@@ -350,6 +357,7 @@ func verifyTermination(t *testing.T, mockPlayer *mockMediaPlayer, startErr error
 // updateSpeedTestCase defines a test case for updateSpeedFromController
 func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.SpeedConfig, tc updateSpeedTestCase) {
 
+	t.Helper()
 	mockPlayer := newMockMediaPlayer()
 	localSC := sc
 	localSC.SpeedThreshold = tc.speedThreshold
@@ -377,7 +385,7 @@ func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.Spe
 	}
 
 	// Verify setPause calls and state
-	pauseCalls := mockPlayer.callCount("setPause")
+	pauseCalls := mockPlayer.callCount(setPause)
 
 	if tc.expectedPauseCall {
 
@@ -394,7 +402,7 @@ func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.Spe
 	}
 
 	// Verify setSpeed calls
-	speedCalls := mockPlayer.callCount("setSpeed")
+	speedCalls := mockPlayer.callCount(setSpeed)
 
 	if tc.expectedSpeedCall {
 

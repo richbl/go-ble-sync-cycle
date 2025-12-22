@@ -8,8 +8,8 @@ import (
 
 // testData holds test constants and data
 type testData struct {
-	window        int
 	speeds        []float64
+	window        int
 	expectedSpeed float64
 	updateCount   int
 	sleepDuration time.Duration

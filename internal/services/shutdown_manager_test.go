@@ -2,7 +2,7 @@ package services_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 
 // Error messages
 var (
-	errServiceError = fmt.Errorf("service error")
+	errServiceError = errors.New("service error")
 )
 
 // TestNewShutdownManager tests the creation of a new shutdown manager
@@ -107,7 +107,6 @@ func TestCleanupOrder(t *testing.T) {
 	order := make([]int, 0, 3)
 
 	for i := range 3 {
-		i := i // Capture loop variable
 		manager.AddCleanup(func() {
 			order = append(order, i)
 		})

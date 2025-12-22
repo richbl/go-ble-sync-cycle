@@ -5,18 +5,18 @@ import (
 )
 
 // mpvPlayerFactory creates a new mpvPlayer instance for testing
-func mpvPlayerFactory() (mediaPlayer, error) {
+func mpvPlayerFactory() (*mpvPlayer, error) {
 	return newMpvPlayer()
 }
 
 func TestMpvPlayerLifecycle(t *testing.T) {
-	testPlayerLifecycle(t, mpvPlayerFactory)
+	testPlayerLifecycle(t, func() (mediaPlayer, error) { return mpvPlayerFactory() })
 }
 
 func TestMpvPlayerPlaybackControls(t *testing.T) {
-	testPlayerPlaybackControls(t, mpvPlayerFactory)
+	testPlayerPlaybackControls(t, func() (mediaPlayer, error) { return mpvPlayerFactory() })
 }
 
 func TestMpvPlayerConfiguration(t *testing.T) {
-	testPlayerConfiguration(t, mpvPlayerFactory, "MPV")
+	testPlayerConfiguration(t, func() (mediaPlayer, error) { return mpvPlayerFactory() }, "MPV")
 }

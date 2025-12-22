@@ -28,23 +28,21 @@ func testVideoPath(t *testing.T) string {
 }
 
 // setupPlayerTest is a generic setup function for any mediaPlayer implementation
-func setupPlayerTest(t *testing.T, factory playerFactory) (mediaPlayer, func()) {
+func setupPlayerTest[T mediaPlayer](t *testing.T, factory func() (T, error)) (T, func()) {
 
 	t.Helper()
-
 	player, err := factory()
 	if err != nil {
-		t.Skipf("Skipping tests: failed to create player: %v", err)
+		t.Fatalf("failed to create player: %v", err)
 	}
 
 	filePath := testVideoPath(t)
 
 	if err := player.loadFile(filePath); err != nil {
 		player.terminatePlayer()
-		t.Fatalf("loadFile() failed: %v", err)
+		t.Fatalf("loadFile(%s) failed: %v", filePath, err)
 	}
 
-	// Allow time for the file to load before setting properties
 	time.Sleep(100 * time.Millisecond)
 
 	cleanup := func() {
@@ -74,7 +72,7 @@ func testPlayerPlaybackControls(t *testing.T, factory playerFactory) {
 	player, cleanup := setupPlayerTest(t, factory)
 	defer cleanup()
 
-	t.Run("setSpeed", func(t *testing.T) {
+	t.Run(setSpeed, func(t *testing.T) {
 
 		if err := player.setSpeed(1.5); err != nil {
 			t.Errorf("setSpeed() error = %v", err)
@@ -82,7 +80,7 @@ func testPlayerPlaybackControls(t *testing.T, factory playerFactory) {
 
 	})
 
-	t.Run("setPause", func(t *testing.T) {
+	t.Run(setPause, func(t *testing.T) {
 
 		if err := player.setPause(true); err != nil {
 			t.Errorf("setPause(true) error = %v", err)

@@ -3,6 +3,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -14,6 +15,14 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 	"github.com/richbl/go-ble-sync-cycle/internal/video"
 	"tinygo.org/x/bluetooth"
+)
+
+const (
+	errFormat = "%v: %w"
+)
+
+var (
+	errNoSessionLoaded = errors.New("no session loaded")
 )
 
 // State represents the current state of a session
@@ -43,15 +52,15 @@ func (s State) String() string {
 	}[s]
 }
 
-// Manager coordinates session lifecycle and state
-type Manager struct {
-	mu           sync.RWMutex
-	state        State
+// StateManager coordinates session lifecycle and state
+type StateManager struct {
 	config       *config.Config
-	configPath   string
-	errorMsg     string
 	controllers  *controllers
 	shutdownMgr  *services.ShutdownManager
+	configPath   string
+	errorMsg     string
+	state        State
+	mu           sync.RWMutex
 	PendingStart bool
 }
 
@@ -64,15 +73,15 @@ type controllers struct {
 }
 
 // NewManager creates a new session manager in Idle state
-func NewManager() *Manager {
+func NewManager() *StateManager {
 
-	return &Manager{
+	return &StateManager{
 		state: StateIdle,
 	}
 }
 
 // LoadSession loads and validates a session configuration file
-func (m *Manager) LoadSession(configPath string) error {
+func (m *StateManager) LoadSession(configPath string) error {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -83,7 +92,7 @@ func (m *Manager) LoadSession(configPath string) error {
 		m.state = StateError
 		m.errorMsg = fmt.Sprintf("failed to load session: %v", err)
 
-		return err
+		return fmt.Errorf(errFormat, m.errorMsg, err)
 	}
 
 	// Update state
@@ -101,7 +110,7 @@ func (m *Manager) LoadSession(configPath string) error {
 }
 
 // SessionState returns the current session state (thread-safe)
-func (m *Manager) SessionState() State {
+func (m *StateManager) SessionState() State {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -110,7 +119,7 @@ func (m *Manager) SessionState() State {
 }
 
 // Config returns a copy of the current configuration (thread-safe)
-func (m *Manager) Config() *config.Config {
+func (m *StateManager) Config() *config.Config {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -124,7 +133,7 @@ func (m *Manager) Config() *config.Config {
 }
 
 // ConfigPath returns the path to the loaded configuration file
-func (m *Manager) ConfigPath() string {
+func (m *StateManager) ConfigPath() string {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -132,8 +141,8 @@ func (m *Manager) ConfigPath() string {
 	return m.configPath
 }
 
-// Error returns the last error message if state is StateError
-func (m *Manager) Error() string {
+// ErrorMessage returns the last error message if state is StateError
+func (m *StateManager) ErrorMessage() string {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -142,7 +151,7 @@ func (m *Manager) Error() string {
 }
 
 // SetState updates the session state (used by service controllers)
-func (m *Manager) SetState(newState State) {
+func (m *StateManager) SetState(newState State) {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -151,7 +160,7 @@ func (m *Manager) SetState(newState State) {
 }
 
 // SetError sets the error state with a message
-func (m *Manager) SetError(err error) {
+func (m *StateManager) SetError(err error) {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -166,7 +175,7 @@ func (m *Manager) SetError(err error) {
 }
 
 // Reset clears the session back to Idle state
-func (m *Manager) Reset() {
+func (m *StateManager) Reset() {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -179,7 +188,7 @@ func (m *Manager) Reset() {
 }
 
 // IsLoaded returns true if a session is currently loaded
-func (m *Manager) IsLoaded() bool {
+func (m *StateManager) IsLoaded() bool {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -188,7 +197,7 @@ func (m *Manager) IsLoaded() bool {
 }
 
 // IsRunning returns true if services are currently running
-func (m *Manager) IsRunning() bool {
+func (m *StateManager) IsRunning() bool {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -197,7 +206,7 @@ func (m *Manager) IsRunning() bool {
 }
 
 // StartSession initializes controllers and starts BLE and video services
-func (m *Manager) StartSession() error {
+func (m *StateManager) StartSession() error {
 
 	// Validate preconditions and flip PendingStart/state to Connecting atomically
 	if err := m.prepareStart(); err != nil {
@@ -250,68 +259,8 @@ func (m *Manager) StartSession() error {
 	return nil
 }
 
-// prepareStart validates state and sets PendingStart/state to Connecting
-func (m *Manager) prepareStart() error {
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if m.config == nil {
-		logger.Debug(logger.APP, "exiting: no config")
-		return fmt.Errorf("no session loaded")
-	}
-
-	if m.state == StateError {
-		logger.Debug(logger.APP, "reset from Error state to Loaded state")
-		m.state = StateLoaded
-	}
-
-	if m.state != StateLoaded {
-		logger.Debug(logger.APP, fmt.Sprintf("exiting: invalid state for start: %s", m.state))
-		return fmt.Errorf("session already started or in invalid state: %s", m.state)
-	}
-
-	if m.controllers != nil {
-		logger.Debug(logger.APP, "exiting: controllers already exist")
-		return fmt.Errorf("session already started")
-	}
-
-	m.PendingStart = true
-	m.state = StateConnecting
-	logger.Debug(logger.APP, "set PendingStart=true, state=Connecting")
-
-	return nil
-}
-
-// storeShutdownMgr stores the shutdown manager under lock
-func (m *Manager) storeShutdownMgr(s *services.ShutdownManager) {
-
-	m.mu.Lock()
-	m.shutdownMgr = s
-	logger.Debug(logger.APP, "shutdownMgr stored")
-	m.mu.Unlock()
-
-}
-
-// cleanupStartFailure handles cleaning manager state when session startup fails
-func (m *Manager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
-
-	m.mu.Lock()
-	m.PendingStart = false
-	m.state = StateLoaded
-	m.controllers = nil
-	m.shutdownMgr = nil
-	m.mu.Unlock()
-
-	// ensure the shutdown manager is shut down (cancels any ongoing operations)
-	if shutdownMgr != nil {
-		shutdownMgr.Shutdown()
-	}
-
-}
-
 // StopSession stops all services and cleans up controllers
-func (m *Manager) StopSession() error {
+func (m *StateManager) StopSession() error {
 
 	m.mu.Lock()
 	shutdownMgr := m.shutdownMgr
@@ -321,11 +270,8 @@ func (m *Manager) StopSession() error {
 	m.mu.Unlock()
 
 	if shutdownMgr == nil && !wasPending {
-		return fmt.Errorf("no active session to stop")
+		return fmt.Errorf(errFormat, "no active session to stop", nil)
 	}
-
-	// Emulate CLI signal: clear echo and log interrupt-like message
-	fmt.Print("\r")
 
 	if wasPending {
 		logger.Info(logger.BLE, "stop requested, canceling pending BLE setup...")
@@ -334,6 +280,8 @@ func (m *Manager) StopSession() error {
 	}
 
 	// Trigger shutdown (cancels ctx, waits wg—like Ctrl+C)
+	fmt.Print("\r") // Clear the ^C character from the terminal line
+
 	if shutdownMgr != nil {
 		shutdownMgr.Shutdown()
 	}
@@ -363,8 +311,129 @@ func (m *Manager) StopSession() error {
 	return nil
 }
 
+// BatteryLevel returns the current battery level from the BLE controller
+func (m *StateManager) BatteryLevel() byte {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers != nil && m.controllers.bleController != nil {
+		return m.controllers.bleController.BatteryLevelLast()
+	}
+
+	return 0 // Unknown (0%)
+}
+
+// CurrentSpeed returns the current smoothed speed from the speed controller
+func (m *StateManager) CurrentSpeed() (float64, string) {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Guard against nil controllers (session stopped or not started)
+	if m.controllers == nil || m.controllers.speedController == nil || m.config == nil {
+		return 0.0, ""
+	}
+
+	return m.controllers.speedController.SmoothedSpeed(), m.config.Speed.SpeedUnits
+}
+
+// VideoTimeRemaining returns the formatted time remaining string (HH:MM:SS)
+func (m *StateManager) VideoTimeRemaining() string {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers == nil || m.controllers.videoPlayer == nil {
+		return "--:--:--"
+	}
+
+	timeStr, err := m.controllers.videoPlayer.TimeRemaining()
+	if err != nil {
+		return "--:--:--"
+	}
+
+	return timeStr
+}
+
+// VideoPlaybackRate returns the current video playback multiplier (e.g. 1.0x)
+func (m *StateManager) VideoPlaybackRate() float64 {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.controllers == nil || m.controllers.videoPlayer == nil {
+		return 0.0
+	}
+
+	return m.controllers.videoPlayer.PlaybackSpeed()
+}
+
+// prepareStart validates state and sets PendingStart/state to Connecting
+func (m *StateManager) prepareStart() error {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.config == nil {
+		logger.Debug(logger.APP, "exiting: no config")
+
+		return fmt.Errorf(errFormat, errNoSessionLoaded, nil)
+	}
+
+	if m.state == StateError {
+		logger.Debug(logger.APP, "reset from Error state to Loaded state")
+		m.state = StateLoaded
+	}
+
+	if m.state != StateLoaded {
+		logger.Debug(logger.APP, fmt.Sprintf("exiting: invalid state for start: %s", m.state))
+
+		return fmt.Errorf(errFormat, fmt.Sprintf("session already started or in invalid state: %s", m.state), nil)
+	}
+
+	if m.controllers != nil {
+		logger.Debug(logger.APP, "exiting: controllers already exist")
+
+		return fmt.Errorf(errFormat, "session already started", nil)
+	}
+
+	m.PendingStart = true
+	m.state = StateConnecting
+	logger.Debug(logger.APP, "set PendingStart=true, state=Connecting")
+
+	return nil
+}
+
+// storeShutdownMgr stores the shutdown manager under lock
+func (m *StateManager) storeShutdownMgr(s *services.ShutdownManager) {
+
+	m.mu.Lock()
+	m.shutdownMgr = s
+	logger.Debug(logger.APP, "shutdownMgr stored")
+	m.mu.Unlock()
+
+}
+
+// cleanupStartFailure handles cleaning manager state when session startup fails
+func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
+
+	m.mu.Lock()
+	m.PendingStart = false
+	m.state = StateLoaded
+	m.controllers = nil
+	m.shutdownMgr = nil
+	m.mu.Unlock()
+
+	// ensure the shutdown manager is shut down (cancels any ongoing operations)
+	if shutdownMgr != nil {
+		shutdownMgr.Shutdown()
+	}
+
+}
+
 // initializeControllers creates the speed, video, and BLE controllers
-func (m *Manager) initializeControllers() (*controllers, error) {
+func (m *StateManager) initializeControllers() (*controllers, error) {
 
 	m.mu.RLock()
 	cfg := m.config
@@ -390,7 +459,7 @@ func (m *Manager) initializeControllers() (*controllers, error) {
 }
 
 // connectBLE handles BLE scanning, connection, and service discovery
-func (m *Manager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownManager) (bluetooth.Device, error) {
+func (m *StateManager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownManager) (bluetooth.Device, error) {
 
 	ctx := *shutdownMgr.Context()
 
@@ -421,7 +490,7 @@ func (m *Manager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownMa
 	}
 
 	// Get battery level
-	if err := ctrl.bleController.BatteryLevel(ctx, batteryServices); err != nil {
+	if err = ctrl.bleController.BatteryLevel(ctx, batteryServices); err != nil {
 		return bluetooth.Device{}, fmt.Errorf("failed to get battery level: %w", err)
 	}
 
@@ -439,21 +508,8 @@ func (m *Manager) connectBLE(ctrl *controllers, shutdownMgr *services.ShutdownMa
 	return device, nil
 }
 
-// BatteryLevel returns the current battery level from the BLE controller
-func (m *Manager) BatteryLevel() byte {
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if m.controllers != nil && m.controllers.bleController != nil {
-		return m.controllers.bleController.BatteryLevelLast()
-	}
-
-	return 0 // Unknown (0%)
-}
-
 // startServices launches BLE and video services in background goroutines
-func (m *Manager) startServices(ctrl *controllers, shutdownMgr *services.ShutdownManager) {
+func (m *StateManager) startServices(ctrl *controllers, shutdownMgr *services.ShutdownManager) {
 
 	// Run BLE service
 	shutdownMgr.Run(func(ctx context.Context) error {
@@ -465,49 +521,4 @@ func (m *Manager) startServices(ctrl *controllers, shutdownMgr *services.Shutdow
 		return ctrl.videoPlayer.Start(ctx, ctrl.speedController)
 	})
 
-}
-
-// CurrentSpeed returns the current smoothed speed from the speed controller
-func (m *Manager) CurrentSpeed() (float64, string) {
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	// Guard against nil controllers (session stopped or not started)
-	if m.controllers == nil || m.controllers.speedController == nil || m.config == nil {
-		return 0.0, ""
-	}
-
-	return m.controllers.speedController.SmoothedSpeed(), m.config.Speed.SpeedUnits
-}
-
-// VideoTimeRemaining returns the formatted time remaining string (HH:MM:SS)
-func (m *Manager) VideoTimeRemaining() string {
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if m.controllers == nil || m.controllers.videoPlayer == nil {
-		return "--:--:--"
-	}
-
-	timeStr, err := m.controllers.videoPlayer.TimeRemaining()
-	if err != nil {
-		return "--:--:--"
-	}
-
-	return timeStr
-}
-
-// VideoPlaybackRate returns the current video playback multiplier (e.g. 1.0x)
-func (m *Manager) VideoPlaybackRate() float64 {
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if m.controllers == nil || m.controllers.videoPlayer == nil {
-		return 0.0
-	}
-
-	return m.controllers.videoPlayer.PlaybackSpeed()
 }

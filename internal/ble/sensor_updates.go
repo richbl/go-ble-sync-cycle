@@ -61,6 +61,7 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 		speed, err := sd.processBLESpeed(m.speedConfig.SpeedUnits, buf)
 		if err != nil {
 			logger.Warn(logger.SPEED, fmt.Sprintf("error processing BLE speed data: %v", err))
+
 			return
 		}
 		speedController.UpdateSpeed(speed)

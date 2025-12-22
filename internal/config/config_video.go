@@ -18,13 +18,13 @@ type VideoConfig struct {
 
 // VideoOSDConfig defines on-screen display settings for video playback from the TOML config file
 type VideoOSDConfig struct {
-	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
-	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
-	DisplayTimeRemaining bool `toml:"display_time_remaining"`
 	FontSize             int  `toml:"font_size"`
 	MarginX              int  `toml:"margin_left"`
 	MarginY              int  `toml:"margin_top"`
-	ShowOSD              bool // Computed field based on display settings
+	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
+	DisplayTimeRemaining bool `toml:"display_time_remaining"`
+	ShowOSD              bool `toml:"-"`
 }
 
 // validate checks VideoConfig for valid settings
