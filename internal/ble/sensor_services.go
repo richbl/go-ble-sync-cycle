@@ -48,10 +48,10 @@ type CharacteristicDiscoverer interface {
 
 // serviceConfig holds configuration for discovering a specific BLE service
 type serviceConfig struct {
-	serviceUUID              bluetooth.UUID
-	characteristicUUID       bluetooth.UUID
 	errNoServicesFound       error
 	errNoCharacteristicFound error
+	serviceUUID              bluetooth.UUID
+	characteristicUUID       bluetooth.UUID
 }
 
 // deviceServiceWrapper wraps bluetooth.DeviceService to satisfy the CharacteristicDiscoverer interface
@@ -62,9 +62,9 @@ type deviceServiceWrapper struct {
 
 // charDiscoveryOptions holds options for characteristic discovery
 type charDiscoveryOptions struct {
-	cfg            serviceConfig
-	services       []CharacteristicDiscoverer
 	characteristic *CharacteristicReader
+	services       []CharacteristicDiscoverer
+	cfg            serviceConfig
 	readValue      bool
 }
 
@@ -72,8 +72,9 @@ type charDiscoveryOptions struct {
 func (w *deviceServiceWrapper) DiscoverCharacteristics(uuids []bluetooth.UUID) ([]CharacteristicReader, error) {
 
 	bleChars, err := w.service.DiscoverCharacteristics(uuids)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errFormat, "failed to discover peripheral characteristics", err)
 	}
 
 	if len(bleChars) == 0 {
@@ -90,16 +91,18 @@ func (w *deviceServiceWrapper) DiscoverCharacteristics(uuids []bluetooth.UUID) (
 }
 
 // discoverServices performs the discovery of BLE services with the given configuration
-func (m *Controller) discoverServices(cfg serviceConfig, device ServiceDiscoverer, found chan<- any, errChan chan<- error) {
+func discoverServices(cfg serviceConfig, device ServiceDiscoverer, found chan<- []CharacteristicDiscoverer, errChan chan<- error) {
 
 	services, err := device.DiscoverServices([]bluetooth.UUID{cfg.serviceUUID})
 	if err != nil {
 		errChan <- err
+
 		return
 	}
 
 	if len(services) == 0 {
 		errChan <- cfg.errNoServicesFound
+
 		return
 	}
 
@@ -113,21 +116,24 @@ func (m *Controller) discoverServices(cfg serviceConfig, device ServiceDiscovere
 }
 
 // discoverCharacteristics performs the discovery of BLE characteristics with the given options
-func (m *Controller) discoverCharacteristics(opts charDiscoveryOptions, found chan<- any, errChan chan<- error) {
+func discoverCharacteristics[T any](opts charDiscoveryOptions, found chan<- T, errChan chan<- error) {
 
 	if len(opts.services) == 0 {
 		errChan <- ErrNoServicesProvided
+
 		return
 	}
 
 	characteristics, err := opts.services[0].DiscoverCharacteristics([]bluetooth.UUID{opts.cfg.characteristicUUID})
 	if err != nil {
 		errChan <- err
+
 		return
 	}
 
 	if len(characteristics) == 0 {
 		errChan <- opts.cfg.errNoCharacteristicFound
+
 		return
 	}
 
@@ -138,7 +144,15 @@ func (m *Controller) discoverCharacteristics(opts charDiscoveryOptions, found ch
 
 	// If no read is requested, return the characteristics
 	if !opts.readValue {
-		found <- characteristics
+
+		if val, ok := any(characteristics).(T); ok {
+			found <- val
+
+			return
+		}
+
+		errChan <- fmt.Errorf("%w: expected %T, got %T", ErrTypeMismatch, *new(T), characteristics)
+
 		return
 	}
 
@@ -146,47 +160,50 @@ func (m *Controller) discoverCharacteristics(opts charDiscoveryOptions, found ch
 	buffer := make([]byte, 1)
 	if _, err := characteristics[0].Read(buffer); err != nil {
 		errChan <- err
+
 		return
 	}
 
-	found <- buffer[0]
+	if val, ok := any(buffer[0]).(T); ok {
+		found <- val
+
+		return
+	}
+
+	errChan <- fmt.Errorf("%w: expected byte, got %T", ErrTypeMismatch, buffer[0])
 }
 
 // executeAction is a helper that creates actionParams and executes a BLE action
-func (m *Controller) executeAction(ctx context.Context, logMessage string, action func(context.Context, chan<- any, chan<- error)) (any, error) {
+func executeAction[T any](ctx context.Context, m *Controller, logMessage string, action func(context.Context, chan<- T, chan<- error)) (T, error) {
 
-	params := actionParams{
+	params := actionParams[T]{
 		ctx:        ctx,
 		action:     action,
 		logMessage: logMessage,
 		stopAction: nil,
 	}
 
-	return m.performBLEAction(params)
+	return performBLEAction(m, params)
 }
 
 // BatteryService discovers and returns available battery services from the BLE peripheral
 func (m *Controller) BatteryService(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
-	result, err := m.executeAction(
+	result, err := executeAction(
 		ctx,
-		fmt.Sprintf("discovering battery service UUID=%s", batteryServiceConfig.serviceUUID.String()),
-		func(_ context.Context, found chan<- any, errChan chan<- error) {
-			m.discoverServices(batteryServiceConfig, device, found, errChan)
+		m,
+		"discovering battery service UUID="+batteryServiceConfig.serviceUUID.String(),
+		func(_ context.Context, found chan<- []CharacteristicDiscoverer, errChan chan<- error) {
+			discoverServices(batteryServiceConfig, device, found, errChan)
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	typedResult, err := assertBLEType(result, []CharacteristicDiscoverer{})
-	if err != nil {
-		return nil, err
-	}
-
 	logger.Info(logger.BLE, "found battery service")
 
-	return typedResult, nil
+	return result, nil
 }
 
 // BatteryLevel reads and logs the current battery level (0-100%) from the BLE peripheral
@@ -199,24 +216,21 @@ func (m *Controller) BatteryLevel(ctx context.Context, services []Characteristic
 		readValue:      true,
 	}
 
-	result, err := m.executeAction(
+	// We explicitly request a byte result here
+	batteryLevel, err := executeAction(
 		ctx,
-		fmt.Sprintf("discovering battery characteristic UUID=%s", batteryServiceConfig.characteristicUUID.String()),
-		func(_ context.Context, found chan<- any, errChan chan<- error) {
-			m.discoverCharacteristics(opts, found, errChan)
+		m,
+		"discovering battery characteristic UUID="+batteryServiceConfig.characteristicUUID.String(),
+		func(_ context.Context, found chan<- byte, errChan chan<- error) {
+			discoverCharacteristics(opts, found, errChan)
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	batteryLevel, err := assertBLEType(result, byte(0))
-	if err != nil {
-		return err
-	}
-
 	m.blePeripheralDetails.batteryLevel = batteryLevel
-	logger.Info(logger.BLE, fmt.Sprintf("found battery characteristic UUID=%s", m.blePeripheralDetails.batteryCharacteristic.UUID().String()))
+	logger.Info(logger.BLE, "found battery characteristic UUID="+m.blePeripheralDetails.batteryCharacteristic.UUID().String())
 	logger.Info(logger.BLE, fmt.Sprintf("BLE sensor battery level: %d%%", m.blePeripheralDetails.batteryLevel))
 
 	return nil
@@ -225,25 +239,21 @@ func (m *Controller) BatteryLevel(ctx context.Context, services []Characteristic
 // CSCServices discovers and returns available CSC services from the BLE peripheral
 func (m *Controller) CSCServices(ctx context.Context, device ServiceDiscoverer) ([]CharacteristicDiscoverer, error) {
 
-	result, err := m.executeAction(
+	result, err := executeAction(
 		ctx,
-		fmt.Sprintf("discovering CSC service UUID=%s", cscServiceConfig.serviceUUID.String()),
-		func(_ context.Context, found chan<- any, errChan chan<- error) {
-			m.discoverServices(cscServiceConfig, device, found, errChan)
+		m,
+		"discovering CSC service UUID="+cscServiceConfig.serviceUUID.String(),
+		func(_ context.Context, found chan<- []CharacteristicDiscoverer, errChan chan<- error) {
+			discoverServices(cscServiceConfig, device, found, errChan)
 		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf(errFormat, ErrCSCServiceDiscovery, err)
 	}
 
-	typedResult, err := assertBLEType(result, []CharacteristicDiscoverer{})
-	if err != nil {
-		return nil, err
-	}
+	logger.Info(logger.BLE, "found CSC service UUID="+cscServiceConfig.serviceUUID.String())
 
-	logger.Info(logger.BLE, fmt.Sprintf("found CSC service UUID=%s", cscServiceConfig.serviceUUID.String()))
-
-	return typedResult, nil
+	return result, nil
 }
 
 // CSCCharacteristics discovers and stores the CSC measurement characteristic from the BLE peripheral
@@ -255,11 +265,14 @@ func (m *Controller) CSCCharacteristics(ctx context.Context, services []Characte
 		characteristic: &m.blePeripheralDetails.bleCharacteristic,
 		readValue:      false,
 	}
-	_, err := m.executeAction(
+
+	// Interested in the CSC measurement characteristic
+	_, err := executeAction(
 		ctx,
-		fmt.Sprintf("discovering CSC characteristic UUID=%s", cscServiceConfig.characteristicUUID.String()),
-		func(_ context.Context, found chan<- any, errChan chan<- error) { // Ignore ctx
-			m.discoverCharacteristics(opts, found, errChan)
+		m,
+		"discovering CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String(),
+		func(_ context.Context, found chan<- []CharacteristicReader, errChan chan<- error) {
+			discoverCharacteristics(opts, found, errChan)
 		},
 	)
 
@@ -267,7 +280,7 @@ func (m *Controller) CSCCharacteristics(ctx context.Context, services []Characte
 		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
-	logger.Info(logger.BLE, fmt.Sprintf("found CSC characteristic UUID=%s", cscServiceConfig.characteristicUUID.String()))
+	logger.Info(logger.BLE, "found CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String())
 
 	return nil
 }

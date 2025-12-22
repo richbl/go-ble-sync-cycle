@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -23,10 +22,10 @@ type smContext struct {
 // ShutdownManager represents a shutdown manager that manages a component lifecycle
 type ShutdownManager struct {
 	context smContext
-	wg      sync.WaitGroup
-	timeout time.Duration
 	errChan chan error
 	cleanup []func()
+	wg      sync.WaitGroup
+	timeout time.Duration
 }
 
 // NewShutdownManager creates a new shutdown manager
@@ -48,11 +47,8 @@ func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 // Run starts a service and waits for it to complete
 func (sm *ShutdownManager) Run(fn func(context.Context) error) {
 
-	// Add a new service to the wait group
-	sm.wg.Add(1)
-
-	go func() {
-		defer sm.wg.Done()
+	// Run the function in a goroutine managed by the wait group
+	sm.wg.Go(func() {
 
 		// if the context is canceled, signal the error channel and return
 		if err := fn(sm.context.ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -65,8 +61,7 @@ func (sm *ShutdownManager) Run(fn func(context.Context) error) {
 
 		}
 
-	}()
-
+	})
 }
 
 // AddCleanup adds a cleanup function to the shutdown manager so that they can be executed when
@@ -134,14 +129,14 @@ func (sm *ShutdownManager) Wait() {
 
 // WaveHello outputs a welcome message
 func WaveHello() {
-	logger.Info(logger.APP, fmt.Sprintf("%s starting...", config.GetFullVersion()))
+	logger.Info(logger.APP, config.GetFullVersion()+" starting...")
 }
 
 // WaveGoodbye outputs a goodbye message and exits the program
 func WaveGoodbye() {
 
 	logger.ClearCLILine()
-	logger.Info(logger.APP, fmt.Sprintf("%s shutdown complete. Goodbye", config.GetFullVersion()))
+	logger.Info(logger.APP, config.GetFullVersion()+" shutdown complete. Goodbye")
 	os.Exit(0)
 
 }

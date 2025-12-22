@@ -12,8 +12,8 @@ import (
 type SessionMetadata struct {
 	Title    string // The session_title from the config, or filename if empty
 	FilePath string // Full path to the config file
-	IsValid  bool   // Whether the config file passed validation
 	ErrorMsg string // Error message if validation failed
+	IsValid  bool   // True if the config is valid
 }
 
 // LoadSessionMetadata loads and validates a TOML config file, extracting only the session title
@@ -28,7 +28,8 @@ func LoadSessionMetadata(filePath string) (*SessionMetadata, error) {
 	cfg, err := loadAndValidateConfig(filePath)
 	if err != nil {
 		metadata.ErrorMsg = err.Error()
-		return metadata, fmt.Errorf("failed to load session metadata from %s: %w", filePath, err)
+
+		return nil, fmt.Errorf("failed to load session metadata from %s: %w", filePath, err)
 	}
 
 	metadata.IsValid = true
@@ -53,7 +54,7 @@ func loadAndValidateConfig(filePath string) (*Config, error) {
 	// Decode the TOML file
 	_, err := toml.DecodeFile(filePath, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errInvalidConfigFile, err)
+		return nil, fmt.Errorf("%w: %w", errInvalidConfigFile, err)
 	}
 
 	// Validate TOML sections

@@ -14,6 +14,11 @@ import (
 // ComponentType represents the types of component for logger identification
 type ComponentType string
 
+// Format for wrapping errors
+const (
+	errFormat = "%v: %w"
+)
+
 // Component types
 const (
 	APP   ComponentType = "[APP]"
@@ -48,8 +53,8 @@ type (
 	}
 
 	syncMultiWriter struct {
-		mu      sync.Mutex
 		writers []io.Writer
+		mu      sync.Mutex
 	}
 )
 
@@ -96,7 +101,7 @@ func SetLogLevel(levelStr string) {
 	newLevel := parseLogLevel(levelStr)
 	logLevelVar.Set(newLevel)
 
-	Debug(APP, fmt.Sprintf("logging level changed to %s", newLevel.String()))
+	Debug(APP, "logging level changed to "+newLevel.String())
 
 }
 
@@ -206,16 +211,22 @@ func (m *syncMultiWriter) Add(w io.Writer) {
 }
 
 // Write writes to all attached writers
-func (m *syncMultiWriter) Write(p []byte) (n int, err error) {
+func (m *syncMultiWriter) Write(p []byte) (int, error) {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	for _, w := range m.writers {
-		n, err = w.Write(p)
+		n, err := w.Write(p)
+
 		if err != nil {
-			return n, err
+			return n, fmt.Errorf(errFormat, "failed to output to writer(s)", err)
 		}
+
+		if n != len(p) {
+			return n, io.ErrShortWrite
+		}
+
 	}
 
 	return len(p), nil
@@ -238,7 +249,7 @@ func NewCustomTextHandler(out io.Writer, opts *slog.HandlerOptions) *CustomTextH
 }
 
 // Handle formats and outputs a log message
-func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
+func (h *CustomTextHandler) Handle(_ context.Context, r slog.Record) error {
 
 	var buf bytes.Buffer
 
@@ -259,13 +270,18 @@ func (h *CustomTextHandler) Handle(ctx context.Context, r slog.Record) error {
 	fmt.Fprintf(&buf, "%s", r.Message)
 
 	// Append the attributes to the buffer
-	h.appendAttrs(&buf, otherAttrs)
+	if err := h.appendAttrs(&buf, otherAttrs); err != nil {
+		return err
+	}
 
 	// Finally write the buffer
-	buf.WriteString("\n")
+	if _, err := buf.WriteString("\n"); err != nil {
+		return fmt.Errorf(errFormat, "failed to write newline", err)
+	}
+
 	_, err := h.out.Write(buf.Bytes())
 
-	return err
+	return fmt.Errorf(errFormat, "failed to output log message", err)
 }
 
 // appendLevel appends the log level formatting to the buffer
@@ -309,6 +325,7 @@ func (h *CustomTextHandler) extractComponentAndAttrs(r slog.Record) (string, []s
 
 		if a.Key == "_component" {
 			component = a.Value.String()
+
 			return true // Continue getting other attrs
 		}
 
@@ -321,24 +338,30 @@ func (h *CustomTextHandler) extractComponentAndAttrs(r slog.Record) (string, []s
 }
 
 // appendAttrs appends the attributes to the buffer
-func (h *CustomTextHandler) appendAttrs(buf *bytes.Buffer, attrs []slog.Attr) {
+func (h *CustomTextHandler) appendAttrs(buf *bytes.Buffer, attrs []slog.Attr) error {
 
 	if len(attrs) == 0 {
-		return
+		return nil
 	}
 
-	buf.WriteString(" ") // Add a space before the attributes
+	// Add a space before the attributes
+	if _, err := buf.WriteString(" "); err != nil {
+		return fmt.Errorf(errFormat, "failed to add space before attributes", err)
+	}
 
 	// Iterate over the attributes
 	for i, a := range attrs {
 		fmt.Fprintf(buf, "%s%s=%v%s", White, a.Key, a.Value, Reset)
 
 		if i < len(attrs)-1 {
-			buf.WriteString(" ")
+			if _, err := buf.WriteString(" "); err != nil {
+				return fmt.Errorf(errFormat, "failed to add space between attributes", err)
+			}
 		}
 
 	}
 
+	return nil
 }
 
 // UseGUIWriterOnly replaces all writers with only the GUI writer (used in GUI mode).

@@ -2,15 +2,17 @@ package session
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
-var configPath = "../config/config_test.toml"
-var errLoadSession = errors.New("LoadSession() unexpected error: %v")
+var (
+	configPath     = "../config/config_test.toml"
+	errLoadSession = errors.New("LoadSession() unexpected error: %v")
+	errTest        = errors.New("test error message")
+)
 
 // init is called to set the log level for tests
 func init() {
@@ -74,8 +76,8 @@ func TestLoadSession(t *testing.T) {
 	}
 
 	// Verify no error message
-	if mgr.Error() != "" {
-		t.Errorf("LoadSession() error message should be empty, got: %v", mgr.Error())
+	if mgr.ErrorMessage() != "" {
+		t.Errorf("LoadSession() error message should be empty, got: %v", mgr.ErrorMessage())
 	}
 
 }
@@ -97,7 +99,7 @@ func TestLoadSessionInvalidFile(t *testing.T) {
 	}
 
 	// Verify error message is set
-	if mgr.Error() == "" {
+	if mgr.ErrorMessage() == "" {
 		t.Error("LoadSession() error message should not be empty")
 	}
 
@@ -133,15 +135,14 @@ func TestSetError(t *testing.T) {
 	mgr := NewManager()
 
 	// Test with actual error
-	testErr := fmt.Errorf("test error message")
-	mgr.SetError(testErr)
+	mgr.SetError(errTest)
 
 	if mgr.SessionState() != StateError {
 		t.Errorf("SetError() state = %v, want %v", mgr.SessionState(), StateError)
 	}
 
-	if mgr.Error() != testErr.Error() {
-		t.Errorf("SetError() error = %v, want %v", mgr.Error(), testErr.Error())
+	if mgr.ErrorMessage() != errTest.Error() {
+		t.Errorf("SetError() error = %v, want %v", mgr.ErrorMessage(), errTest.Error())
 	}
 
 	// Test with nil error (should not panic)
@@ -188,7 +189,7 @@ func TestReset(t *testing.T) {
 	}
 
 	// Verify error message is cleared
-	if mgr.Error() != "" {
+	if mgr.ErrorMessage() != "" {
 		t.Error("Reset() error message should be empty")
 	}
 
@@ -216,11 +217,11 @@ func TestConcurrentAccess(t *testing.T) {
 	// Concurrent readers
 	for range 10 {
 		wg.Go(func() {
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				_ = mgr.SessionState()
 				_ = mgr.Config()
 				_ = mgr.ConfigPath()
-				_ = mgr.Error()
+				_ = mgr.ErrorMessage()
 				_ = mgr.IsLoaded()
 			}
 		})
@@ -229,7 +230,7 @@ func TestConcurrentAccess(t *testing.T) {
 	// Concurrent state changes
 	for range 5 {
 		wg.Go(func() {
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				mgr.SetState(StateConnecting)
 				mgr.SetState(StateConnected)
 			}

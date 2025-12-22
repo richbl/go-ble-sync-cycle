@@ -10,6 +10,11 @@ import (
 // ModeType represents the current mode of operation for the application
 type ModeType int
 
+// Format for wrapping errors
+const (
+	errFormat = "%v: %w"
+)
+
 const (
 	CLI ModeType = iota
 	GUI
@@ -27,10 +32,10 @@ type FlagInfo struct {
 
 // CLIFlags holds a list of available command-line flags
 type CLIFlags struct {
-	Logging bool
-	NoGUI   bool
 	Config  string
 	Seek    string
+	Logging bool
+	NoGUI   bool
 	Help    bool
 }
 
@@ -107,7 +112,7 @@ func ParseArgs() error {
 
 	// Parse the flags
 	if err := fs.Parse(os.Args[1:]); err != nil {
-		return err
+		return fmt.Errorf(errFormat, "failed to parse flags", err)
 	}
 
 	return nil

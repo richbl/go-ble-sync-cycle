@@ -109,8 +109,8 @@ type PageSessionEditor struct {
 func NewAppUI(builder *gtk.Builder) *AppUI {
 
 	ui := &AppUI{
-		Window:    objGTK(builder, "main_window").Cast().(*adw.ApplicationWindow),
-		ViewStack: objGTK(builder, "view_stack").Cast().(*adw.ViewStack),
+		Window:    objGTK[*adw.ApplicationWindow](builder, "main_window"),
+		ViewStack: objGTK[*adw.ViewStack](builder, "view_stack"),
 		Page1:     hydrateSessionSelect(builder),
 		Page2:     hydrateSessionStatus(builder),
 		Page3:     hydrateSessionLog(builder),
@@ -120,24 +120,29 @@ func NewAppUI(builder *gtk.Builder) *AppUI {
 	return ui
 }
 
-// objGTK retrieves a GTK object by ID and logs a fatal error if not found
-func objGTK(builder *gtk.Builder, id string) *glib.Object {
+// objGTK retrieves a GTK object by ID and casts it to type T
+func objGTK[T any](builder *gtk.Builder, id string) T {
 
 	obj := builder.GetObject(id)
 	if obj == nil {
 		logger.Fatal(logger.GUI, fmt.Sprintf("widget ID '%s' not found in XML design file", id))
 	}
 
-	return obj
+	val, ok := obj.Cast().(T)
+	if !ok {
+		logger.Fatal(logger.GUI, fmt.Sprintf("widget ID '%s' is not of expected type %T", id, *new(T)))
+	}
+
+	return val
 }
 
 // hydrateSessionSelect constructs the PageSessionSelect from the GTK-Builder GUI file (bsc_gui.ui)
 func hydrateSessionSelect(builder *gtk.Builder) *PageSessionSelect {
 
 	return &PageSessionSelect{
-		ListBox:    objGTK(builder, "session_listbox").Cast().(*gtk.ListBox),
-		EditButton: objGTK(builder, "edit_session_button").Cast().(*gtk.Button),
-		LoadButton: objGTK(builder, "load_session_button").Cast().(*gtk.Button),
+		ListBox:    objGTK[*gtk.ListBox](builder, "session_listbox"),
+		EditButton: objGTK[*gtk.Button](builder, "edit_session_button"),
+		LoadButton: objGTK[*gtk.Button](builder, "load_session_button"),
 	}
 }
 
@@ -145,21 +150,21 @@ func hydrateSessionSelect(builder *gtk.Builder) *PageSessionSelect {
 func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 
 	return &PageSessionStatus{
-		SessionNameRow:           objGTK(builder, "session_name_row").Cast().(*adw.ActionRow),
-		SessionFileLocationRow:   objGTK(builder, "session_file_location_row").Cast().(*adw.ActionRow),
-		SensorStatusRow:          objGTK(builder, "sensor_status_row").Cast().(*adw.ActionRow),
-		SensorBatteryRow:         objGTK(builder, "battery_level_row").Cast().(*adw.ActionRow),
-		SpeedRow:                 objGTK(builder, "speed_row").Cast().(*adw.ActionRow),
-		SpeedLabel:               objGTK(builder, "speed_large_label").Cast().(*gtk.Label),
-		PlaybackSpeedLabel:       objGTK(builder, "playback_speed_large_label").Cast().(*gtk.Label),
-		PlaybackSpeedRow:         objGTK(builder, "playback_speed_row").Cast().(*adw.ActionRow),
-		TimeRemainingLabel:       objGTK(builder, "time_remaining_large_label").Cast().(*gtk.Label),
-		TimeRemainingRow:         objGTK(builder, "time_remaining_row").Cast().(*adw.ActionRow),
-		SessionControlRow:        objGTK(builder, "session_control_row").Cast().(*adw.ActionRow),
-		SessionControlBtn:        objGTK(builder, "session_control_button").Cast().(*gtk.Button),
-		SessionControlBtnContent: objGTK(builder, "session_control_button_content").Cast().(*adw.ButtonContent),
-		SensorConnIcon:           objGTK(builder, "connection_status_icon").Cast().(*gtk.Image),
-		SensorBattIcon:           objGTK(builder, "battery_icon").Cast().(*gtk.Image),
+		SessionNameRow:           objGTK[*adw.ActionRow](builder, "session_name_row"),
+		SessionFileLocationRow:   objGTK[*adw.ActionRow](builder, "session_file_location_row"),
+		SensorStatusRow:          objGTK[*adw.ActionRow](builder, "sensor_status_row"),
+		SensorBatteryRow:         objGTK[*adw.ActionRow](builder, "battery_level_row"),
+		SpeedRow:                 objGTK[*adw.ActionRow](builder, "speed_row"),
+		SpeedLabel:               objGTK[*gtk.Label](builder, "speed_large_label"),
+		PlaybackSpeedLabel:       objGTK[*gtk.Label](builder, "playback_speed_large_label"),
+		PlaybackSpeedRow:         objGTK[*adw.ActionRow](builder, "playback_speed_row"),
+		TimeRemainingLabel:       objGTK[*gtk.Label](builder, "time_remaining_large_label"),
+		TimeRemainingRow:         objGTK[*adw.ActionRow](builder, "time_remaining_row"),
+		SessionControlRow:        objGTK[*adw.ActionRow](builder, "session_control_row"),
+		SessionControlBtn:        objGTK[*gtk.Button](builder, "session_control_button"),
+		SessionControlBtnContent: objGTK[*adw.ButtonContent](builder, "session_control_button_content"),
+		SensorConnIcon:           objGTK[*gtk.Image](builder, "connection_status_icon"),
+		SensorBattIcon:           objGTK[*gtk.Image](builder, "battery_icon"),
 	}
 }
 
@@ -167,8 +172,8 @@ func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 
 	sessionLog := &PageSessionLog{
-		LogLevelRow: objGTK(builder, "logging_level_row").Cast().(*adw.ActionRow),
-		TextView:    objGTK(builder, "logging_view").Cast().(*gtk.TextView),
+		LogLevelRow: objGTK[*adw.ActionRow](builder, "logging_level_row"),
+		TextView:    objGTK[*gtk.TextView](builder, "logging_view"),
 	}
 
 	// Display logging level
@@ -189,7 +194,7 @@ func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 	applyLogStyles()
 
 	// Configure scrolling behavior to always scroll to the bottom
-	scrolledWindow := objGTK(builder, "logging_scroll_window").Cast().(*gtk.ScrolledWindow)
+	scrolledWindow := objGTK[*gtk.ScrolledWindow](builder, "logging_scroll_window")
 	vAdj := scrolledWindow.VAdjustment()
 	vAdj.Connect("changed", func() {
 
@@ -242,31 +247,31 @@ func applyLogStyles() {
 func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 
 	return &PageSessionEditor{
-		ScrolledWindow:      objGTK(builder, "session_editor_page").Cast().(*adw.PreferencesPage),
-		TitleEntry:          objGTK(builder, "session_title_entry_row").Cast().(*adw.EntryRow),
-		LogLevel:            objGTK(builder, "log_level_combo").Cast().(*adw.ComboRow),
-		BTAddressEntry:      objGTK(builder, "bt_address_entry_row").Cast().(*adw.EntryRow),
-		ScanTimeout:         objGTK(builder, "scan_timeout_spin").Cast().(*adw.SpinRow),
-		WheelCircumference:  objGTK(builder, "edit_wheel_circumference_spin").Cast().(*adw.SpinRow),
-		SpeedUnits:          objGTK(builder, "edit_speed_units_combo").Cast().(*adw.ComboRow),
-		SpeedThreshold:      objGTK(builder, "edit_speed_threshold_spin").Cast().(*adw.SpinRow),
-		SpeedSmoothing:      objGTK(builder, "edit_speed_smoothing_spin").Cast().(*adw.SpinRow),
-		MediaPlayer:         objGTK(builder, "edit_media_player_combo").Cast().(*adw.ComboRow),
-		VideoFileRow:        objGTK(builder, "video_file_row").Cast().(*adw.ActionRow),
-		VideoFileButton:     objGTK(builder, "video_file_button").Cast().(*gtk.Button),
-		StartTimeEntry:      objGTK(builder, "start_time_entry_row").Cast().(*adw.EntryRow),
-		WindowScale:         objGTK(builder, "edit_window_scale_factor_spin").Cast().(*adw.SpinRow),
-		UpdateInterval:      objGTK(builder, "edit_update_interval_spin").Cast().(*adw.SpinRow),
-		SpeedMultiplier:     objGTK(builder, "edit_speed_multiplier_spin").Cast().(*adw.SpinRow),
-		SwitchCycleSpeed:    objGTK(builder, "display_cycle_speed_switch").Cast().(*adw.SwitchRow),
-		SwitchPlaybackSpeed: objGTK(builder, "display_playback_speed_switch").Cast().(*adw.SwitchRow),
-		SwitchTimeRemaining: objGTK(builder, "display_time_remaining_switch").Cast().(*adw.SwitchRow),
-		FontSize:            objGTK(builder, "display_font_size_spin").Cast().(*adw.SpinRow),
-		MarginLeft:          objGTK(builder, "pixel_offset_left_spin").Cast().(*adw.SpinRow),
-		MarginTop:           objGTK(builder, "pixel_offset_top_spin").Cast().(*adw.SpinRow),
-		SaveRow:             objGTK(builder, "edit_save_row").Cast().(*adw.ActionRow),
-		SaveButton:          objGTK(builder, "save_button").Cast().(*gtk.Button),
-		SaveAsButton:        objGTK(builder, "save_as_button").Cast().(*gtk.Button),
+		ScrolledWindow:      objGTK[*adw.PreferencesPage](builder, "session_editor_page"),
+		TitleEntry:          objGTK[*adw.EntryRow](builder, "session_title_entry_row"),
+		LogLevel:            objGTK[*adw.ComboRow](builder, "log_level_combo"),
+		BTAddressEntry:      objGTK[*adw.EntryRow](builder, "bt_address_entry_row"),
+		ScanTimeout:         objGTK[*adw.SpinRow](builder, "scan_timeout_spin"),
+		WheelCircumference:  objGTK[*adw.SpinRow](builder, "edit_wheel_circumference_spin"),
+		SpeedUnits:          objGTK[*adw.ComboRow](builder, "edit_speed_units_combo"),
+		SpeedThreshold:      objGTK[*adw.SpinRow](builder, "edit_speed_threshold_spin"),
+		SpeedSmoothing:      objGTK[*adw.SpinRow](builder, "edit_speed_smoothing_spin"),
+		MediaPlayer:         objGTK[*adw.ComboRow](builder, "edit_media_player_combo"),
+		VideoFileRow:        objGTK[*adw.ActionRow](builder, "video_file_row"),
+		VideoFileButton:     objGTK[*gtk.Button](builder, "video_file_button"),
+		StartTimeEntry:      objGTK[*adw.EntryRow](builder, "start_time_entry_row"),
+		WindowScale:         objGTK[*adw.SpinRow](builder, "edit_window_scale_factor_spin"),
+		UpdateInterval:      objGTK[*adw.SpinRow](builder, "edit_update_interval_spin"),
+		SpeedMultiplier:     objGTK[*adw.SpinRow](builder, "edit_speed_multiplier_spin"),
+		SwitchCycleSpeed:    objGTK[*adw.SwitchRow](builder, "display_cycle_speed_switch"),
+		SwitchPlaybackSpeed: objGTK[*adw.SwitchRow](builder, "display_playback_speed_switch"),
+		SwitchTimeRemaining: objGTK[*adw.SwitchRow](builder, "display_time_remaining_switch"),
+		FontSize:            objGTK[*adw.SpinRow](builder, "display_font_size_spin"),
+		MarginLeft:          objGTK[*adw.SpinRow](builder, "pixel_offset_left_spin"),
+		MarginTop:           objGTK[*adw.SpinRow](builder, "pixel_offset_top_spin"),
+		SaveRow:             objGTK[*adw.ActionRow](builder, "edit_save_row"),
+		SaveButton:          objGTK[*gtk.Button](builder, "save_button"),
+		SaveAsButton:        objGTK[*gtk.Button](builder, "save_as_button"),
 	}
 }
 
@@ -309,7 +314,6 @@ func setupAllSignals(sc *SessionController) {
 }
 
 // StartGUI initializes and runs the GTK4/Adwaita application
-// StartGUI initializes and runs the GTK4/Adwaita application
 func StartGUI() {
 
 	// Initialize the application
@@ -324,11 +328,12 @@ func StartGUI() {
 		// Create the "About" menu item action handler
 		aboutAction := gio.NewSimpleAction("about", nil)
 		aboutAction.ConnectActivate(func(_ *glib.Variant) {
-			// Create a fresh About dialog each time to ensure clean state
+
+			// Create a new About dialog
 			aboutDialog := adw.NewAboutDialog()
 			aboutDialog.SetApplicationIcon("bsc_logo")
 			aboutDialog.SetApplicationName("BLE Sync Cycle")
-			aboutDialog.SetVersion(fmt.Sprintf("v%s", config.GetVersion()))
+			aboutDialog.SetVersion("v" + config.GetVersion())
 			aboutDialog.SetCopyright("Copyright © 2025 Rich Bloch")
 			aboutDialog.SetDevelopers([]string{"Rich Bloch"})
 			aboutDialog.SetIssueURL("https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md")
@@ -337,6 +342,7 @@ func StartGUI() {
 
 			var transientParent gtk.Widgetter = ui.Window
 			aboutDialog.Present(transientParent)
+
 		})
 
 		app.AddAction(aboutAction)

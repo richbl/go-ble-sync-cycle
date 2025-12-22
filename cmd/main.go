@@ -163,12 +163,12 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
-		return &appControllers{}, logger.VIDEO, fmt.Errorf(errFormat, errVideoPlaybackController, err)
+		return nil, logger.VIDEO, fmt.Errorf(errFormat, errVideoPlaybackController, err)
 	}
 
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
-		return &appControllers{}, logger.BLE, fmt.Errorf(errFormat, errBLEController, err)
+		return nil, logger.BLE, fmt.Errorf(errFormat, errBLEController, err)
 	}
 
 	return &appControllers{
@@ -181,9 +181,7 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 // logBLESetupError displays BLE setup errors and exits the application
 func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
 
-	if !errors.Is(err, context.Canceled) {
-		logger.Fatal(logger.BLE, fmt.Sprintf("%s: %v", msg, err))
-	}
+	logger.Fatal(logger.BLE, fmt.Sprintf("%s: %v", msg, err))
 
 	// Time to go... so say goodbye
 	mgr.Shutdown()
@@ -244,8 +242,6 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 
 		if err := controllers.bleController.BLEUpdates(ctx, controllers.speedController); err != nil {
 			logger.Error(logger.BLE, fmt.Sprintf("failed to start BLE updates: %v", err))
-
-			return err
 		}
 
 		return nil
@@ -256,7 +252,6 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 
 		if err := controllers.videoPlayer.Start(ctx, controllers.speedController); err != nil {
 			logger.Error(logger.VIDEO, fmt.Sprintf("failed to start video playback: %v", err))
-			return err
 		}
 
 		return nil

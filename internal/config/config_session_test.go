@@ -9,7 +9,7 @@ import (
 
 // Error messages
 var (
-	errFailedToCreateTempFile = errors.New("Failed to create temp config file: %v")
+	errFailedToCreateTempFile = errors.New("failed to create temp config file: %v")
 )
 
 // TestLoadSessionMetadataSuccess tests the successful loading of session metadata
@@ -26,6 +26,8 @@ func TestLoadSessionMetadataSuccess(t *testing.T) {
 
 		if metadata == nil {
 			t.Fatal("LoadSessionMetadata() returned nil metadata")
+
+			return
 		}
 
 		if !metadata.IsValid {
@@ -67,20 +69,14 @@ func TestLoadSessionMetadataErrors(t *testing.T) {
 
 			if err == nil {
 				t.Errorf("LoadSessionMetadata() expected an error, but got nil")
+
 				return
 			}
 
-			if metadata == nil {
-				t.Fatal("LoadSessionMetadata() should return metadata even on error")
+			if metadata != nil {
+				t.Error("LoadSessionMetadata() should return nil metadata on error")
 			}
 
-			if metadata.IsValid {
-				t.Error("LoadSessionMetadata() metadata.IsValid should be false for invalid configs")
-			}
-
-			if metadata.ErrorMsg == "" {
-				t.Error("LoadSessionMetadata() metadata.ErrorMsg should not be empty for invalid configs")
-			}
 		})
 	}
 
@@ -125,7 +121,7 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0644)
+	err := os.WriteFile(tempFile, []byte(configContent), 0600)
 	if err != nil {
 		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
@@ -188,7 +184,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0644)
+	err := os.WriteFile(tempFile, []byte(configContent), 0600)
 	if err != nil {
 		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
@@ -247,7 +243,7 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0644)
+	err := os.WriteFile(tempFile, []byte(configContent), 0600)
 	if err != nil {
 		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
@@ -260,19 +256,9 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
 		t.Error("LoadSessionMetadata() expected error for invalid log level, got nil")
 	}
 
-	// Metadata should still be returned
-	if metadata == nil {
-		t.Fatal("LoadSessionMetadata() should return metadata even on validation error")
-	}
-
-	// Should be marked as invalid
-	if metadata.IsValid {
+	// metadata should be nil
+	if metadata != nil {
 		t.Error("LoadSessionMetadata() metadata.IsValid should be false for validation errors")
-	}
-
-	// Should have error message
-	if metadata.ErrorMsg == "" {
-		t.Error("LoadSessionMetadata() metadata.ErrorMsg should contain validation error")
 	}
 
 }

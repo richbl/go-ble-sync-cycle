@@ -80,7 +80,7 @@ var statusTable = map[ObjectKind]map[Status]StatusPresentation{
 type SessionController struct {
 	UI             *AppUI
 	Sessions       []Session
-	SessionManager *session.Manager
+	SessionManager *session.StateManager
 	starting       atomic.Bool
 	metricsLoop    glib.SourceHandle
 	saveFileDialog *gtk.FileDialog
@@ -93,6 +93,44 @@ func NewSessionController(ui *AppUI) *SessionController {
 		UI:             ui,
 		SessionManager: session.NewManager(),
 	}
+}
+
+// PopulateSessionList refreshes the ListBox with current sessions
+func (sc *SessionController) PopulateSessionList() {
+
+	// Clear existing rows
+	sc.UI.Page1.ListBox.RemoveAll()
+
+	if len(sc.Sessions) == 0 {
+		logger.Debug(logger.GUI, "no sessions to populate in the list")
+
+		row := adw.NewActionRow()
+		row.SetTitle("No sessions found")
+		row.SetSubtitle("")
+		sc.UI.Page1.ListBox.Append(row)
+
+		return
+	}
+
+	// Enable the list of sessions
+	sc.UI.Page1.ListBox.SetSensitive(true)
+
+	logger.Debug(logger.GUI, fmt.Sprintf("populating session list with %d session(s)...", len(sc.Sessions)))
+
+	// Populate with current sessions
+	for _, s := range sc.Sessions {
+		row := adw.NewActionRow()
+		row.SetTitle(s.Title)
+		sc.UI.Page1.ListBox.Append(row)
+	}
+
+	// Set focus on first element
+	sc.UI.Page1.ListBox.SelectRow(sc.UI.Page1.ListBox.RowAtIndex(0))
+
+	// With session selection made, enable buttons
+	sc.UI.Page1.EditButton.SetSensitive(true)
+	sc.UI.Page1.LoadButton.SetSensitive(true)
+
 }
 
 // setupSessionSelectSignals wires up event listeners for the session selection tab (Page 1)
@@ -134,6 +172,7 @@ func (sc *SessionController) scanForSessions() {
 
 		if err != nil {
 			logger.Warn(logger.GUI, fmt.Sprintf("skipping invalid config file %s: %v", filePath, err))
+
 			continue
 		}
 
@@ -152,44 +191,6 @@ func (sc *SessionController) scanForSessions() {
 	}
 
 	logger.Debug(logger.GUI, fmt.Sprintf("session scan complete: found %d valid session(s)", len(sc.Sessions)))
-
-}
-
-// PopulateSessionList refreshes the ListBox with current sessions
-func (sc *SessionController) PopulateSessionList() {
-
-	// Clear existing rows
-	sc.UI.Page1.ListBox.RemoveAll()
-
-	if len(sc.Sessions) == 0 {
-		logger.Debug(logger.GUI, "no sessions to populate in the list")
-
-		row := adw.NewActionRow()
-		row.SetTitle("No sessions found")
-		row.SetSubtitle(fmt.Sprintf(""))
-		sc.UI.Page1.ListBox.Append(row)
-
-		return
-	}
-
-	// Enable the list of sessions
-	sc.UI.Page1.ListBox.SetSensitive(true)
-
-	logger.Debug(logger.GUI, fmt.Sprintf("populating session list with %d session(s)...", len(sc.Sessions)))
-
-	// Populate with current sessions
-	for _, s := range sc.Sessions {
-		row := adw.NewActionRow()
-		row.SetTitle(s.Title)
-		sc.UI.Page1.ListBox.Append(row)
-	}
-
-	// Set focus on first element
-	sc.UI.Page1.ListBox.SelectRow(sc.UI.Page1.ListBox.RowAtIndex(0))
-
-	// With session selection made, enable buttons
-	sc.UI.Page1.EditButton.SetSensitive(true)
-	sc.UI.Page1.LoadButton.SetSensitive(true)
 
 }
 
@@ -232,6 +233,7 @@ func (sc *SessionController) setupLoadButtonSignals() {
 				err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
 				if err != nil {
 					logger.Error(logger.GUI, fmt.Sprintf("error loading session: %v", err))
+
 					return
 				}
 

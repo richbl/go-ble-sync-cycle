@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -78,6 +79,7 @@ func (sc *SessionController) populateEditor() {
 	cfg := sc.SessionManager.Config()
 	if cfg == nil {
 		logger.Warn(logger.GUI, "attempted to populate editor with nil config")
+
 		return
 	}
 
@@ -125,11 +127,11 @@ func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 	// Use reflection to iterate through the widgets and set their sensitivity
 	v := reflect.ValueOf(p4).Elem()
 
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 
 		field := v.Field(i)
 		if field.CanInterface() {
-			widget, ok := field.Interface().(interface{ SetSensitive(bool) })
+			widget, ok := field.Interface().(interface{ SetSensitive(enabled bool) })
 
 			if ok {
 				widget.SetSensitive(enabled)
@@ -204,13 +206,14 @@ func (sc *SessionController) openVideoFilePicker() {
 		file, err := fileDialog.OpenFinish(res)
 		if err != nil {
 			logger.Warn(logger.GUI, fmt.Sprintf("File dialog cancelled or error: %v", err))
+
 			return
 		}
 
 		// Update the UI with the selected path
 		path := file.Path()
 		glib.IdleAdd(func() {
-			logger.Debug(logger.GUI, fmt.Sprintf("File selected: %s", path))
+			logger.Debug(logger.GUI, "File selected: "+path)
 			if path != "" {
 				sc.UI.Page4.VideoFileRow.SetSubtitle(path)
 			}
@@ -250,7 +253,7 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 	}
 
 	// Update dialog properties
-	newFilename := fmt.Sprintf("%s.toml", convertSessionTitle(cfg.App.SessionTitle))
+	newFilename := convertSessionTitle(cfg.App.SessionTitle) + ".toml"
 	sc.saveFileDialog.SetInitialName(newFilename)
 
 	// Define the callback used to handle the file chooser
@@ -276,7 +279,7 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 // performSessionSave handles I/O, Error reporting, and UI Refresh
 func (sc *SessionController) performSessionSave(path string, cfg *config.Config) {
 
-	logger.Debug(logger.GUI, fmt.Sprintf("attempting to save session to: %s", path))
+	logger.Debug(logger.GUI, "attempting to save session to: "+path)
 
 	// Perform file I/O
 	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
@@ -286,24 +289,12 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 		return
 	}
 
-	logger.Info(logger.GUI, fmt.Sprintf("session saved to %s", path))
+	logger.Info(logger.GUI, "session saved to "+path)
 
 	// Refresh the Session List (Page 1) to show new session(s)
 	sc.scanForSessions()
 	sc.PopulateSessionList()
 
-}
-
-// indexOf finds the index of a string in a slice (defaults to 0)
-func indexOf(element string, data []string) uint {
-
-	for k, v := range data {
-		if element == v {
-			return uint(k)
-		}
-	}
-
-	return 0
 }
 
 // convertSessionTitle converts a session title into a string for use as a filename
@@ -315,4 +306,15 @@ func convertSessionTitle(sessionTitle string) string {
 
 	return "BSC_session"
 
+}
+
+// indexOf returns the index of the target string in the slice
+func indexOf(target string, options []string) uint {
+
+	idx := slices.Index(options, target)
+	if idx < 0 {
+		logger.Warn(logger.BLE, "target not found in options; skipping selection update", "target", target)
+	}
+
+	return uint(idx)
 }

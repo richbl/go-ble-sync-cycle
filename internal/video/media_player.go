@@ -2,6 +2,7 @@ package video
 
 import (
 	"errors"
+	"fmt"
 )
 
 // Error definitions
@@ -15,6 +16,8 @@ var (
 const (
 	errFormat        = "%v: %w"
 	errTimeRemaining = "failed to get time remaining in video"
+	setSpeed         = "setSpeed"
+	setPause         = "setPause"
 )
 
 // PlayerEventID represents the type of a player event
@@ -32,13 +35,13 @@ type playerEvent struct {
 
 // osdConfig manages the configuration for the On-Screen Display (OSD)
 type osdConfig struct {
-	showOSD              bool
 	fontSize             int
+	marginX              int
+	marginY              int
+	showOSD              bool
 	displayCycleSpeed    bool
 	displayPlaybackSpeed bool
 	displayTimeRemaining bool
-	marginX              int
-	marginY              int
 }
 
 // mediaPlayer defines the interface abstraction for a video player
@@ -61,4 +64,14 @@ type mediaPlayer interface {
 	// On Screen Display (OSD) methods
 	showOSDText(text string) error
 	terminatePlayer()
+}
+
+// wrapError helper function adds return context only if an error occurred
+func wrapError(context string, err error) error {
+
+	if err == nil {
+		return nil
+	}
+
+	return fmt.Errorf(errFormat, context, err)
 }

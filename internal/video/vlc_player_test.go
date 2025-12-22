@@ -5,20 +5,20 @@ import (
 )
 
 // vlcPlayerFactory creates a new vlcPlayer instance for testing
-func vlcPlayerFactory() (mediaPlayer, error) {
+func vlcPlayerFactory() (*vlcPlayer, error) {
 	return newVLCPlayer()
 }
 
 func TestVLCPlayerLifecycle(t *testing.T) {
-	testPlayerLifecycle(t, vlcPlayerFactory)
+	testPlayerLifecycle(t, func() (mediaPlayer, error) { return vlcPlayerFactory() })
 }
 
 func TestVLCPlayerPlaybackControls(t *testing.T) {
-	testPlayerPlaybackControls(t, vlcPlayerFactory)
+	testPlayerPlaybackControls(t, func() (mediaPlayer, error) { return vlcPlayerFactory() })
 }
 
 func TestVLCPlayerConfiguration(t *testing.T) {
-	testPlayerConfiguration(t, vlcPlayerFactory, "VLC")
+	testPlayerConfiguration(t, func() (mediaPlayer, error) { return vlcPlayerFactory() }, "VLC")
 }
 
 // TestVLCPlayerParseTimePosition tests VLC-specific time parsing logic
