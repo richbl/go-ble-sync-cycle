@@ -47,10 +47,7 @@ func TestLoadSession(t *testing.T) {
 	mgr := NewManager()
 
 	// Test loading a valid config
-	err := mgr.LoadSession(configPath)
-	if err != nil {
-		t.Fatalf(errLoadSession.Error(), err)
-	}
+	loadSession(t, configPath, mgr, errLoadSession.Error())
 
 	// Verify state changed to Loaded
 	if mgr.SessionState() != StateLoaded {
@@ -160,10 +157,7 @@ func TestReset(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	err := mgr.LoadSession(configPath)
-	if err != nil {
-		t.Fatalf(errLoadSession.Error(), err)
-	}
+	loadSession(t, configPath, mgr, errLoadSession.Error())
 
 	// Verify session is loaded
 	if !mgr.IsLoaded() {
@@ -206,10 +200,7 @@ func TestConcurrentAccess(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	err := mgr.LoadSession(configPath)
-	if err != nil {
-		t.Fatalf(errLoadSession.Error(), err)
-	}
+	loadSession(t, configPath, mgr, errLoadSession.Error())
 
 	var wg sync.WaitGroup
 	iterations := 100
@@ -274,18 +265,12 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	mgr := NewManager()
 
 	// Load first session
-	err := mgr.LoadSession(configPath)
-	if err != nil {
-		t.Fatalf("LoadSession() first load failed: %v", err)
-	}
+	loadSession(t, configPath, mgr, "LoadSession() first load failed: %v")
 
 	firstPath := mgr.ConfigPath()
 
 	// Load second session (same file, but simulates switching)
-	err = mgr.LoadSession(configPath)
-	if err != nil {
-		t.Fatalf("LoadSession() second load failed: %v", err)
-	}
+	loadSession(t, configPath, mgr, "LoadSession() second load failed: %v")
 
 	secondPath := mgr.ConfigPath()
 
@@ -297,6 +282,17 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	// Verify state is still Loaded
 	if mgr.SessionState() != StateLoaded {
 		t.Errorf("State after second load = %v, want %v", mgr.SessionState(), StateLoaded)
+	}
+
+}
+
+// loadSession is a helper function that loads a valid session configuration
+func loadSession(t *testing.T, configPath string, mgr *StateManager, errMsg string) {
+
+	t.Helper()
+	err := mgr.LoadSession(configPath)
+	if err != nil {
+		t.Fatalf(errMsg, err)
 	}
 
 }

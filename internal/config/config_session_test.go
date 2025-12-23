@@ -121,10 +121,7 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0600)
-	if err != nil {
-		t.Fatalf(errFailedToCreateTempFile.Error(), err)
-	}
+	createTestConfigFile(t, tempFile, configContent)
 
 	// Test loading the config
 	metadata, err := LoadSessionMetadata(tempFile)
@@ -184,10 +181,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0600)
-	if err != nil {
-		t.Fatalf(errFailedToCreateTempFile.Error(), err)
-	}
+	createTestConfigFile(t, tempFile, configContent)
 
 	// Test loading the config
 	metadata, err := LoadSessionMetadata(tempFile)
@@ -243,10 +237,7 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
     margin_top = 10
 `
 
-	err := os.WriteFile(tempFile, []byte(configContent), 0600)
-	if err != nil {
-		t.Fatalf(errFailedToCreateTempFile.Error(), err)
-	}
+	createTestConfigFile(t, tempFile, configContent)
 
 	// Test loading the invalid config
 	metadata, err := LoadSessionMetadata(tempFile)
@@ -259,6 +250,17 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
 	// metadata should be nil
 	if metadata != nil {
 		t.Error("LoadSessionMetadata() metadata.IsValid should be false for validation errors")
+	}
+
+}
+
+// createTestConfigFile creates a test config file
+func createTestConfigFile(t *testing.T, tempFile string, content string) {
+
+	t.Helper()
+	err := os.WriteFile(tempFile, []byte(content), 0600)
+	if err != nil {
+		t.Fatalf(errFailedToCreateTempFile.Error(), err)
 	}
 
 }

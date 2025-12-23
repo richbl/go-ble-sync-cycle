@@ -174,6 +174,7 @@ func TestCustomTextHandler(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
+
 			buf := &bytes.Buffer{}
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
 			r := slog.NewRecord(time.Now(), tt.level, testMessage, 0)
