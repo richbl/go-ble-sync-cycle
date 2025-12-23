@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"os"
 
 	config "github.com/richbl/go-ble-sync-cycle/internal/config"
 	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -75,7 +76,7 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 	// Manage context cancellation
 	go func() {
 		<-ctx.Done()
-		fmt.Print("\r") // Clear the ^C character from the terminal line
+		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
 
 		// Disable real-time notifications from BLE sensor

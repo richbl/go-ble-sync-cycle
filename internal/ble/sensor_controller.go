@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -179,7 +180,7 @@ func handleActionTimeout(ctx context.Context, m *Controller, stopAction func() e
 	if stopAction != nil {
 
 		if err := stopAction(); err != nil {
-			fmt.Print("\r") // Clear the ^C character from the terminal line
+			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 			logger.Error(logger.BLE, fmt.Sprintf("failed to stop action: %v", err))
 		}
 
@@ -190,7 +191,7 @@ func handleActionTimeout(ctx context.Context, m *Controller, stopAction func() e
 		return fmt.Errorf("%w (%ds)", ErrScanTimeout, m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)
 	}
 
-	fmt.Print("\r") // Clear the ^C character from the terminal line
+	fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 
 	return fmt.Errorf(errFormat, "user interrupt detected", ctx.Err())
 }

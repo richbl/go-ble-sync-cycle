@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -187,7 +188,7 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 
 		case <-ctx.Done():
 
-			fmt.Print("\r") // Clear the ^C character from the terminal line
+			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 			logger.Info(logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
 			return nil // No need to show this context cancellation error
