@@ -112,7 +112,7 @@ func LogLevel() string {
 
 // ClearCLILine clears the CLI
 func ClearCLILine() {
-	fmt.Print("\r\033[K")
+	fmt.Fprint(os.Stdout, "\r\033[K")
 }
 
 // SetExitHandler sets the exit handler for fatal log events

@@ -1,8 +1,8 @@
 version: "2"
 linters:
   enable:
-  # - containedctx
-  # - contextcheck
+  - containedctx
+  - contextcheck
   - copyloopvar
   - cyclop
   - decorder
@@ -51,57 +51,6 @@ linters:
   - usestdlibvars
   - wastedassign
   - wrapcheck
-  settings:
-    errcheck:
-      disable-default-exclusions: true
-      check-type-assertions: true
-      check-blank: true
-      exclude-functions:
-        - io/ioutil.ReadFile
-        - io.Copy(*bytes.Buffer)
-        - io.Copy(os.Stdout)
-    forbidigo:
-      forbid:
-        - pattern: ^print(ln)?$
-        - pattern: ^spew\.(ConfigState\.)?Dump$
-        - pattern: ^v1.Dump$
-          pkg: ^example.com/pkg/api/v1$
-      exclude-godoc-examples: false
-      analyze-types: true
-    funcorder:
-      # Checks that constructors are placed after the structure declaration.
-      # Default: true
-      constructor: true
-      # Checks if the exported methods of a structure are placed before the non-exported ones.
-      # Default: true
-      struct-method: false
-      # Checks if the constructors and/or structure methods are sorted alphabetically.
-      # Default: false
-      alphabetical: true
-    gocognit:
-      min-complexity: 15
-    govet:
-      enable-all: true
-      disable:
-        - fieldalignment
-    ineffassign:
-      check-escaping-errors: true
-    ireturn:
-      allow:
-        - generic
-        - error
-        - stdlib
-    nilnil:
-      detect-opposite: true
-    testifylint:
-      enable-all: true
-    unconvert:
-      # Remove conversions that force intermediate rounding.
-      # Default: false
-      fast-math: true
-      # Be more conservative (experimental)
-      # Default: false
-      safe: true
   exclusions:
     generated: lax
     presets:
@@ -117,6 +66,51 @@ linters:
       - third_party$
       - builtin$
       - examples$
+
+linters-settings:
+  errcheck:
+    check-blank: true
+    check-type-assertions: true
+    disable-default-exclusions: true
+    exclude-functions:
+      - io/ioutil.ReadFile
+      - io.Copy(*bytes.Buffer)
+      - io.Copy(os.Stdout)
+  funcorder:
+    # Checks if the constructors and/or structure methods are sorted alphabetically.
+    # Default: false
+    alphabetical: true
+    # Checks that constructors are placed after the structure declaration.
+    # Default: true
+    constructor: true
+    # Checks if the exported methods of a structure are placed before the non-exported ones.
+    # Default: true
+    struct-method: false
+  gocognit:
+    min-complexity: 15
+  govet:
+    disable:
+      - fieldalignment
+    enable-all: true
+  ineffassign:
+    check-escaping-errors: true
+  ireturn:
+    allow:
+      - error
+      - generic
+      - stdlib
+  nilnil:
+    detect-opposite: true
+  testifylint:
+    enable-all: true
+  unconvert:
+    # Remove conversions that force intermediate rounding.
+    # Default: false
+    fast-math: true
+    # Be more conservative (experimental)
+    # Default: false
+    safe: true
+
 formatters:
   exclusions:
     generated: lax

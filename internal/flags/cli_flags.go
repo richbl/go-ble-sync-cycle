@@ -121,32 +121,32 @@ func ParseArgs() error {
 // ShowHelp displays application help information
 func ShowHelp() {
 
-	fmt.Println("")
-	fmt.Println("-----------------------------------------------------------------------------------")
-	fmt.Println("")
-	fmt.Println("Usage: ble-sync-cycle [flags]")
-	fmt.Println("")
-	fmt.Println("The following flags are available when running in console/CLI mode:")
-	fmt.Println("")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "-----------------------------------------------------------------------------------")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "Usage: ble-sync-cycle [flags]")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "The following flags are available when running in console/CLI mode:")
+	fmt.Fprintln(os.Stdout, "")
 
 	for _, fi := range flagInfos {
 		if fi.Mode == CLI {
-			fmt.Printf("  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
+			fmt.Fprintf(os.Stdout, "  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
 		}
 	}
 
-	fmt.Println("")
-	fmt.Println("The following flags are available when running in GUI mode:")
-	fmt.Println("")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "The following flags are available when running in GUI mode:")
+	fmt.Fprintln(os.Stdout, "")
 
 	for _, fi := range flagInfos {
 		if fi.Mode == GUI {
-			fmt.Printf("  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
+			fmt.Fprintf(os.Stdout, "  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
 		}
 	}
-	fmt.Println("")
-	fmt.Println("-----------------------------------------------------------------------------------")
-	fmt.Println("")
+	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout, "-----------------------------------------------------------------------------------")
+	fmt.Fprintln(os.Stdout, "")
 }
 
 // Flags returns the parsed flags

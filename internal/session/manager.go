@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -280,7 +281,7 @@ func (m *StateManager) StopSession() error {
 	}
 
 	// Trigger shutdown (cancels ctx, waits wg—like Ctrl+C)
-	fmt.Print("\r") // Clear the ^C character from the terminal line
+	fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 
 	if shutdownMgr != nil {
 		shutdownMgr.Shutdown()
