@@ -280,8 +280,11 @@ func (h *CustomTextHandler) Handle(_ context.Context, r slog.Record) error {
 	}
 
 	_, err := h.out.Write(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to output log message", err)
+	}
 
-	return fmt.Errorf(errFormat, "failed to output log message", err)
+	return nil
 }
 
 // appendLevel appends the log level formatting to the buffer
