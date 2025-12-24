@@ -221,7 +221,7 @@ func (sc *SessionController) openVideoFilePicker() {
 	}
 
 	// Launch dialog
-	fileDialog.Open(context.TODO(), &sc.UI.Window.Window, cb)
+	fileDialog.Open(context.Background(), &sc.UI.Window.Window, cb)
 
 }
 
@@ -273,7 +273,7 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 	}
 
 	// Launch the dialog
-	sc.saveFileDialog.Save(context.TODO(), &sc.UI.Window.Window, cb)
+	sc.saveFileDialog.Save(context.Background(), &sc.UI.Window.Window, cb)
 }
 
 // performSessionSave handles I/O, Error reporting, and UI Refresh
