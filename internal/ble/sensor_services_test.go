@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"tinygo.org/x/bluetooth"
@@ -174,7 +175,7 @@ func TestServiceDiscoverySuccess(t *testing.T) {
 				return []bluetooth.DeviceService{{}}, nil
 			})
 
-			services, err := cfg.serviceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
 
 			require.NoError(t, err)
 			assert.Len(t, services, 1)
@@ -194,7 +195,7 @@ func TestServiceDiscoveryNoServicesFound(t *testing.T) {
 				return nil, nil
 			})
 
-			services, err := cfg.serviceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
 
 			require.Error(t, err)
 			require.ErrorIs(t, err, cfg.expectedNoSvcErr)
@@ -215,7 +216,7 @@ func TestServiceDiscoveryError(t *testing.T) {
 				return nil, errServiceDiscoveryFailed
 			})
 
-			services, err := cfg.serviceFunc(controller, context.Background(), mock)
+			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
 
 			require.Error(t, err)
 			require.ErrorIs(t, err, errServiceDiscoveryFailed)
@@ -251,7 +252,7 @@ func TestCharacteristicsDiscoverySuccess(t *testing.T) {
 				return []CharacteristicReader{mockChar}, nil
 			})
 
-			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
 			assert.NoError(t, err)
 		})
 	}
@@ -269,7 +270,7 @@ func TestCharacteristicsDiscoveryNoCharacteristicsFound(t *testing.T) {
 				return []CharacteristicReader{}, nil
 			})
 
-			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
 
 			require.Error(t, err)
 			assert.ErrorIs(t, err, cfg.expectedNoCharErr)
@@ -289,7 +290,7 @@ func TestCharacteristicsDiscoveryError(t *testing.T) {
 				return nil, errCharacteristicsDiscoveryFailed
 			})
 
-			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{mockService})
+			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
 
 			require.Error(t, err)
 			assert.ErrorIs(t, err, errCharacteristicsDiscoveryFailed)
@@ -305,7 +306,7 @@ func TestCharacteristicsEmptyServicesList(t *testing.T) {
 		t.Run(cfg.name+" Characteristics Empty Services List", func(t *testing.T) {
 			controller := createTestBLEController(t)
 
-			err := cfg.charFunc(controller, context.Background(), []CharacteristicDiscoverer{})
+			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{})
 
 			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrNoServicesProvided)
@@ -332,7 +333,7 @@ func TestBatteryLevelReadError(t *testing.T) {
 		return []CharacteristicReader{mockChar}, nil
 	})
 
-	err := controller.BatteryLevel(context.Background(), []CharacteristicDiscoverer{mockService})
+	err := controller.BatteryLevel(logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, errCharReadFailed)
 
@@ -365,7 +366,7 @@ func TestServiceConfigErrorTypes(t *testing.T) {
 func TestBatteryServiceWithCancel(t *testing.T) {
 
 	controller := createTestBLEController(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(logger.BackgroundCtx, 100*time.Millisecond)
 	defer cancel()
 
 	// Create a mock that will block until the context is canceled

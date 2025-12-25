@@ -70,11 +70,11 @@ func (ui *AppUI) createExitDialog() {
 	ui.exitDialog.ConnectResponse(func(response string) {
 
 		if response == "yes" {
-			logger.Info(logger.GUI, "user confirmed exit")
-			services.WaveGoodbye()
+			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed exit")
+			services.WaveGoodbye(logger.BackgroundCtx)
 			ui.Window.Close()
 		} else {
-			logger.Debug(logger.GUI, "user cancelled exit")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "user cancelled exit")
 		}
 
 	})

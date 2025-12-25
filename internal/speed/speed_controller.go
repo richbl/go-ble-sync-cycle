@@ -2,6 +2,7 @@ package speed
 
 import (
 	"container/ring"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -53,7 +54,7 @@ func NewSpeedController(window int) *Controller {
 }
 
 // UpdateSpeed updates the current speed measurement and calculates a smoothed average
-func (sc *Controller) UpdateSpeed(speed float64) {
+func (sc *Controller) UpdateSpeed(ctx context.Context, speed float64) {
 
 	// Lock the mutex to protect the fields
 	sc.mu.Lock()
@@ -68,7 +69,7 @@ func (sc *Controller) UpdateSpeed(speed float64) {
 
 		value, ok := x.(float64)
 		if !ok {
-			logger.Error(logger.BLE, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
+			logger.Error(ctx, logger.BLE, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
 
 			return
 		}
@@ -92,7 +93,7 @@ func (sc *Controller) SmoothedSpeed() float64 {
 }
 
 // SpeedBuffer returns the current speed buffer
-func (sc *Controller) SpeedBuffer() []string {
+func (sc *Controller) SpeedBuffer(ctx context.Context) []string {
 
 	// Lock the mutex to protect the fields
 	sc.mu.RLock()
@@ -104,7 +105,7 @@ func (sc *Controller) SpeedBuffer() []string {
 		if x != nil {
 			value, ok := x.(float64)
 			if !ok {
-				logger.Error(logger.SPEED, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
+				logger.Error(ctx, logger.SPEED, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
 
 				return
 			}

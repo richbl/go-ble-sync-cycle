@@ -44,7 +44,7 @@ func main() {
 	appInitialize()
 
 	// Hello computer...
-	services.WaveHello()
+	services.WaveHello(logger.BackgroundCtx)
 
 	// Parse for command-line flags
 	parseCLIFlags()
@@ -52,19 +52,19 @@ func main() {
 
 	// Check for application mode (CLI or GUI)
 	if !flags.IsCLIMode() {
-		logger.Info(logger.APP, "now running in GUI mode...")
+		logger.Info(logger.BackgroundCtx, logger.APP, "now running in GUI mode...")
 		ui.StartGUI()
 
 		return
 	}
 
 	// Continue running in CLI mode
-	logger.Info(logger.APP, "running in CLI mode")
+	logger.Info(logger.BackgroundCtx, logger.APP, "running in CLI mode")
 
 	// Load configuration from TOML file
 	cfg := loadConfig(configFile)
 
-	// Initialize services
+	// Initialize utility/shutdown services
 	mgr := initializeUtilityServices(cfg)
 
 	// Initialize controllers
@@ -74,12 +74,13 @@ func main() {
 	bleDevice := controllers.bleScanAndConnect(*mgr.Context(), mgr)
 	controllers.bleServicesAndCharacteristics(*mgr.Context(), bleDevice, mgr)
 
-	// Start services
+	// Start services to manage BLE and video
 	controllers.startServiceRunners(mgr)
 
 	// Wait patiently for shutdown and then wave goodbye
 	mgr.Wait()
-	services.WaveGoodbye()
+	services.WaveGoodbye(logger.BackgroundCtx)
+
 }
 
 // appInitialize defaults the logger and exit handler objects until later services start
@@ -90,7 +91,7 @@ func appInitialize() {
 
 	// Initialize the fatal log events exit handler until the service manager is loaded
 	logger.SetExitHandler(func() {
-		services.WaveGoodbye()
+		services.WaveGoodbye(logger.BackgroundCtx)
 	})
 
 }
@@ -99,7 +100,7 @@ func appInitialize() {
 func parseCLIFlags() {
 
 	if err := flags.ParseArgs(); err != nil {
-		logger.Fatal(logger.APP, fmt.Sprintf("failed to parse command-line flags: %v", err))
+		logger.Fatal(logger.BackgroundCtx, logger.APP, fmt.Sprintf("failed to parse command-line flags: %v", err))
 	}
 
 }
@@ -109,7 +110,7 @@ func checkForHelpFlag() {
 
 	if flags.IsHelpFlag() {
 		flags.ShowHelp()
-		services.WaveGoodbye()
+		services.WaveGoodbye(logger.BackgroundCtx)
 	}
 
 }
@@ -119,7 +120,7 @@ func loadConfig(file string) *config.Config {
 
 	cfg, err := config.Load(file)
 	if err != nil {
-		logger.Fatal(logger.APP, fmt.Sprintf("failed to load TOML configuration: %v", err))
+		logger.Fatal(logger.BackgroundCtx, logger.APP, fmt.Sprintf("failed to load TOML configuration: %v", err))
 	}
 
 	return cfg
@@ -139,7 +140,7 @@ func initializeUtilityServices(cfg *config.Config) *services.ShutdownManager {
 	// Set the exit handler for fatal log events
 	logger.SetExitHandler(func() {
 		mgr.Shutdown()
-		services.WaveGoodbye()
+		services.WaveGoodbye(logger.BackgroundCtx)
 	})
 
 	return mgr
@@ -151,7 +152,7 @@ func initializeControllers(cfg *config.Config) *appControllers {
 
 	controllers, componentType, err := setupAppControllers(*cfg)
 	if err != nil {
-		logger.Fatal(componentType, fmt.Sprintf("failed to create controllers: %v", err))
+		logger.Fatal(logger.BackgroundCtx, componentType, fmt.Sprintf("failed to create controllers: %v", err))
 	}
 
 	return controllers
@@ -179,13 +180,13 @@ func setupAppControllers(cfg config.Config) (*appControllers, logger.ComponentTy
 }
 
 // logBLESetupError displays BLE setup errors and exits the application
-func logBLESetupError(err error, msg string, mgr *services.ShutdownManager) {
+func logBLESetupError(ctx context.Context, err error, msg string, mgr *services.ShutdownManager) {
 
-	logger.Fatal(logger.BLE, fmt.Sprintf("%s: %v", msg, err))
+	logger.Fatal(ctx, logger.BLE, fmt.Sprintf("%s: %v", msg, err))
 
 	// Time to go... so say goodbye
 	mgr.Shutdown()
-	services.WaveGoodbye()
+	services.WaveGoodbye(ctx)
 }
 
 // bleScanAndConnect scans for a BLE peripheral and connects to it
@@ -196,11 +197,11 @@ func (controllers *appControllers) bleScanAndConnect(ctx context.Context, mgr *s
 	var err error
 
 	if scanResult, err = controllers.bleController.ScanForBLEPeripheral(ctx); err != nil {
-		logBLESetupError(err, "failed to scan for BLE peripheral", mgr)
+		logBLESetupError(ctx, err, "failed to scan for BLE peripheral", mgr)
 	}
 
 	if connectResult, err = controllers.bleController.ConnectToBLEPeripheral(ctx, scanResult); err != nil {
-		logBLESetupError(err, "failed to connect to BLE peripheral", mgr)
+		logBLESetupError(ctx, err, "failed to connect to BLE peripheral", mgr)
 	}
 
 	return connectResult
@@ -214,22 +215,22 @@ func (controllers *appControllers) bleServicesAndCharacteristics(ctx context.Con
 
 	// Get the battery service
 	if serviceResult, err = controllers.bleController.BatteryService(ctx, &connectResult); err != nil {
-		logBLESetupError(err, "failed to acquire battery service", mgr)
+		logBLESetupError(ctx, err, "failed to acquire battery service", mgr)
 	}
 
 	// Get the battery level
 	if err = controllers.bleController.BatteryLevel(ctx, serviceResult); err != nil {
-		logBLESetupError(err, "failed to acquire battery level", mgr)
+		logBLESetupError(ctx, err, "failed to acquire battery level", mgr)
 	}
 
 	// Get the CSC services
 	if serviceResult, err = controllers.bleController.CSCServices(ctx, &connectResult); err != nil {
-		logBLESetupError(err, "failed to acquire BLE services", mgr)
+		logBLESetupError(ctx, err, "failed to acquire BLE services", mgr)
 	}
 
 	// Get the CSC characteristics
 	if err = controllers.bleController.CSCCharacteristics(ctx, serviceResult); err != nil {
-		logBLESetupError(err, "failed to acquire BLE characteristics", mgr)
+		logBLESetupError(ctx, err, "failed to acquire BLE characteristics", mgr)
 	}
 
 }
@@ -241,7 +242,7 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.bleController.BLEUpdates(ctx, controllers.speedController); err != nil {
-			logger.Error(logger.BLE, fmt.Sprintf("failed to start BLE updates: %v", err))
+			logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to start BLE updates: %v", err))
 		}
 
 		return nil
@@ -251,7 +252,7 @@ func (controllers *appControllers) startServiceRunners(mgr *services.ShutdownMan
 	mgr.Run(func(ctx context.Context) error {
 
 		if err := controllers.videoPlayer.Start(ctx, controllers.speedController); err != nil {
-			logger.Error(logger.VIDEO, fmt.Sprintf("failed to start video playback: %v", err))
+			logger.Error(ctx, logger.VIDEO, fmt.Sprintf("failed to start video playback: %v", err))
 		}
 
 		return nil

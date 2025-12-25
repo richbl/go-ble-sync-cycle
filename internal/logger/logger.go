@@ -58,14 +58,16 @@ type (
 	}
 )
 
+// Package variables
 var (
-	logger       *slog.Logger
-	ExitFunc     = os.Exit
-	exitHandler  ExitHandler
-	exitOnce     sync.Once
-	logOutput    *syncMultiWriter
-	logLevelVar  = new(slog.LevelVar)
-	outputFormat = "%s%s%s "
+	logger        *slog.Logger
+	ExitFunc      = os.Exit
+	exitHandler   ExitHandler
+	exitOnce      sync.Once
+	logOutput     *syncMultiWriter
+	logLevelVar   = new(slog.LevelVar)
+	outputFormat  = "%s%s%s "
+	BackgroundCtx = context.Background() // root context for logging
 )
 
 // Initialize sets up the logger
@@ -101,7 +103,7 @@ func SetLogLevel(levelStr string) {
 	newLevel := parseLogLevel(levelStr)
 	logLevelVar.Set(newLevel)
 
-	Debug(APP, "logging level changed to "+newLevel.String())
+	Debug(BackgroundCtx, APP, "logging level changed to "+newLevel.String())
 
 }
 
@@ -122,26 +124,26 @@ func SetExitHandler(handler ExitHandler) {
 
 // Logger functions for each log level
 
-func Debug(first any, args ...any) {
-	logStrict(context.Background(), slog.LevelDebug, first, args...)
+func Debug(ctx context.Context, first any, args ...any) {
+	logStrict(ctx, slog.LevelDebug, first, args...)
 }
 
-func Info(first any, args ...any) {
-	logStrict(context.Background(), slog.LevelInfo, first, args...)
+func Info(ctx context.Context, first any, args ...any) {
+	logStrict(ctx, slog.LevelInfo, first, args...)
 }
 
-func Warn(first any, args ...any) {
-	logStrict(context.Background(), slog.LevelWarn, first, args...)
+func Warn(ctx context.Context, first any, args ...any) {
+	logStrict(ctx, slog.LevelWarn, first, args...)
 }
 
-func Error(first any, args ...any) {
-	logStrict(context.Background(), slog.LevelError, first, args...)
+func Error(ctx context.Context, first any, args ...any) {
+	logStrict(ctx, slog.LevelError, first, args...)
 }
 
 // Fatal logs a fatal error and exits
-func Fatal(first any, args ...any) {
+func Fatal(ctx context.Context, first any, args ...any) {
 
-	logStrict(context.Background(), LevelFatal, first, args...)
+	logStrict(ctx, LevelFatal, first, args...)
 
 	exitOnce.Do(func() {
 

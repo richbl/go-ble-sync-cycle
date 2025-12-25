@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"slices"
@@ -38,20 +37,20 @@ func (sc *SessionController) setupSessionEditSignals() {
 		}
 
 		selectedSession := sc.Sessions[idx]
-		logger.Debug(logger.GUI, fmt.Sprintf("preparing to edit Session: %s...", selectedSession.Title))
+		logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("preparing to edit Session: %s...", selectedSession.Title))
 
 		// Load the session into the SessionManager
 		if err := sc.SessionManager.LoadSession(selectedSession.ConfigPath); err != nil {
-			logger.Warn(logger.GUI, fmt.Sprintf("loading session for edit generated warnings: %v", err))
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading session for edit generated warnings: %v", err))
 		}
 
 		// Populate the UI with the session data
-		logger.Debug(logger.GUI, "populating UI with session data...")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "populating UI with session data...")
 		sc.populateEditor()
 
 		// Connect file chooser for video button
 		sc.UI.Page4.VideoFileButton.ConnectClicked(func() {
-			logger.Debug(logger.GUI, "Video file button clicked")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "Video file button clicked")
 			sc.openVideoFilePicker()
 		})
 
@@ -66,7 +65,7 @@ func (sc *SessionController) setupSessionEditSignals() {
 		})
 
 		// Navigate to the Editor (Page 4)
-		logger.Debug(logger.GUI, "navigating to Session Editor (page 4)...")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "navigating to Session Editor (page 4)...")
 		sc.UI.ViewStack.SetVisibleChildName("page4")
 
 	})
@@ -78,12 +77,12 @@ func (sc *SessionController) populateEditor() {
 
 	cfg := sc.SessionManager.Config()
 	if cfg == nil {
-		logger.Warn(logger.GUI, "attempted to populate editor with nil config")
+		logger.Warn(logger.BackgroundCtx, logger.GUI, "attempted to populate editor with nil config")
 
 		return
 	}
 
-	logger.Debug(logger.GUI, "populating editor with session data and enabling widgets")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "populating editor with session data and enabling widgets")
 
 	p4 := sc.UI.Page4
 
@@ -185,7 +184,7 @@ func (sc *SessionController) harvestEditor() *config.Config {
 // openVideoFilePicker opens a native file dialog to select a video
 func (sc *SessionController) openVideoFilePicker() {
 
-	logger.Debug(logger.GUI, "Opening video file dialog...")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "Opening video file dialog...")
 
 	fileDialog := gtk.NewFileDialog()
 	fileDialog.SetTitle("Select Video File")
@@ -205,7 +204,7 @@ func (sc *SessionController) openVideoFilePicker() {
 	cb := func(res gio.AsyncResulter) {
 		file, err := fileDialog.OpenFinish(res)
 		if err != nil {
-			logger.Warn(logger.GUI, fmt.Sprintf("File dialog cancelled or error: %v", err))
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("File dialog cancelled or error: %v", err))
 
 			return
 		}
@@ -213,15 +212,18 @@ func (sc *SessionController) openVideoFilePicker() {
 		// Update the UI with the selected path
 		path := file.Path()
 		glib.IdleAdd(func() {
-			logger.Debug(logger.GUI, "File selected: "+path)
+
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "File selected: "+path)
+
 			if path != "" {
 				sc.UI.Page4.VideoFileRow.SetSubtitle(path)
 			}
+
 		})
 	}
 
 	// Launch dialog
-	fileDialog.Open(context.Background(), &sc.UI.Window.Window, cb)
+	fileDialog.Open(logger.BackgroundCtx, &sc.UI.Window.Window, cb)
 
 }
 
@@ -236,9 +238,7 @@ func (sc *SessionController) saveSession(saveAs bool) {
 	if saveAs || currentPath == "" {
 		sc.openSaveAsDialog(newConfig)
 	} else {
-		glib.IdleAdd(func() {
-			sc.performSessionSave(currentPath, newConfig)
-		})
+		glib.IdleAdd(func() { sc.performSessionSave(currentPath, newConfig) })
 	}
 }
 
@@ -273,23 +273,23 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 	}
 
 	// Launch the dialog
-	sc.saveFileDialog.Save(context.Background(), &sc.UI.Window.Window, cb)
+	sc.saveFileDialog.Save(logger.BackgroundCtx, &sc.UI.Window.Window, cb)
 }
 
 // performSessionSave handles I/O, Error reporting, and UI Refresh
 func (sc *SessionController) performSessionSave(path string, cfg *config.Config) {
 
-	logger.Debug(logger.GUI, "attempting to save session to: "+path)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "attempting to save session to: "+path)
 
 	// Perform file I/O
 	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
-		logger.Error(logger.GUI, fmt.Sprintf("failed to save config: %v", err))
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save config: %v", err))
 		displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
 
 		return
 	}
 
-	logger.Info(logger.GUI, "session saved to "+path)
+	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)
 
 	// Refresh the Session List (Page 1) to show new session(s)
 	sc.scanForSessions()
@@ -313,7 +313,7 @@ func indexOf(target string, options []string) uint {
 
 	idx := slices.Index(options, target)
 	if idx < 0 {
-		logger.Warn(logger.BLE, "target not found in options; skipping selection update", "target", target)
+		logger.Warn(logger.BackgroundCtx, logger.BLE, "target not found in options; skipping selection update", "target", target)
 	}
 
 	return uint(idx)

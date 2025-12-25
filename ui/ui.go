@@ -121,16 +121,18 @@ func NewAppUI(builder *gtk.Builder) *AppUI {
 }
 
 // objGTK retrieves a GTK object by ID and casts it to type T
+//
+//nolint:ireturn // Generic function returning T must return the interface type
 func objGTK[T any](builder *gtk.Builder, id string) T {
 
 	obj := builder.GetObject(id)
 	if obj == nil {
-		logger.Fatal(logger.GUI, fmt.Sprintf("widget ID '%s' not found in XML design file", id))
+		logger.Fatal(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("widget ID '%s' not found in XML design file", id))
 	}
 
 	val, ok := obj.Cast().(T)
 	if !ok {
-		logger.Fatal(logger.GUI, fmt.Sprintf("widget ID '%s' is not of expected type %T", id, *new(T)))
+		logger.Fatal(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("widget ID '%s' is not of expected type %T", id, *new(T)))
 	}
 
 	return val
@@ -214,10 +216,10 @@ func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 	// Enable logging to the console in GUI mode if requested
 	if flags.IsGUIConsoleLogging() {
 		logger.AddWriter(sessionLog.LogWriter)
-		logger.Info(logger.GUI, "logging via Session Log started with added console/CLI output")
+		logger.Info(logger.BackgroundCtx, logger.GUI, "logging via Session Log started with added console/CLI output")
 	} else {
 		logger.UseGUIWriterOnly(sessionLog.LogWriter)
-		logger.Info(logger.GUI, "logging via Session Log started")
+		logger.Info(logger.BackgroundCtx, logger.GUI, "logging via Session Log started")
 	}
 
 	return sessionLog
@@ -282,22 +284,22 @@ func setupAllSignals(sc *SessionController) {
 	pageActions := map[string]func(){
 
 		"page1": func() {
-			logger.Debug(logger.GUI, "view switched to Session Select: refreshing session list from CWD...")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Select: refreshing session list from CWD...")
 			sc.scanForSessions()
 			sc.PopulateSessionList()
 		},
 
 		"page2": func() {
-			logger.Debug(logger.GUI, "view switched to Session Status")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Status")
 		},
 
 		"page3": func() {
-			logger.Debug(logger.GUI, "view switched to Session Log")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Log")
 			sc.UpdateLogLevel()
 		},
 
 		"page4": func() {
-			logger.Debug(logger.GUI, "view switched to Session Editor")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Editor")
 			sc.UI.Page4.ScrolledWindow.ScrollToTop()
 		},
 	}
@@ -350,7 +352,7 @@ func StartGUI() {
 		// Create the "Exit" menu item action handler
 		exitAction := gio.NewSimpleAction("exit", nil)
 		exitAction.ConnectActivate(func(_ *glib.Variant) {
-			logger.Info(logger.GUI, "Exit action triggered from app menu item")
+			logger.Info(logger.BackgroundCtx, logger.GUI, "Exit action triggered from app menu item")
 			ui.createExitDialog()
 		})
 		app.AddAction(exitAction)
@@ -359,7 +361,7 @@ func StartGUI() {
 		ui.Window.ConnectCloseRequest(func() bool {
 
 			glib.IdleAdd(func() {
-				logger.Debug(logger.GUI, "Exit action triggered from window manager close button")
+				logger.Debug(logger.BackgroundCtx, logger.GUI, "Exit action triggered from window manager close button")
 				ui.createExitDialog()
 			})
 

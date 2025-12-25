@@ -28,6 +28,8 @@ func testVideoPath(t *testing.T) string {
 }
 
 // setupPlayerTest is a generic setup function for any mediaPlayer implementation
+//
+//nolint:ireturn // Generic function returning T
 func setupPlayerTest[T mediaPlayer](t *testing.T, factory func() (T, error)) (T, func()) {
 
 	t.Helper()
