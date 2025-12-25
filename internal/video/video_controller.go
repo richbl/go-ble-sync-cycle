@@ -92,7 +92,7 @@ func newOSDConfig(displayConfig config.VideoOSDConfig) osdConfig {
 // Start configures and starts playback of the media player
 func (p *PlaybackController) Start(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
+	logger.Info(ctx, logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
 
 	defer p.player.terminatePlayer()
 
@@ -182,14 +182,14 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 		select {
 		case <-ticker.C:
 
-			if err := p.updateSpeedFromController(speedController); err != nil {
-				logger.Warn(logger.VIDEO, fmt.Sprintf("speed update error: %v", err))
+			if err := p.updateSpeedFromController(ctx, speedController); err != nil {
+				logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("speed update error: %v", err))
 			}
 
 		case <-ctx.Done():
 
 			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
-			logger.Info(logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
+			logger.Info(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
 			return nil // No need to show this context cancellation error
 		}
@@ -209,28 +209,28 @@ func (p *PlaybackController) handlePlayerEvents() error {
 }
 
 // updateSpeedFromController manages updates from the speedController component
-func (p *PlaybackController) updateSpeedFromController(speedController *speed.Controller) error {
+func (p *PlaybackController) updateSpeedFromController(ctx context.Context, speedController *speed.Controller) error {
 
 	p.speedState.current = speedController.SmoothedSpeed()
-	p.logDebugInfo(speedController)
+	p.logDebugInfo(ctx, speedController)
 
 	if p.speedState.current == 0 {
-		return p.handleZeroSpeed()
+		return p.handleZeroSpeed(ctx)
 	}
 
 	if p.shouldUpdateSpeed() {
-		return p.updateSpeed()
+		return p.updateSpeed(ctx)
 	}
 
 	return nil
 }
 
 // handleZeroSpeed handles the case when no speed is detected
-func (p *PlaybackController) handleZeroSpeed() error {
+func (p *PlaybackController) handleZeroSpeed(ctx context.Context) error {
 
-	logger.Debug(logger.VIDEO, "no speed detected, pausing video")
+	logger.Debug(ctx, logger.VIDEO, "no speed detected, pausing video")
 
-	if err := p.updateDisplay(0.0, 0.0); err != nil {
+	if err := p.updateDisplay(ctx, 0.0, 0.0); err != nil {
 		return fmt.Errorf(errFormat, errOSDUpdate, err)
 	}
 
@@ -247,19 +247,19 @@ func (p *PlaybackController) shouldUpdateSpeed() bool {
 }
 
 // updateSpeed adjusts the playback speed based on current speed
-func (p *PlaybackController) updateSpeed() error {
+func (p *PlaybackController) updateSpeed(ctx context.Context) error {
 
 	// Update the playback speed based on current speed and unit multiplier
 	playbackSpeed := p.PlaybackSpeed()
 
-	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
 
 	if err := p.player.setSpeed(playbackSpeed); err != nil {
 		return fmt.Errorf(errFormat, "failed to set playback speed", err)
 	}
 
 	if p.osdConfig.showOSD {
-		if err := p.updateDisplay(p.speedState.current, playbackSpeed); err != nil {
+		if err := p.updateDisplay(ctx, p.speedState.current, playbackSpeed); err != nil {
 			return fmt.Errorf(errFormat, errOSDUpdate, err)
 		}
 	}
@@ -270,7 +270,7 @@ func (p *PlaybackController) updateSpeed() error {
 }
 
 // updateDisplay updates the on-screen display
-func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) error {
+func (p *PlaybackController) updateDisplay(ctx context.Context, cycleSpeed, playbackSpeed float64) error {
 
 	if !p.osdConfig.showOSD {
 		return nil
@@ -296,7 +296,7 @@ func (p *PlaybackController) updateDisplay(cycleSpeed, playbackSpeed float64) er
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", formatSeconds(timeRemaining))
 		} else {
 			fmt.Fprintf(&osdText, "Time Remaining: %s\n", "????")
-			logger.Warn(logger.VIDEO, fmt.Sprintf("%s: %v", errTimeRemaining, err))
+			logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("%s: %v", errTimeRemaining, err))
 		}
 
 	}
@@ -310,13 +310,13 @@ func (p *PlaybackController) timeRemaining() (int64, error) {
 }
 
 // logDebugInfo logs debug information about current speeds
-func (p *PlaybackController) logDebugInfo(speedController *speed.Controller) {
+func (p *PlaybackController) logDebugInfo(ctx context.Context, speedController *speed.Controller) {
 
-	logger.Debug(logger.VIDEO, fmt.Sprintf("sensor speed buffer: [%s]", strings.Join(speedController.SpeedBuffer(), " ")))
-	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"smoothed sensor speed: %.2f %s", p.speedState.current, p.speedConfig.SpeedUnits))
-	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"last playback speed: %.2f %s", p.speedState.last, p.speedConfig.SpeedUnits))
-	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"sensor speed delta: %.2f %s", math.Abs(p.speedState.current-p.speedState.last), p.speedConfig.SpeedUnits))
-	logger.Debug(logger.VIDEO, fmt.Sprintf(logger.Magenta+"playback speed update threshold: %.2f %s", p.speedConfig.SpeedThreshold, p.speedConfig.SpeedUnits))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("sensor speed buffer: [%s]", strings.Join(speedController.SpeedBuffer(ctx), " ")))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"smoothed sensor speed: %.2f %s", p.speedState.current, p.speedConfig.SpeedUnits))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"last playback speed: %.2f %s", p.speedState.last, p.speedConfig.SpeedUnits))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"sensor speed delta: %.2f %s", math.Abs(p.speedState.current-p.speedState.last), p.speedConfig.SpeedUnits))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"playback speed update threshold: %.2f %s", p.speedConfig.SpeedThreshold, p.speedConfig.SpeedUnits))
 }
 
 // formatSeconds converts seconds into HH:MM:SS format

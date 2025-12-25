@@ -50,7 +50,7 @@ func initSpeedData(wheelCircumferenceMM int, speedUnitMultiplier float64) *speed
 // BLEUpdates starts the real-time monitoring of BLE sensor notifications
 func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(logger.BLE, "starting the monitoring for BLE sensor notifications...")
+	logger.Info(ctx, logger.BLE, "starting the monitoring for BLE sensor notifications...")
 
 	errChan := make(chan error, 1)
 
@@ -59,13 +59,13 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 	sd := initSpeedData(m.speedConfig.WheelCircumferenceMM, speedUnitMultiplier)
 
 	notificationHandler := func(buf []byte) {
-		speed, err := sd.processBLESpeed(m.speedConfig.SpeedUnits, buf)
+		speed, err := sd.processBLESpeed(ctx, m.speedConfig.SpeedUnits, buf)
 		if err != nil {
-			logger.Warn(logger.SPEED, fmt.Sprintf("error processing BLE speed data: %v", err))
+			logger.Warn(ctx, logger.SPEED, fmt.Sprintf("error processing BLE speed data: %v", err))
 
 			return
 		}
-		speedController.UpdateSpeed(speed)
+		speedController.UpdateSpeed(ctx, speed)
 	}
 
 	// Enable real-time notifications from BLE sensor
@@ -77,11 +77,11 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 	go func() {
 		<-ctx.Done()
 		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
-		logger.Info(logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
+		logger.Info(ctx, logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
 
 		// Disable real-time notifications from BLE sensor
 		if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(nil); err != nil {
-			logger.Error(logger.BLE, fmt.Sprintf("failed to disable BLE notifications: %v", err))
+			logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to disable BLE notifications: %v", err))
 		}
 
 		errChan <- nil
@@ -92,14 +92,14 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 }
 
 // processBLESpeed processes raw BLE speed data into human-readable speed values
-func (sd *speedData) processBLESpeed(speedUnits string, speedData []byte) (float64, error) {
+func (sd *speedData) processBLESpeed(ctx context.Context, speedUnits string, speedData []byte) (float64, error) {
 
 	if err := sd.parseSpeedData(speedData); err != nil {
 		return 0.0, err
 	}
 
 	speed := sd.calculateSpeed()
-	logger.Debug(logger.SPEED, fmt.Sprintf("%sBLE sensor speed: %.2f %s", logger.Blue, speed, speedUnits))
+	logger.Debug(ctx, logger.SPEED, fmt.Sprintf("%sBLE sensor speed: %.2f %s", logger.Blue, speed, speedUnits))
 
 	return speed, nil
 }

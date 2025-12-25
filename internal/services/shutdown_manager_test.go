@@ -50,7 +50,6 @@ func TestRunService(t *testing.T) {
 
 	select {
 	case <-serviceDone:
-		// Service completed successfully
 	case <-time.After(2 * time.Second):
 		t.Fatal("service did not complete in time")
 	}

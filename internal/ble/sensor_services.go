@@ -174,16 +174,17 @@ func discoverCharacteristics[T any](opts charDiscoveryOptions, found chan<- T, e
 }
 
 // executeAction is a helper that creates actionParams and executes a BLE action
+//
+//nolint:ireturn // Generic function returning T
 func executeAction[T any](ctx context.Context, m *Controller, logMessage string, action func(context.Context, chan<- T, chan<- error)) (T, error) {
 
 	params := actionParams[T]{
-		ctx:        ctx,
 		action:     action,
 		logMessage: logMessage,
 		stopAction: nil,
 	}
 
-	return performBLEAction(m, params)
+	return performBLEAction(ctx, m, params)
 }
 
 // BatteryService discovers and returns available battery services from the BLE peripheral
@@ -201,7 +202,7 @@ func (m *Controller) BatteryService(ctx context.Context, device ServiceDiscovere
 		return nil, err
 	}
 
-	logger.Info(logger.BLE, "found battery service")
+	logger.Info(ctx, logger.BLE, "found battery service")
 
 	return result, nil
 }
@@ -230,8 +231,8 @@ func (m *Controller) BatteryLevel(ctx context.Context, services []Characteristic
 	}
 
 	m.blePeripheralDetails.batteryLevel = batteryLevel
-	logger.Info(logger.BLE, "found battery characteristic UUID="+m.blePeripheralDetails.batteryCharacteristic.UUID().String())
-	logger.Info(logger.BLE, fmt.Sprintf("BLE sensor battery level: %d%%", m.blePeripheralDetails.batteryLevel))
+	logger.Info(ctx, logger.BLE, "found battery characteristic UUID="+m.blePeripheralDetails.batteryCharacteristic.UUID().String())
+	logger.Info(ctx, logger.BLE, fmt.Sprintf("BLE sensor battery level: %d%%", m.blePeripheralDetails.batteryLevel))
 
 	return nil
 }
@@ -251,7 +252,7 @@ func (m *Controller) CSCServices(ctx context.Context, device ServiceDiscoverer) 
 		return nil, fmt.Errorf(errFormat, ErrCSCServiceDiscovery, err)
 	}
 
-	logger.Info(logger.BLE, "found CSC service UUID="+cscServiceConfig.serviceUUID.String())
+	logger.Info(ctx, logger.BLE, "found CSC service UUID="+cscServiceConfig.serviceUUID.String())
 
 	return result, nil
 }
@@ -280,7 +281,7 @@ func (m *Controller) CSCCharacteristics(ctx context.Context, services []Characte
 		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
-	logger.Info(logger.BLE, "found CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String())
+	logger.Info(ctx, logger.BLE, "found CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String())
 
 	return nil
 }

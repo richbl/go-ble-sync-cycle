@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 // smContext represents the cancellation context for ShutdownManager
 type smContext struct {
+	//nolint:containedctx // ShutdownManager owns this context lifecycle
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -32,7 +34,7 @@ type ShutdownManager struct {
 func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 
 	// Create a context with a timeout
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
 
 	return &ShutdownManager{
 		context: smContext{
@@ -97,7 +99,7 @@ func (sm *ShutdownManager) Shutdown() {
 	select {
 	case <-done:
 	case <-time.After(sm.timeout):
-		logger.Warn(logger.APP, "shutdown timed out")
+		logger.Warn(sm.context.ctx, logger.APP, "shutdown timed out")
 	}
 
 	// Execute cleanup functions in reverse order
@@ -120,6 +122,7 @@ func (sm *ShutdownManager) Wait() {
 		sm.Shutdown()
 	case err := <-sm.errChan:
 		if err != nil {
+			logger.Error(sm.context.ctx, logger.APP, fmt.Sprintf("service error: %v", err))
 			sm.Shutdown()
 		}
 
@@ -128,15 +131,15 @@ func (sm *ShutdownManager) Wait() {
 }
 
 // WaveHello outputs a welcome message
-func WaveHello() {
-	logger.Info(logger.APP, config.GetFullVersion()+" starting...")
+func WaveHello(ctx context.Context) {
+	logger.Info(ctx, logger.APP, config.GetFullVersion()+" starting...")
 }
 
 // WaveGoodbye outputs a goodbye message and exits the program
-func WaveGoodbye() {
+func WaveGoodbye(ctx context.Context) {
 
 	logger.ClearCLILine()
-	logger.Info(logger.APP, config.GetFullVersion()+" shutdown complete. Goodbye")
+	logger.Info(ctx, logger.APP, config.GetFullVersion()+" shutdown complete. Goodbye")
 	os.Exit(0)
 
 }

@@ -31,7 +31,7 @@ type GuiLogWriter struct {
 
 // setupSessionLogSignals wires up event listeners for the Session Log view (Page 3)
 func (sc *SessionController) setupSessionLogSignals() {
-	logger.Debug(logger.GUI, "Session Log: signals setup complete")
+	logger.Debug(logger.BackgroundCtx,logger.GUI, "Session Log: signals setup complete")
 }
 
 // UpdateLogLevel updates the log level component in the view

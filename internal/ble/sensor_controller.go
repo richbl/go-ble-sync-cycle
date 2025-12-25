@@ -38,7 +38,6 @@ type Controller struct {
 
 // actionParams encapsulates parameters for BLE actions
 type actionParams[T any] struct {
-	ctx        context.Context
 	action     func(context.Context, chan<- T, chan<- error)
 	stopAction func() error
 	logMessage string
@@ -87,7 +86,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 		return nil, fmt.Errorf(errFormat, "failed to enable BLE central controller", err)
 	}
 
-	logger.Info(logger.BLE, "created new BLE central controller")
+	logger.Info(logger.BackgroundCtx, logger.BLE, "created new BLE central controller")
 
 	return &Controller{
 		blePeripheralDetails: blePeripheralDetails{
@@ -102,18 +101,17 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 func (m *Controller) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanResult, error) {
 
 	params := actionParams[bluetooth.ScanResult]{
-		ctx:        ctx,
 		action:     m.scanAction,
 		logMessage: "scanning for BLE peripheral BD_ADDR=" + m.blePeripheralDetails.bleConfig.SensorBDAddr,
 		stopAction: m.blePeripheralDetails.bleAdapter.StopScan,
 	}
 
-	result, err := performBLEAction(m, params)
+	result, err := performBLEAction(ctx, m, params)
 	if err != nil {
 		return bluetooth.ScanResult{}, err
 	}
 
-	logger.Info(logger.BLE, "found BLE peripheral", "BD_ADDR", result.Address.String())
+	logger.Info(ctx, logger.BLE, "found BLE peripheral", "BD_ADDR", result.Address.String())
 
 	return result, nil
 }
@@ -122,7 +120,6 @@ func (m *Controller) ScanForBLEPeripheral(ctx context.Context) (bluetooth.ScanRe
 func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetooth.ScanResult) (bluetooth.Device, error) {
 
 	params := actionParams[bluetooth.Device]{
-		ctx: ctx,
 		action: func(_ context.Context, found chan<- bluetooth.Device, errChan chan<- error) {
 			m.connectAction(device, found, errChan)
 		},
@@ -130,12 +127,12 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 		stopAction: nil,
 	}
 
-	result, err := performBLEAction(m, params)
+	result, err := performBLEAction(ctx, m, params)
 	if err != nil {
 		return bluetooth.Device{}, err
 	}
 
-	logger.Info(logger.BLE, "BLE peripheral device connected")
+	logger.Info(ctx, logger.BLE, "BLE peripheral device connected")
 
 	return result, nil
 }
@@ -146,15 +143,17 @@ func (m *Controller) BatteryLevelLast() byte {
 }
 
 // performBLEAction is a wrapper for performing BLE discovery actions
-func performBLEAction[T any](m *Controller, params actionParams[T]) (T, error) {
+//
+//nolint:ireturn // Generic function returning T
+func performBLEAction[T any](ctx context.Context, m *Controller, params actionParams[T]) (T, error) {
 
-	scanCtx, cancel := context.WithTimeout(params.ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
+	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 	found := make(chan T, 1)
 	errChan := make(chan error, 1)
 
 	go func() {
-		logger.Debug(logger.BLE, params.logMessage)
+		logger.Debug(scanCtx, logger.BLE, params.logMessage)
 		params.action(scanCtx, found, errChan)
 	}()
 
@@ -181,7 +180,7 @@ func handleActionTimeout(ctx context.Context, m *Controller, stopAction func() e
 
 		if err := stopAction(); err != nil {
 			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
-			logger.Error(logger.BLE, fmt.Sprintf("failed to stop action: %v", err))
+			logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to stop action: %v", err))
 		}
 
 	}
@@ -235,7 +234,7 @@ func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.S
 
 		select {
 		case <-ctx.Done():
-			logger.Debug(logger.BLE, "scan canceled via context")
+			logger.Debug(ctx, logger.BLE, "scan canceled via context")
 
 			return
 		default:
@@ -244,13 +243,13 @@ func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.S
 		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorBDAddr {
 
 			if stopErr := m.blePeripheralDetails.bleAdapter.StopScan(); stopErr != nil {
-				logger.Error(logger.BLE, fmt.Sprintf("failed to stop scan: %v", stopErr))
+				logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to stop scan: %v", stopErr))
 			}
 
 			select {
 			case found <- result:
 			default:
-				logger.Warn(logger.BLE, "scan results channel full... try restarting the BLE device")
+				logger.Warn(ctx, logger.BLE, "scan results channel full... try restarting the BLE device")
 			}
 
 			return

@@ -291,7 +291,7 @@ func TestPlaybackControllerStart(t *testing.T) {
 
 	controller, mockPlayer, speedCtrl := setupTestController(t)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
 	defer cancel()
 	var startErr error
 	var wg sync.WaitGroup
@@ -376,10 +376,10 @@ func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.Spe
 
 	// Fill the speed controller's buffer to get a predictable smoothed speed
 	for range 5 {
-		speedCtrl.UpdateSpeed(tc.currentSpeed)
+		speedCtrl.UpdateSpeed(logger.BackgroundCtx, tc.currentSpeed)
 	}
 
-	err := controller.updateSpeedFromController(speedCtrl)
+	err := controller.updateSpeedFromController(logger.BackgroundCtx, speedCtrl)
 	if err != nil {
 		t.Fatalf("updateSpeedFromController() returned an error: %v", err)
 	}
@@ -507,7 +507,7 @@ func TestUpdateDisplay(t *testing.T) {
 
 	t.Run("paused display", func(t *testing.T) {
 
-		err := controller.updateDisplay(0.0, 0.0)
+		err := controller.updateDisplay(logger.BackgroundCtx, 0.0, 0.0)
 		if err != nil {
 			t.Fatalf("updateDisplay failed: %v", err)
 		}
@@ -521,7 +521,7 @@ func TestUpdateDisplay(t *testing.T) {
 	t.Run("active display", func(t *testing.T) {
 
 		mockPlayer.remainingTime = 125 // 00:02:05
-		err := controller.updateDisplay(15.5, 1.55)
+		err := controller.updateDisplay(logger.BackgroundCtx, 15.5, 1.55)
 		if err != nil {
 			t.Fatalf("updateDisplay failed: %v", err)
 		}

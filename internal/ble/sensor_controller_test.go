@@ -83,7 +83,7 @@ func TestScanForBLEPeripheralIntegration(t *testing.T) {
 	}
 
 	// This test expects a timeout error
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(logger.BackgroundCtx, 1*time.Second)
 	defer cancel()
 	_, err := controller.ScanForBLEPeripheral(ctx)
 	assert.Error(t, err)
@@ -108,7 +108,7 @@ func TestScanCancel(t *testing.T) {
 	if ctrl == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(logger.BackgroundCtx, 500*time.Millisecond)
 	defer cancel()
 
 	_, err := ctrl.ScanForBLEPeripheral(ctx)
@@ -123,7 +123,7 @@ func TestScanForBLEPeripheralWithCancel(t *testing.T) {
 	if controller == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond) // Short for test
+	ctx, cancel := context.WithTimeout(logger.BackgroundCtx, 500*time.Millisecond) // Short for test
 	defer cancel()
 
 	_, err := controller.ScanForBLEPeripheral(ctx)

@@ -107,7 +107,7 @@ func TestUseGUIWriterOnly(t *testing.T) {
 	// Force set the initial output
 	UseGUIWriterOnly(initialBuf)
 	message := "Message 1"
-	Info(message)
+	Info(BackgroundCtx, message)
 
 	// Verify Message 1 is in initialBuf
 	if !strings.Contains(initialBuf.String(), message) {
@@ -117,7 +117,7 @@ func TestUseGUIWriterOnly(t *testing.T) {
 	// Switch output
 	UseGUIWriterOnly(secondBuf)
 	message = "Message 2"
-	Info(message)
+	Info(BackgroundCtx, message)
 
 	// Verify Message 2 is ONLY in secondBuf
 	if strings.Contains(initialBuf.String(), message) {
@@ -144,7 +144,7 @@ func TestAddWriter(t *testing.T) {
 	// Add a second writer
 	AddWriter(secondaryBuf)
 	message := "Broadcast Message"
-	Info(message)
+	Info(BackgroundCtx, message)
 
 	// Verify both received it
 	if !strings.Contains(primaryBuf.String(), message) {
@@ -179,7 +179,7 @@ func TestCustomTextHandler(t *testing.T) {
 			h := NewCustomTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})
 			r := slog.NewRecord(time.Now(), tt.level, testMessage, 0)
 
-			if err := h.Handle(context.Background(), r); err != nil {
+			if err := h.Handle(BackgroundCtx, r); err != nil {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
@@ -215,7 +215,7 @@ func TestLogLevels(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		logFunc func(any, ...any)
+		logFunc func(context.Context, any, ...any)
 		level   string
 	}{
 		{"Debug", Debug, "DBG"},
@@ -231,7 +231,7 @@ func TestLogLevels(t *testing.T) {
 			originalLogger := logger
 			logger = testLogger
 			defer func() { logger = originalLogger }()
-			tt.logFunc(td.message)
+			tt.logFunc(BackgroundCtx, td.message)
 			validateLogOutput(t, buf.String(), tt.level)
 		})
 
@@ -255,7 +255,7 @@ func TestFatal(t *testing.T) {
 	ExitFunc = func(code int) { exitCode = code }
 	defer func() { ExitFunc = origExit }()
 
-	Fatal(td.message)
+	Fatal(BackgroundCtx, td.message)
 
 	// Fatal should exit with code 1
 	if exitCode != 1 {
@@ -284,7 +284,7 @@ func TestEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewCustomTextHandler(&bytes.Buffer{}, &slog.HandlerOptions{Level: tt.setLevel})
 
-			if got := h.Enabled(context.Background(), tt.level); got != tt.want {
+			if got := h.Enabled(BackgroundCtx, tt.level); got != tt.want {
 				t.Errorf("Enabled() = %v, want %v", got, tt.want)
 			}
 

@@ -4,6 +4,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // testData holds test constants and data
@@ -67,7 +69,7 @@ func TestUpdateSpeed(t *testing.T) {
 
 	// Update with test speeds
 	for _, speed := range td.speeds {
-		controller.UpdateSpeed(speed)
+		controller.UpdateSpeed(logger.BackgroundCtx, speed)
 	}
 
 	got := controller.SmoothedSpeed()
@@ -98,7 +100,7 @@ func TestSmoothedSpeed(t *testing.T) {
 			controller := NewSpeedController(td.window)
 
 			for _, speed := range tt.updates {
-				controller.UpdateSpeed(speed)
+				controller.UpdateSpeed(logger.BackgroundCtx, speed)
 			}
 
 			if got := controller.SmoothedSpeed(); got != tt.expected {
@@ -120,11 +122,11 @@ func TestSpeedBuffer(t *testing.T) {
 
 	// Update with test speeds
 	for _, speed := range speeds {
-		controller.UpdateSpeed(speed)
+		controller.UpdateSpeed(logger.BackgroundCtx, speed)
 	}
 
 	// Verify buffer
-	got := controller.SpeedBuffer()
+	got := controller.SpeedBuffer(logger.BackgroundCtx)
 
 	for i, val := range want {
 
@@ -149,7 +151,7 @@ func TestConcurrency(t *testing.T) {
 
 		go func(speed float64) {
 			defer wg.Done()
-			controller.UpdateSpeed(speed)
+			controller.UpdateSpeed(logger.BackgroundCtx, speed)
 			time.Sleep(td.sleepDuration)
 		}(float64(i))
 
