@@ -91,9 +91,9 @@ func (m *StateManager) LoadSession(configPath string) error {
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		m.state = StateError
-		m.errorMsg = fmt.Sprintf("failed to load session: %v", err)
+		m.errorMsg = err.Error()
 
-		return fmt.Errorf(errFormat, m.errorMsg, err)
+		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
 	// Update state
@@ -371,6 +371,31 @@ func (m *StateManager) VideoPlaybackRate() float64 {
 	}
 
 	return m.controllers.videoPlayer.PlaybackSpeed()
+}
+
+// Context returns the session's context (NEW for CLI mode)
+func (m *StateManager) Context() context.Context {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.shutdownMgr != nil {
+		return *m.shutdownMgr.Context()
+	}
+
+	return logger.BackgroundCtx
+}
+
+// Wait blocks until the session completes or is interrupted (NEW for CLI mode)
+func (m *StateManager) Wait() {
+
+	m.mu.RLock()
+	shutdownMgr := m.shutdownMgr
+	m.mu.RUnlock()
+
+	if shutdownMgr != nil {
+		shutdownMgr.Wait()
+	}
 }
 
 // prepareStart validates state and sets PendingStart/state to Connecting
