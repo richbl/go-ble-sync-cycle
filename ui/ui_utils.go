@@ -5,7 +5,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
-	"github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
 // safeUpdateUI helper for main-thread GUI calls
@@ -71,8 +70,8 @@ func (ui *AppUI) createExitDialog() {
 
 		if response == "yes" {
 			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed exit")
-			services.WaveGoodbye(logger.BackgroundCtx)
-			ui.Window.Close()
+			// Trigger shutdown via the ShutdownManager to ensure proper cleanup
+			ui.shutdownMgr.Shutdown()
 		} else {
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "user cancelled exit")
 		}

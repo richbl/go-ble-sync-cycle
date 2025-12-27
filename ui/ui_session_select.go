@@ -11,6 +11,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/services"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
 
@@ -81,17 +82,19 @@ type SessionController struct {
 	UI             *AppUI
 	Sessions       []Session
 	SessionManager *session.StateManager
+	shutdownMgr    *services.ShutdownManager
 	starting       atomic.Bool
 	metricsLoop    glib.SourceHandle
 	saveFileDialog *gtk.FileDialog
 }
 
 // NewSessionController creates the controller
-func NewSessionController(ui *AppUI) *SessionController {
+func NewSessionController(ui *AppUI, shutdownMgr *services.ShutdownManager) *SessionController {
 
 	return &SessionController{
 		UI:             ui,
 		SessionManager: session.NewManager(),
+		shutdownMgr:    shutdownMgr,
 	}
 }
 
