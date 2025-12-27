@@ -4,15 +4,16 @@ import (
 	_ "embed" // required for go:embed
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/flags"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
 //go:embed assets/bsc_gui.ui
@@ -20,13 +21,14 @@ var uiXML string
 
 // AppUI serves as the central controller for the GUI
 type AppUI struct {
-	Window     *adw.ApplicationWindow
-	ViewStack  *adw.ViewStack
-	Page1      *PageSessionSelect
-	Page2      *PageSessionStatus
-	Page3      *PageSessionLog
-	Page4      *PageSessionEditor
-	exitDialog *adw.AlertDialog
+	Window      *adw.ApplicationWindow
+	ViewStack   *adw.ViewStack
+	Page1       *PageSessionSelect
+	Page2       *PageSessionStatus
+	Page3       *PageSessionLog
+	Page4       *PageSessionEditor
+	exitDialog  *adw.AlertDialog
+	shutdownMgr *services.ShutdownManager
 }
 
 // PageSessionSelect holds widgets for the Session Selection tab (Page 1)
@@ -318,69 +320,41 @@ func setupAllSignals(sc *SessionController) {
 // StartGUI initializes and runs the GTK4/Adwaita application
 func StartGUI() {
 
+	// Create a global ShutdownManager for GUI mode to handle signals (CTRL+C)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "creating GUI ShutdownManager for signal handling")
+	shutdownMgr := services.NewShutdownManager(30 * time.Second)
+
 	// Initialize the application
 	app := gtk.NewApplication("com.github.richbl.ble-sync-cycle", gio.ApplicationFlagsNone)
 
 	app.ConnectActivate(func() {
-
-		adw.Init()
-		builder := gtk.NewBuilderFromString(uiXML)
-		ui := NewAppUI(builder)
-
-		// Create the "About" menu item action handler
-		aboutAction := gio.NewSimpleAction("about", nil)
-		aboutAction.ConnectActivate(func(_ *glib.Variant) {
-
-			// Create a new About dialog
-			aboutDialog := adw.NewAboutDialog()
-			aboutDialog.SetApplicationIcon("bsc_logo")
-			aboutDialog.SetApplicationName("BLE Sync Cycle")
-			aboutDialog.SetVersion("v" + config.GetVersion())
-			aboutDialog.SetCopyright("Copyright © 2025 Rich Bloch")
-			aboutDialog.SetDevelopers([]string{"Rich Bloch"})
-			aboutDialog.SetIssueURL("https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md")
-			aboutDialog.SetLicenseType(gtk.LicenseMITX11)
-			aboutDialog.SetWebsite("https://github.com/richbl/go-ble-sync-cycle")
-
-			var transientParent gtk.Widgetter = ui.Window
-			aboutDialog.Present(transientParent)
-
-		})
-
-		app.AddAction(aboutAction)
-
-		// Create the "Exit" menu item action handler
-		exitAction := gio.NewSimpleAction("exit", nil)
-		exitAction.ConnectActivate(func(_ *glib.Variant) {
-			logger.Info(logger.BackgroundCtx, logger.GUI, "Exit action triggered from app menu item")
-			ui.createExitDialog()
-		})
-		app.AddAction(exitAction)
-
-		// Set up close request handler (system-level exit via the [x] button)
-		ui.Window.ConnectCloseRequest(func() bool {
-
-			glib.IdleAdd(func() {
-				logger.Debug(logger.BackgroundCtx, logger.GUI, "Exit action triggered from window manager close button")
-				ui.createExitDialog()
-			})
-
-			return true
-		})
-
-		// Create SessionController and initialize (Page 1)
-		sessionCtrl := NewSessionController(ui)
-		sessionCtrl.scanForSessions()
-		sessionCtrl.PopulateSessionList()
-
-		setupAllSignals(sessionCtrl)
-		ui.Window.SetApplication(app)
-		ui.Window.Present()
+		setupGUIApplication(app, shutdownMgr)
 	})
 
+	// Set up signal handling for CTRL+C that integrates with GTK event loop
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting ShutdownManager signal handler")
+	shutdownMgr.Start()
+
+	// Monitor shutdown signal in a goroutine and trigger GTK quit when signaled
+	go func() {
+		ctx := *shutdownMgr.Context()
+		<-ctx.Done()
+		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
+		logger.Info(logger.BackgroundCtx, logger.GUI, "shutdown signal received, triggering GTK application quit")
+
+		// Use glib.IdleAdd to safely quit the GTK application from the main thread
+		glib.IdleAdd(func() {
+			app.Quit()
+		})
+	}()
+
 	// Run the GUI application... fly and be free!
-	if code := app.Run(nil); code > 0 {
-		os.Exit(code)
-	}
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting GTK event loop")
+	app.Run(nil)
+
+	// Application has exited, perform cleanup
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "GTK event loop exited, performing cleanup")
+	shutdownMgr.Shutdown()
+	services.WaveGoodbye(logger.BackgroundCtx)
 
 }
