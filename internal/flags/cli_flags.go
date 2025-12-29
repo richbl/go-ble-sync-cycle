@@ -144,6 +144,7 @@ func ShowHelp() {
 			fmt.Fprintf(os.Stdout, "  -%s, --%-12s %s\n", fi.ShortName, fi.Name, fi.Usage)
 		}
 	}
+
 	fmt.Fprintln(os.Stdout, "")
 	fmt.Fprintln(os.Stdout, "-----------------------------------------------------------------------------------")
 	fmt.Fprintln(os.Stdout, "")

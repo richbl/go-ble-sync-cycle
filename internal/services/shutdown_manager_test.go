@@ -148,8 +148,8 @@ func TestShutdownTimeout(t *testing.T) {
 	<-started
 	start := time.Now()
 	manager.Shutdown()
-	duration := time.Since(start)
 
+	duration := time.Since(start)
 	if duration > timeout*2 {
 		t.Errorf("shutdown took %v, expected <= %v", duration, timeout*2)
 	}

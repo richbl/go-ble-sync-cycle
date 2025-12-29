@@ -8,7 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	flags "github.com/richbl/go-ble-sync-cycle/internal/flags"
+	"github.com/richbl/go-ble-sync-cycle/internal/flags"
 )
 
 // Config represents the complete application configuration structure from the TOML config file

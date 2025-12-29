@@ -3,7 +3,6 @@ package ui
 import (
 	"regexp"
 
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
@@ -11,7 +10,7 @@ import (
 // Regex to find ANSI escape sequences
 var ansiSplitRegex = regexp.MustCompile(`(\x1b\[[0-9;]*m)`)
 
-// Map ANSI codes to human-readable GTK Tag names
+// Map ANSI codes (pretty colors) to human-readable GTK Tag names
 var ansiToTag = map[string]string{
 	"\x1b[31m": "red",     // Error
 	"\x1b[32m": "green",   // Info
@@ -31,7 +30,7 @@ type GuiLogWriter struct {
 
 // setupSessionLogSignals wires up event listeners for the Session Log view (Page 3)
 func (sc *SessionController) setupSessionLogSignals() {
-	logger.Debug(logger.BackgroundCtx,logger.GUI, "Session Log: signals setup complete")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "Session Log: signals setup complete")
 }
 
 // UpdateLogLevel updates the log level component in the view
@@ -56,7 +55,7 @@ func (w *GuiLogWriter) Write(p []byte) (int, error) {
 
 	fullText := string(p)
 
-	glib.IdleAdd(func() {
+	safeUpdateUI(func() {
 		w.processAnsiAndInsert(fullText)
 	})
 
@@ -66,7 +65,7 @@ func (w *GuiLogWriter) Write(p []byte) (int, error) {
 // processAnsiAndInsert parses the text for ANSI codes and inserts into the buffer
 func (w *GuiLogWriter) processAnsiAndInsert(text string) {
 
-	// Get the end iterator
+	// Get the logger endpoint
 	endIter := w.buffer.EndIter()
 	var currentTag *gtk.TextTag
 

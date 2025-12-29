@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
-	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 // mockMediaPlayer is a mock implementation of the mediaPlayer interface for testing
@@ -95,12 +95,10 @@ func createTestConfig() (config.VideoConfig, config.SpeedConfig) {
 
 // newMockMediaPlayer creates a new mockMediaPlayer instance
 func newMockMediaPlayer() *mockMediaPlayer {
-
 	return &mockMediaPlayer{
 		calls:     make(map[string]int),
 		eventChan: make(chan *playerEvent, 1),
 	}
-
 }
 
 // recordCall records a method call by name
@@ -132,7 +130,6 @@ func (m *mockMediaPlayer) loadFile(_ string) error {
 	m.recordCall("loadFile")
 
 	return m.loadFileErr
-
 }
 
 // setupEvents sets up event handling for the mock media player
@@ -141,7 +138,6 @@ func (m *mockMediaPlayer) setupEvents() error {
 	m.recordCall("setupEvents")
 
 	return m.setupEventsErr
-
 }
 
 // seek seeks to a specified position in the video
@@ -150,7 +146,6 @@ func (m *mockMediaPlayer) setFullscreen(_ bool) error {
 	m.recordCall("setFullscreen")
 
 	return m.setFullscreenErr
-
 }
 
 // setKeepOpen configures whether the player window stays open after playback
@@ -159,7 +154,6 @@ func (m *mockMediaPlayer) setKeepOpen(_ bool) error {
 	m.recordCall("setKeepOpen")
 
 	return m.setKeepOpenErr
-
 }
 
 // setOSD configures the On-Screen Display (OSD)
@@ -168,7 +162,6 @@ func (m *mockMediaPlayer) setOSD(_ osdConfig) error {
 	m.recordCall("setOSD")
 
 	return m.SetOSDErr
-
 }
 
 // seek seeks to a specified position in the video
@@ -177,7 +170,6 @@ func (m *mockMediaPlayer) seek(_ string) error {
 	m.recordCall("seek")
 
 	return m.seekErr
-
 }
 
 // setSpeed sets the playback speed of the video
@@ -213,7 +205,6 @@ func (m *mockMediaPlayer) timeRemaining() (int64, error) {
 	m.recordCall("timeRemaining")
 
 	return m.remainingTime, m.remainingTimeErr
-
 }
 
 // waitEvent waits for a player event or times out
@@ -227,7 +218,6 @@ func (m *mockMediaPlayer) waitEvent(timeout float64) *playerEvent {
 	case <-time.After(time.Duration(timeout * float64(time.Second))):
 		return &playerEvent{id: eventNone}
 	}
-
 }
 
 // TestNewPlaybackController tests the NewPlaybackController function
@@ -260,12 +250,14 @@ func TestNewPlaybackController(t *testing.T) {
 		}
 
 	})
+
 }
 
 // setupTestController creates a PlaybackController with a mock player for testing
 func setupTestController(t *testing.T) (*PlaybackController, *mockMediaPlayer, *speed.Controller) {
 
 	t.Helper()
+
 	vc, sc := createTestConfig()
 	mockPlayer := newMockMediaPlayer()
 	speedCtrl := speed.NewSpeedController(5)
@@ -337,6 +329,7 @@ func verifyInitializationCalls(t *testing.T, mockPlayer *mockMediaPlayer) {
 		}
 
 	}
+
 }
 
 // verifyTermination checks for clean shutdown and no errors
@@ -358,6 +351,7 @@ func verifyTermination(t *testing.T, mockPlayer *mockMediaPlayer, startErr error
 func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.SpeedConfig, tc updateSpeedTestCase) {
 
 	t.Helper()
+
 	mockPlayer := newMockMediaPlayer()
 	localSC := sc
 	localSC.SpeedThreshold = tc.speedThreshold
@@ -545,4 +539,5 @@ func TestUpdateDisplay(t *testing.T) {
 			t.Errorf("unexpected OSD text\ngot:  %q\nwant: %q", mockPlayer.lastShowText, expectedText.String())
 		}
 	})
+
 }

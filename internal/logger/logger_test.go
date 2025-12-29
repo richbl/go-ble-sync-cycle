@@ -32,7 +32,7 @@ var td = testData{
 	defaultOpts: slog.LevelDebug,
 }
 
-var testMessage = "test message"
+const testMessage = "test message"
 
 // setupTest creates a new test logger with buffer
 func setupTest() (*bytes.Buffer, *slog.Logger) {
@@ -194,6 +194,7 @@ func TestCustomTextHandler(t *testing.T) {
 func assertOutput(t *testing.T, output, expectedLevel, expectedMessage string) {
 
 	t.Helper()
+
 	timestampRegex := `^(\x1b\[[0-9;]*m)?\d{2}:\d{2}:\d{2}(\x1b\[[0-9;]*m)? `
 
 	if !regexp.MustCompile(timestampRegex).MatchString(output) {

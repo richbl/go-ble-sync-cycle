@@ -76,16 +76,6 @@ linters-settings:
       - io/ioutil.ReadFile
       - io.Copy(*bytes.Buffer)
       - io.Copy(os.Stdout)
-  funcorder:
-    # Checks if the constructors and/or structure methods are sorted alphabetically.
-    # Default: false
-    alphabetical: true
-    # Checks that constructors are placed after the structure declaration.
-    # Default: true
-    constructor: true
-    # Checks if the exported methods of a structure are placed before the non-exported ones.
-    # Default: true
-    struct-method: false
   gocognit:
     min-complexity: 15
   govet:

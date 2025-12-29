@@ -10,8 +10,8 @@ import (
 
 	"tinygo.org/x/bluetooth"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // CharacteristicReader is an interface for a bluetooth peripheral characteristic

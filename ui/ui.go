@@ -9,7 +9,6 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/flags"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -27,7 +26,6 @@ type AppUI struct {
 	Page2       *PageSessionStatus
 	Page3       *PageSessionLog
 	Page4       *PageSessionEditor
-	exitDialog  *adw.AlertDialog
 	shutdownMgr *services.ShutdownManager
 }
 
@@ -227,7 +225,7 @@ func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 	return sessionLog
 }
 
-// applyLogStyles injects a CSS provider to style the log view specifically
+// applyLogStyles injects a CSS provider to style the log view
 func applyLogStyles() {
 
 	// Create CSS styles that define the log view
@@ -249,7 +247,6 @@ func applyLogStyles() {
 
 // hydrateSessionEditor constructs the PageSessionEditor from the GTK builder
 func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
-
 	return &PageSessionEditor{
 		ScrolledWindow:      objGTK[*adw.PreferencesPage](builder, "session_editor_page"),
 		TitleEntry:          objGTK[*adw.EntryRow](builder, "session_title_entry_row"),
@@ -342,8 +339,7 @@ func StartGUI() {
 		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BackgroundCtx, logger.GUI, "shutdown signal received, triggering GTK application quit")
 
-		// Use glib.IdleAdd to safely quit the GTK application from the main thread
-		glib.IdleAdd(func() {
+		safeUpdateUI(func() {
 			app.Quit()
 		})
 	}()

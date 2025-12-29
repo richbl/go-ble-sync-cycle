@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // state holds the current speed measurement, smoothed speed, and timestamp
@@ -80,6 +80,7 @@ func (sc *Controller) UpdateSpeed(ctx context.Context, speed float64) {
 	// Ahh... smoothness
 	sc.state.smoothedSpeed = sum / float64(sc.window)
 	sc.state.timestamp = time.Now()
+
 }
 
 // SmoothedSpeed returns the current smoothed speed measurement

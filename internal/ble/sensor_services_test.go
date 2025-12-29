@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"tinygo.org/x/bluetooth"
@@ -124,10 +124,12 @@ var testConfigs = []serviceTestConfig{
 func createTestBLEController(t *testing.T) *Controller {
 
 	t.Helper()
+
 	controller, err := NewBLEController(
 		config.BLEConfig{ScanTimeoutSecs: 10},
 		config.SpeedConfig{},
 	)
+
 	require.NoError(t, err, "failed to create BLE controller")
 
 	return controller
@@ -176,7 +178,6 @@ func TestServiceDiscoverySuccess(t *testing.T) {
 			})
 
 			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
-
 			require.NoError(t, err)
 			assert.Len(t, services, 1)
 		})
@@ -196,7 +197,6 @@ func TestServiceDiscoveryNoServicesFound(t *testing.T) {
 			})
 
 			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
-
 			require.Error(t, err)
 			require.ErrorIs(t, err, cfg.expectedNoSvcErr)
 			assert.Nil(t, services)
@@ -217,7 +217,6 @@ func TestServiceDiscoveryError(t *testing.T) {
 			})
 
 			services, err := cfg.serviceFunc(controller, logger.BackgroundCtx, mock)
-
 			require.Error(t, err)
 			require.ErrorIs(t, err, errServiceDiscoveryFailed)
 			assert.Nil(t, services)
@@ -271,7 +270,6 @@ func TestCharacteristicsDiscoveryNoCharacteristicsFound(t *testing.T) {
 			})
 
 			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
-
 			require.Error(t, err)
 			assert.ErrorIs(t, err, cfg.expectedNoCharErr)
 		})
@@ -291,7 +289,6 @@ func TestCharacteristicsDiscoveryError(t *testing.T) {
 			})
 
 			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{mockService})
-
 			require.Error(t, err)
 			assert.ErrorIs(t, err, errCharacteristicsDiscoveryFailed)
 		})
@@ -307,7 +304,6 @@ func TestCharacteristicsEmptyServicesList(t *testing.T) {
 			controller := createTestBLEController(t)
 
 			err := cfg.charFunc(controller, logger.BackgroundCtx, []CharacteristicDiscoverer{})
-
 			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrNoServicesProvided)
 		})
@@ -342,7 +338,6 @@ func TestBatteryLevelReadError(t *testing.T) {
 // TestDeviceServiceWrapperDiscoverCharacteristics verifies that deviceServiceWrapper correctly implements CharacteristicDiscoverer
 func TestDeviceServiceWrapperDiscoverCharacteristics(t *testing.T) {
 	t.Run("successful discovery", func(_ *testing.T) {
-		// This test verifies that the wrapper works correctly
 		var _ CharacteristicDiscoverer = &deviceServiceWrapper{}
 	})
 }

@@ -263,7 +263,6 @@ func (h *CustomTextHandler) Handle(_ context.Context, r slog.Record) error {
 
 	// Get the component and attributes
 	component, otherAttrs := h.extractComponentAndAttrs(r)
-
 	if component != "" {
 		fmt.Fprintf(&buf, outputFormat, Blue, component, Reset)
 	}

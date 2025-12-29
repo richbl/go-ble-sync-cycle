@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	flags "github.com/richbl/go-ble-sync-cycle/internal/flags"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/flags"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/services"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 	"github.com/richbl/go-ble-sync-cycle/ui"
