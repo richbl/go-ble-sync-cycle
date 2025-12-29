@@ -46,12 +46,13 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 		logger.Info(logger.BackgroundCtx, logger.GUI, "Exit action triggered from app menu item")
 		ui.createExitDialog()
 	})
+
 	app.AddAction(exitAction)
 
 	// Set up close request handler (system-level exit via the [x] button)
 	ui.Window.ConnectCloseRequest(func() bool {
 
-		glib.IdleAdd(func() {
+		safeUpdateUI(func() {
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "Exit action triggered from window manager close button")
 			ui.createExitDialog()
 		})
@@ -67,4 +68,5 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	setupAllSignals(sessionCtrl)
 	ui.Window.SetApplication(app)
 	ui.Window.Present()
+
 }

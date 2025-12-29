@@ -43,8 +43,9 @@ const (
 
 // StatusPresentation holds the UI-facing data for a status
 type StatusPresentation struct {
-	Display string
-	Icon    string
+	Display  string
+	Icon     string
+	CSSStyle string
 }
 
 const (
@@ -59,21 +60,21 @@ const (
 	iconBatteryConnecting   = "battery-symbolic"
 )
 
-// statusTable centralizes all mappings of (object, status) -> UI data
+// statusTable centralizes all mappings of (object, status, style/color) -> UI data
 var statusTable = map[ObjectKind]map[Status]StatusPresentation{
 	ObjectBLE: {
-		StatusConnected:    {Display: "Connected", Icon: iconBLEConnected},
-		StatusNotConnected: {Display: "Not Connected", Icon: iconBLENotConnected},
-		StatusStopped:      {Display: "Stopped", Icon: iconBLENotConnected},
-		StatusConnecting:   {Display: "Connecting...", Icon: iconBLEConnecting},
-		StatusFailed:       {Display: "Failed", Icon: iconBLENotConnected},
+		StatusConnected:    {Display: "Connected", Icon: iconBLEConnected, CSSStyle: "success"},
+		StatusNotConnected: {Display: "Not Connected", Icon: iconBLENotConnected, CSSStyle: "error"},
+		StatusStopped:      {Display: "Stopped", Icon: iconBLENotConnected, CSSStyle: "error"},
+		StatusConnecting:   {Display: "Connecting...", Icon: iconBLEConnecting, CSSStyle: "warning"},
+		StatusFailed:       {Display: "Failed", Icon: iconBLENotConnected, CSSStyle: "error"},
 	},
 	ObjectBattery: {
-		StatusConnected:    {Display: "Connected", Icon: iconBatteryConnected},
-		StatusNotConnected: {Display: "Unknown", Icon: iconBatteryNotConnected},
-		StatusStopped:      {Display: "Unknown", Icon: iconBatteryNotConnected},
-		StatusConnecting:   {Display: "Connecting...", Icon: iconBatteryConnecting},
-		StatusFailed:       {Display: "Unknown", Icon: iconBatteryNotConnected},
+		StatusConnected:    {Display: "Connected", Icon: iconBatteryConnected, CSSStyle: "success"},
+		StatusNotConnected: {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
+		StatusStopped:      {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
+		StatusConnecting:   {Display: "Connecting...", Icon: iconBatteryConnecting, CSSStyle: "warning"},
+		StatusFailed:       {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
 	},
 }
 
@@ -101,7 +102,7 @@ func NewSessionController(ui *AppUI, shutdownMgr *services.ShutdownManager) *Ses
 // PopulateSessionList refreshes the ListBox with current sessions
 func (sc *SessionController) PopulateSessionList() {
 
-	// Clear existing rows
+	// Clear existing rows (reset list)
 	sc.UI.Page1.ListBox.RemoveAll()
 
 	if len(sc.Sessions) == 0 {
@@ -180,7 +181,6 @@ func (sc *SessionController) scanForSessions() {
 		}
 
 		if metadata.IsValid {
-
 			session := Session{
 				ID:         sessionID,
 				Title:      metadata.Title,
@@ -224,32 +224,47 @@ func (sc *SessionController) setupLoadButtonSignals() {
 	sc.UI.Page1.LoadButton.ConnectClicked(func() {
 
 		selectedRow := sc.UI.Page1.ListBox.SelectedRow()
-		if selectedRow != nil {
-
-			idx := selectedRow.Index()
-			if idx >= 0 && idx < len(sc.Sessions) {
-
-				selectedSession := sc.Sessions[idx]
-				logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading Session: %s...", selectedSession.Title))
-
-				// Load the session into the SessionManager
-				err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
-				if err != nil {
-					logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("error loading session: %v", err))
-
-					return
-				}
-
-				logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session loaded successfully. State: %s", sc.SessionManager.SessionState()))
-
-				// Update Page 2 with session info
-				sc.updatePage2WithSession(selectedSession)
-
-				// Navigate to Page 2
-				sc.UI.ViewStack.SetVisibleChildName("page2")
-			}
+		if selectedRow == nil {
+			return
 		}
 
+		idx := selectedRow.Index()
+		if idx < 0 || idx >= len(sc.Sessions) {
+			return
+		}
+		selectedSession := sc.Sessions[idx]
+
+		// Check if a session is currently running
+		if sc.SessionManager.IsRunning() {
+
+			activeTitle := "Unknown"
+			if cfg := sc.SessionManager.ActiveConfig(); cfg != nil {
+				activeTitle = cfg.App.SessionTitle
+			}
+
+			// Show session stop/replace confirmation dialog
+			displayConfirmationDialog(
+				sc.UI.Window,
+				"Stop Current BSC Session?",
+				fmt.Sprintf("'%s' is currently running\n\nDo you want to stop and switch to '%s'?", activeTitle, selectedSession.Title),
+				adw.ResponseDestructive,
+				func() {
+
+					// User confirmed stop
+					if err := sc.SessionManager.StopSession(); err != nil {
+						logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to stop session: %v", err))
+
+						return
+					}
+					// Proceed with load
+					sc.performLoadSession(selectedSession)
+				},
+			)
+
+			return
+		}
+		// Not running, proceed normally
+		sc.performLoadSession(selectedSession)
 	})
 
 }
@@ -263,5 +278,28 @@ func (sc *SessionController) setupEditButtonSignals() {
 		// Navigate to Page 4
 		sc.UI.ViewStack.SetVisibleChildName("page4")
 	})
+
+}
+
+// performLoadSession handles the actual loading and navigation logic
+func (sc *SessionController) performLoadSession(selectedSession Session) {
+
+	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading Session: %s...", selectedSession.Title))
+
+	// Load the session into the SessionManager
+	err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
+	if err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("error loading session: %v", err))
+
+		return
+	}
+
+	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session loaded successfully. State: %s", sc.SessionManager.SessionState()))
+
+	// Update Page 2 with session info
+	sc.updatePage2WithSession(selectedSession)
+
+	// Navigate to Page 2
+	sc.UI.ViewStack.SetVisibleChildName("page2")
 
 }

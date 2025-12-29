@@ -87,7 +87,6 @@ func runTestCase(t *testing.T, tc struct {
 	os.Args = append([]string{"app"}, tc.args...)
 
 	err := ParseArgs()
-
 	if (err != nil) != tc.wantErr {
 		t.Errorf("ParseArgs() error = %v, wantErr %v", err, tc.wantErr)
 

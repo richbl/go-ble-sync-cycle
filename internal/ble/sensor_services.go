@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"tinygo.org/x/bluetooth"
 )
 
@@ -83,6 +83,7 @@ func (w *deviceServiceWrapper) DiscoverCharacteristics(uuids []bluetooth.UUID) (
 
 	// Convert []bluetooth.DeviceCharacteristic to []CharacteristicReader
 	chars := make([]CharacteristicReader, len(bleChars))
+
 	for i := range bleChars {
 		chars[i] = &bleChars[i]
 	}

@@ -9,25 +9,23 @@ import (
 
 // safeUpdateUI helper for main-thread GUI calls
 func safeUpdateUI(fn func()) {
-
 	glib.IdleAdd(func() bool {
 		fn()
 
 		return false
 	})
-
 }
 
 // setupNavigationSignals sets up ViewStack navigation handlers, with per-page actions
 func setupNavigationSignals(stack *adw.ViewStack, pageActions map[string]func()) {
-
 	stack.Connect("notify::visible-child-name", func() {
 		pageName := stack.VisibleChildName()
+
 		if action, ok := pageActions[pageName]; ok {
 			action()
 		}
-	})
 
+	})
 }
 
 // displayAlertDialog shows a simple alert dialog with an OK button
@@ -41,43 +39,46 @@ func displayAlertDialog(window *adw.ApplicationWindow, title, message string) {
 
 }
 
-// createExitDialog creates the application exit confirmation dialog
-func (ui *AppUI) createExitDialog() {
+// displayConfirmationDialog shows a Yes/No dialog with customizable appearance for the Yes button
+func displayConfirmationDialog(window *adw.ApplicationWindow, title, message string, appearance adw.ResponseAppearance, onYes func()) {
 
 	const (
 		yes = "yes"
 		no  = "no"
 	)
 
-	ui.exitDialog = adw.NewAlertDialog(
-		"Exit BLE Sync Cycle?",
-		"Are you sure you want to exit?",
-	)
+	dialog := adw.NewAlertDialog(title, message)
 
-	// Set dialog properties
-	ui.exitDialog.SetCloseResponse(no)
-	ui.exitDialog.SetDefaultResponse(no)
+	// Default/Cancel setup
+	dialog.SetCloseResponse(no)
+	dialog.SetDefaultResponse(no)
 
-	// Add response buttons in the recommended order for GTK4/Adwaita
-	ui.exitDialog.AddResponse(no, "No")
-	ui.exitDialog.AddResponse(yes, "Yes")
+	dialog.AddResponse(no, "No")
+	dialog.AddResponse(yes, "Yes")
 
-	// Style the Yes button as destructive
-	ui.exitDialog.SetResponseAppearance(yes, adw.ResponseDestructive)
+	// Set specific appearance for the "Yes" action (Suggested or Destructive)
+	dialog.SetResponseAppearance(yes, appearance)
 
-	// Connect response signal
-	ui.exitDialog.ConnectResponse(func(response string) {
-
-		if response == "yes" {
-			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed exit")
-			// Trigger shutdown via the ShutdownManager to ensure proper cleanup
-			ui.shutdownMgr.Shutdown()
-		} else {
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "user cancelled exit")
+	dialog.ConnectResponse(func(response string) {
+		if response == yes {
+			onYes()
 		}
-
 	})
 
-	ui.exitDialog.Present(ui.Window)
+	dialog.Present(gtk.Widgetter(window))
 
+}
+
+// createExitDialog creates the application exit confirmation dialog
+func (ui *AppUI) createExitDialog() {
+	displayConfirmationDialog(
+		ui.Window,
+		"Exit BLE Sync Cycle?",
+		"Are you sure you want to exit?",
+		adw.ResponseDestructive,
+		func() {
+			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed exit")
+			ui.shutdownMgr.Shutdown()
+		},
+	)
 }

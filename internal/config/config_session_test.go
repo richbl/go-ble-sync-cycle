@@ -14,6 +14,7 @@ var (
 
 // TestLoadSessionMetadataSuccess tests the successful loading of session metadata
 func TestLoadSessionMetadataSuccess(t *testing.T) {
+
 	t.Run("valid config with session title", func(t *testing.T) {
 		configFile := "config_test.toml"
 		expectedTitle := "Session Title"
@@ -42,6 +43,7 @@ func TestLoadSessionMetadataSuccess(t *testing.T) {
 			t.Errorf("LoadSessionMetadata() FilePath = %v, want %v", metadata.FilePath, configFile)
 		}
 	})
+
 }
 
 // TestLoadSessionMetadataErrors tests error handling in LoadSessionMetadata
@@ -65,8 +67,8 @@ func TestLoadSessionMetadataErrors(t *testing.T) {
 	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			metadata, err := LoadSessionMetadata(tt.configFile)
 
+			metadata, err := LoadSessionMetadata(tt.configFile)
 			if err == nil {
 				t.Errorf("LoadSessionMetadata() expected an error, but got nil")
 
@@ -191,6 +193,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
 
 	// Should use filename as fallback when title is only whitespace
 	expectedTitle := "whitespace_test"
+
 	if metadata.Title != expectedTitle {
 		t.Errorf("LoadSessionMetadata() Title = %v, want %v (filename without extension)",
 			metadata.Title, expectedTitle)

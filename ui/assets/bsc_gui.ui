@@ -216,6 +216,7 @@
                                 <child type="suffix">
                                   <object class="GtkImage" id="connection_status_icon">
                                     <property name="icon-name">bluetooth-disconnected-symbolic</property>
+                                    <property name="pixel-size">23</property>
                                     <property name="valign">center</property>
                                   </object>
                                 </child>
@@ -229,6 +230,7 @@
                                 <child type="suffix">
                                   <object class="GtkImage" id="battery_icon">
                                     <property name="icon-name">battery-symbolic</property>
+                                    <property name="pixel-size">23</property>
                                     <property name="valign">center</property>
                                   </object>
                                 </child>

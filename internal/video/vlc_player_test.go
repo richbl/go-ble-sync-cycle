@@ -9,14 +9,17 @@ func vlcPlayerFactory() (*vlcPlayer, error) {
 	return newVLCPlayer()
 }
 
+// TestVLCPlayerLifecycle tests the lifecycle of the vlcPlayer
 func TestVLCPlayerLifecycle(t *testing.T) {
 	testPlayerLifecycle(t, func() (mediaPlayer, error) { return vlcPlayerFactory() })
 }
 
+// TestVLCPlayerPlaybackControls tests the playback controls of the vlcPlayer
 func TestVLCPlayerPlaybackControls(t *testing.T) {
 	testPlayerPlaybackControls(t, func() (mediaPlayer, error) { return vlcPlayerFactory() })
 }
 
+// TestVLCPlayerConfiguration tests the configuration of the vlcPlayer
 func TestVLCPlayerConfiguration(t *testing.T) {
 	testPlayerConfiguration(t, func() (mediaPlayer, error) { return vlcPlayerFactory() }, "VLC")
 }

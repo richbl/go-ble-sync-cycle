@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
-	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 // PlaybackController manages video playback

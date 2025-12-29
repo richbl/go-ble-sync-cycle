@@ -2,7 +2,7 @@ package video
 
 /*
 
-// DO NOT REMOVE: mpv player expects C locale set to LC_NUMERIC:
+// DO NOT REMOVE: mpv player library expects C locale set to LC_NUMERIC:
 //
 #include <locale.h>
 #include <stdlib.h>

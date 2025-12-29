@@ -33,6 +33,7 @@ func testVideoPath(t *testing.T) string {
 func setupPlayerTest[T mediaPlayer](t *testing.T, factory func() (T, error)) (T, func()) {
 
 	t.Helper()
+
 	player, err := factory()
 	if err != nil {
 		t.Fatalf("failed to create player: %v", err)
@@ -101,6 +102,7 @@ func testPlayerPlaybackControls(t *testing.T, factory playerFactory) {
 		}
 
 	})
+
 }
 
 // testPlayerConfiguration tests configuration methods
@@ -145,4 +147,5 @@ func testPlayerConfiguration(t *testing.T, factory playerFactory, playerName str
 		}
 
 	})
+
 }

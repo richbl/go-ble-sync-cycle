@@ -42,7 +42,7 @@ func (sc *SessionController) handleSessionControl() error {
 
 	if currentState >= session.StateConnecting || sc.starting.Load() {
 
-		// Stop the session
+		// Stop the session!
 		if err := sc.handleStop(); err != nil {
 			return fmt.Errorf(errFormat, "unable to stop session", err)
 		}
@@ -91,7 +91,6 @@ func (sc *SessionController) handleStart() {
 func (sc *SessionController) handleStartError(err error) {
 
 	safeUpdateUI(func() {
-
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for error")
 
 		sc.updateSessionControlButton(false)
@@ -123,8 +122,6 @@ func (sc *SessionController) handleStop() error {
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for stop")
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, StatusUnknown)
-
-		// Reset metrics
 		sc.resetMetrics()
 	})
 
@@ -137,7 +134,6 @@ func (sc *SessionController) startSessionGoroutine() {
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "start goroutine launched")
 
 	defer func() {
-
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "start goroutine exiting")
 
 		safeUpdateUI(func() {
@@ -168,8 +164,7 @@ func (sc *SessionController) startSessionGoroutine() {
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for successful start")
 		battery := fmt.Sprintf("%d%%", sc.SessionManager.BatteryLevel())
 		sc.updatePage2Status(StatusConnected, StatusConnected, battery)
-
-		sc.startMetricsLoop() // Start metrics loop
+		sc.startMetricsLoop()
 	})
 
 }
@@ -229,6 +224,7 @@ func (sc *SessionController) setBLEStatus(status Status) {
 	p := statusTable[ObjectBLE][status]
 	sc.UI.Page2.SensorStatusRow.SetSubtitle(p.Display)
 	sc.UI.Page2.SensorConnIcon.SetFromIconName(p.Icon)
+	sc.UI.Page2.SensorConnIcon.SetCSSClasses([]string{p.CSSStyle})
 
 }
 
@@ -238,13 +234,14 @@ func (sc *SessionController) setBatteryStatus(status Status, level string) {
 	p := statusTable[ObjectBattery][status]
 	display := p.Display
 
-	// If battery is logically connected and a battery level is provided, show the level instead
+	// If battery is logically connected and a battery level is provided, show the level
 	if status == StatusConnected && level != "" {
 		display = level
 	}
 
 	sc.UI.Page2.SensorBatteryRow.SetSubtitle(display)
 	sc.UI.Page2.SensorBattIcon.SetFromIconName(p.Icon)
+	sc.UI.Page2.SensorBattIcon.SetCSSClasses([]string{p.CSSStyle})
 
 }
 
@@ -272,7 +269,7 @@ func (sc *SessionController) startMetricsLoop() {
 			return false
 		}
 
-		// Get Data from Manager
+		// Get data from SessionManager
 		speed, _ := sc.SessionManager.CurrentSpeed()
 		timeRem := sc.SessionManager.VideoTimeRemaining()
 		rate := sc.SessionManager.VideoPlaybackRate()
@@ -282,7 +279,7 @@ func (sc *SessionController) startMetricsLoop() {
 		sc.UI.Page2.PlaybackSpeedLabel.SetLabel(fmt.Sprintf("%.2fx", rate))
 		sc.UI.Page2.TimeRemainingLabel.SetLabel(timeRem)
 
-		// Return true to keep the loop running
+		// Return true to keep the loop chugging along...
 		return true
 	})
 

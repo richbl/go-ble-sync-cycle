@@ -3,7 +3,7 @@ package ble
 import (
 	"testing"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // init is called to set the log level
@@ -38,6 +38,7 @@ func TestCalculateSpeed(t *testing.T) {
 	if speed != expectedSpeed {
 		t.Errorf("Expected speed %v, got %v", expectedSpeed, speed)
 	}
+
 }
 
 // TestParseSpeedData tests the parseSpeedData function

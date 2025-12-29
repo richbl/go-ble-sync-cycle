@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -20,12 +19,13 @@ var (
 	mediaPlayers = []string{"mpv", "vlc"}
 )
 
-// setupSessionEditSignals wires up event listeners for the Edit button
+// setupSessionEditSignals wires up event listeners for the Edit tab and its controls
 func (sc *SessionController) setupSessionEditSignals() {
 
+	// Configure the "Edit" button on the Session List page (Page 1)
 	sc.UI.Page1.EditButton.ConnectClicked(func() {
 
-		// Identify the chosen BSC session
+		// Identify the chosen BSC session from the list
 		selectedRow := sc.UI.Page1.ListBox.SelectedRow()
 		if selectedRow == nil {
 			return
@@ -37,38 +37,44 @@ func (sc *SessionController) setupSessionEditSignals() {
 		}
 
 		selectedSession := sc.Sessions[idx]
-		logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("preparing to edit Session: %s...", selectedSession.Title))
-
-		// Load the session into the SessionManager
-		if err := sc.SessionManager.LoadSession(selectedSession.ConfigPath); err != nil {
-			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading session for edit generated warnings: %v", err))
-		}
-
-		// Populate the UI with the session data
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "populating UI with session data...")
-		sc.populateEditor()
-
-		// Connect file chooser for video button
-		sc.UI.Page4.VideoFileButton.ConnectClicked(func() {
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "Video file button clicked")
-			sc.openVideoFilePicker()
-		})
-
-		// Connect Save button
-		sc.UI.Page4.SaveButton.ConnectClicked(func() {
-			sc.saveSession(false) // Save to current path
-		})
-
-		// Connect Save As button
-		sc.UI.Page4.SaveAsButton.ConnectClicked(func() {
-			sc.saveSession(true) // Save As new path
-		})
-
-		// Navigate to the Editor (Page 4)
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "navigating to Session Editor (page 4)...")
-		sc.UI.ViewStack.SetVisibleChildName("page4")
-
+		sc.loadAndNavigateToEditor(selectedSession)
 	})
+
+	// Video file picker dialog
+	sc.UI.Page4.VideoFileButton.ConnectClicked(func() {
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "Video file button clicked")
+		sc.openVideoFilePicker()
+	})
+
+	// Save button
+	sc.UI.Page4.SaveButton.ConnectClicked(func() {
+		sc.saveSession(false) // Save to current path
+	})
+
+	// Save As button
+	sc.UI.Page4.SaveAsButton.ConnectClicked(func() {
+		sc.saveSession(true) // Save As new path
+	})
+
+}
+
+// loadAndNavigateToEditor handles loading the session config and switching the view
+func (sc *SessionController) loadAndNavigateToEditor(selectedSession Session) {
+
+	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("preparing to edit Session: %s...", selectedSession.Title))
+
+	// Load the session into the SessionManager (Updates editConfig only)
+	if err := sc.SessionManager.LoadSession(selectedSession.ConfigPath); err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading session for edit generated warnings: %v", err))
+	}
+
+	// Populate the UI with the session data (reads from editConfig)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "populating UI with session data...")
+	sc.populateEditor()
+
+	// Navigate to the Editor (Page 4)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "navigating to Session Editor (page 4)...")
+	sc.UI.ViewStack.SetVisibleChildName("page4")
 
 }
 
@@ -77,7 +83,7 @@ func (sc *SessionController) populateEditor() {
 
 	cfg := sc.SessionManager.Config()
 	if cfg == nil {
-		logger.Warn(logger.BackgroundCtx, logger.GUI, "attempted to populate editor with nil config")
+		logger.Warn(logger.BackgroundCtx, logger.GUI, "attempted to populate editor with nil config... yikes!")
 
 		return
 	}
@@ -118,6 +124,7 @@ func (sc *SessionController) populateEditor() {
 
 	// Enable all widgets
 	toggleSensitive(p4, true)
+
 }
 
 // toggleSensitive enables or disables widgets
@@ -127,7 +134,6 @@ func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 	v := reflect.ValueOf(p4).Elem()
 
 	for i := range v.NumField() {
-
 		field := v.Field(i)
 		if field.CanInterface() {
 			widget, ok := field.Interface().(interface{ SetSensitive(enabled bool) })
@@ -135,7 +141,6 @@ func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 			if ok {
 				widget.SetSensitive(enabled)
 			}
-
 		}
 
 	}
@@ -211,8 +216,8 @@ func (sc *SessionController) openVideoFilePicker() {
 
 		// Update the UI with the selected path
 		path := file.Path()
-		glib.IdleAdd(func() {
 
+		safeUpdateUI(func() {
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "File selected: "+path)
 
 			if path != "" {
@@ -232,14 +237,19 @@ func (sc *SessionController) saveSession(saveAs bool) {
 
 	// Harvest the data from the UI widgets
 	newConfig := sc.harvestEditor()
+
+	// We get the path from the SessionManager (which reflects the editConfig's path)
 	currentPath := sc.SessionManager.ConfigPath()
 
 	// Perform Save or Save As... action
 	if saveAs || currentPath == "" {
 		sc.openSaveAsDialog(newConfig)
 	} else {
-		glib.IdleAdd(func() { sc.performSessionSave(currentPath, newConfig) })
+		safeUpdateUI(func() {
+			sc.performSessionSave(currentPath, newConfig)
+		})
 	}
+
 }
 
 // openSaveAsDialog handles the lifecycle of the file chooser
@@ -267,16 +277,17 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 		filePath := file.Path()
 
 		// Perform the actual save
-		glib.IdleAdd(func() {
+		safeUpdateUI(func() {
 			sc.performSessionSave(filePath, cfg)
 		})
 	}
 
 	// Launch the dialog
 	sc.saveFileDialog.Save(logger.BackgroundCtx, &sc.UI.Window.Window, cb)
+
 }
 
-// performSessionSave handles I/O, Error reporting, and UI Refresh
+// performSessionSave handles I/O, Error reporting, and UI refresh
 func (sc *SessionController) performSessionSave(path string, cfg *config.Config) {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "attempting to save session to: "+path)
@@ -290,6 +301,11 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 	}
 
 	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)
+
+	// If we saved to the path currently being edited, reload it to ensure consistency
+	if err := sc.SessionManager.LoadSession(path); err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload after save generated warnings: %v", err))
+	}
 
 	// Refresh the Session List (Page 1) to show new session(s)
 	sc.scanForSessions()
@@ -305,7 +321,6 @@ func convertSessionTitle(sessionTitle string) string {
 	}
 
 	return "BSC_session"
-
 }
 
 // indexOf returns the index of the target string in the slice
@@ -314,6 +329,8 @@ func indexOf(target string, options []string) uint {
 	idx := slices.Index(options, target)
 	if idx < 0 {
 		logger.Warn(logger.BackgroundCtx, logger.BLE, "target not found in options; skipping selection update", "target", target)
+
+		return 0
 	}
 
 	return uint(idx)

@@ -7,9 +7,9 @@ import (
 	"math"
 	"os"
 
-	config "github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
-	speed "github.com/richbl/go-ble-sync-cycle/internal/speed"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 )
 
 const (
@@ -58,6 +58,7 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 	speedUnitMultiplier := unitConversion[m.speedConfig.SpeedUnits]
 	sd := initSpeedData(m.speedConfig.WheelCircumferenceMM, speedUnitMultiplier)
 
+	// notificationHandler processes the BLE speed data
 	notificationHandler := func(buf []byte) {
 		speed, err := sd.processBLESpeed(ctx, m.speedConfig.SpeedUnits, buf)
 		if err != nil {
@@ -65,6 +66,7 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 
 			return
 		}
+
 		speedController.UpdateSpeed(ctx, speed)
 	}
 

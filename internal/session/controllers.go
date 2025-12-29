@@ -1,8 +1,8 @@
-// Package session manages BSC session lifecycle and state
 package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -13,6 +13,11 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 	"github.com/richbl/go-ble-sync-cycle/internal/video"
 	"tinygo.org/x/bluetooth"
+)
+
+// Error definitions
+var (
+	errNoActiveConfig = errors.New("cannot initialize controllers: no active configuration")
 )
 
 // controllers holds the application component controllers
@@ -111,6 +116,7 @@ func (m *StateManager) StopSession() error {
 	m.mu.Lock()
 	m.controllers = nil
 	m.shutdownMgr = nil
+	m.activeConfig = nil // Clear the active snapshot on stop
 	m.mu.Unlock()
 
 	// Emulate CLI cleanup: stop any ongoing scan under mutex
@@ -151,12 +157,19 @@ func (m *StateManager) CurrentSpeed() (float64, string) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	// Use ActiveConfig here to ensure we return the units of the *Running* session
+	cfg := m.activeConfig
+	if cfg == nil {
+		// Fallback for UI display when not running
+		cfg = m.editConfig
+	}
+
 	// Guard against nil controllers (session stopped or not started)
-	if m.controllers == nil || m.controllers.speedController == nil || m.config == nil {
+	if m.controllers == nil || m.controllers.speedController == nil || cfg == nil {
 		return 0.0, ""
 	}
 
-	return m.controllers.speedController.SmoothedSpeed(), m.config.Speed.SpeedUnits
+	return m.controllers.speedController.SmoothedSpeed(), cfg.Speed.SpeedUnits
 }
 
 // VideoTimeRemaining returns the formatted time remaining string (HH:MM:SS)
@@ -196,8 +209,12 @@ func (m *StateManager) VideoPlaybackRate() float64 {
 func (m *StateManager) initializeControllers() (*controllers, error) {
 
 	m.mu.RLock()
-	cfg := m.config
+	cfg := m.activeConfig
 	m.mu.RUnlock()
+
+	if cfg == nil {
+		return nil, errNoActiveConfig
+	}
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "creating speed controller...")
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)

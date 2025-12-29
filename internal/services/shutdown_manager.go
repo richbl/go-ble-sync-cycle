@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // smContext represents the cancellation context for ShutdownManager
@@ -64,10 +64,10 @@ func (sm *ShutdownManager) Run(fn func(context.Context) error) {
 		}
 
 	})
+
 }
 
-// AddCleanup adds a cleanup function to the shutdown manager so that they can be executed when
-// the shutdown manager is eventually shut down
+// AddCleanup adds a cleanup function to the shutdown manager
 func (sm *ShutdownManager) AddCleanup(fn func()) {
 	sm.cleanup = append(sm.cleanup, fn)
 }

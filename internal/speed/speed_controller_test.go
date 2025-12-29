@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	logger "github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // testData holds test constants and data
