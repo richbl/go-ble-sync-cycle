@@ -161,14 +161,6 @@ func (sc *SessionController) scanForSessions() {
 		return
 	}
 
-	// Check if any files were actually found
-	if len(files) == 0 {
-		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
-		displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No BSC session configuration files found in the current directory")
-
-		return
-	}
-
 	// Load metadata for each session file found
 	sessionID := 1
 	for _, filePath := range files {
@@ -194,6 +186,12 @@ func (sc *SessionController) scanForSessions() {
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session scan complete: found %d valid session(s)", len(sc.Sessions)))
+
+	// Check if any files were actually found
+	if len(sc.Sessions) == 0 {
+		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
+		displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No BSC session configuration files found in the current directory")
+	}
 
 }
 
