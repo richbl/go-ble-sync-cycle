@@ -40,6 +40,15 @@ func (sc *SessionController) setupSessionEditSignals() {
 		sc.loadAndNavigateToEditor(selectedSession)
 	})
 
+	// Real-time validation signal handler for the Save buttons
+	updateSaveButtons := func() {
+		sc.updateSaveButtonState()
+	}
+
+	// Define widget validators for BD_ADDR and video seek/start time
+	bindValidator(sc.UI.Page4.BTAddressEntry, `^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`, updateSaveButtons)
+	bindValidator(sc.UI.Page4.StartTimeEntry, `^\d{1,2}:[0-5]\d$`, updateSaveButtons)
+
 	// Video file picker dialog
 	sc.UI.Page4.VideoFileButton.ConnectClicked(func() {
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "Video file button clicked")
@@ -55,6 +64,22 @@ func (sc *SessionController) setupSessionEditSignals() {
 	sc.UI.Page4.SaveAsButton.ConnectClicked(func() {
 		sc.saveSession(true) // Save As new path
 	})
+
+}
+
+// updateSaveButtonState checks the validity of fields and toggles the Save buttons
+func (sc *SessionController) updateSaveButtonState() {
+
+	bdAddrEntry := sc.UI.Page4.BTAddressEntry
+	timeEntry := sc.UI.Page4.StartTimeEntry
+
+	isBDAddrValid := bdAddrEntry.Text() != "" && !bdAddrEntry.HasCSSClass("error")
+	isTimeValid := timeEntry.Text() != "" && !timeEntry.HasCSSClass("error")
+
+	canSave := isBDAddrValid && isTimeValid
+
+	sc.UI.Page4.SaveButton.SetSensitive(canSave)
+	sc.UI.Page4.SaveAsButton.SetSensitive(canSave)
 
 }
 
