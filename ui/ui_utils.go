@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"regexp"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -81,4 +83,28 @@ func (ui *AppUI) createExitDialog() {
 			ui.shutdownMgr.Shutdown()
 		},
 	)
+}
+
+// bindValidator ties regex validation check to an EntryRow widget
+func bindValidator(entry *adw.EntryRow, pattern string, onUpdate func()) {
+
+	reg := regexp.MustCompile(pattern)
+
+	entry.Connect("changed", func() {
+
+		text := entry.Text()
+
+		if text == "" || reg.MatchString(text) {
+			entry.RemoveCSSClass("error")
+		} else {
+			entry.AddCSSClass("error")
+		}
+
+		// Trigger the callback if provided (e.g., to update button state)
+		if onUpdate != nil {
+			onUpdate()
+		}
+
+	})
+
 }
