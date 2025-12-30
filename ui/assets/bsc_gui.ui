@@ -825,21 +825,8 @@
         </child>
       </object>
     </property>
-    <property name="default-height">860</property>
+    <property name="default-height">886</property>
     <property name="default-width">600</property>
     <property name="title">BLE Sync Cycle</property>
   </object>
-
-  <!-- <object class="AdwAboutDialog" id="about_window">
-    <property name="application-icon">bsc_logo</property>
-    <property name="application-name" translatable="yes">BLE Sync Cycle</property>
-    <property name="copyright" translatable="yes">Copyright © 2025 Rich Bloch</property>
-    <property name="developers">Rich Bloch</property>
-    <property name="issue-url">https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md</property>
-    <property name="license">MIT</property>
-    <property name="license-type">mit-x11</property>
-    <property name="version"></property>
-    <property name="website">https://github.com/richbl/go-ble-sync-cycle</property>
-  </object> -->
-
 </interface>
