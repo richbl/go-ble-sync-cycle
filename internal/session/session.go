@@ -124,6 +124,35 @@ func (m *StateManager) LoadEditSession(configPath string) error {
 	return nil
 }
 
+// UpdateLoadedSession updates the loaded session configuration
+func (m *StateManager) UpdateLoadedSession(cfg *config.Config, path string) error {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	// Update the loaded config
+	m.editConfig = cfg
+	m.editConfigPath = path
+
+	// If the path matches the loaded config path, update the loaded config too
+	if m.loadedConfigPath == path {
+		m.loadedConfig = cfg
+
+		// Set the state to Loaded if we were in Error or Idle state
+		if m.state == StateError || m.state == StateIdle {
+			m.state = StateLoaded
+			m.errorMsg = ""
+		}
+
+	}
+
+	return nil
+}
+
 // SessionState returns the current session state (thread-safe)
 func (m *StateManager) SessionState() State {
 

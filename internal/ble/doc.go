@@ -1,6 +1,12 @@
-// Package ble provides Bluetooth Low Energy (BLE) functionality for BLE Sync Cycle
+// Package ble implements the Bluetooth Low Energy (BLE) interface for BLE Sync Cycle
 //
-// This package handles BLE peripheral discovery, connection, and data retrieval, enabling
-// integration with cycling speed sensors that follow the BLE Cycling Speed and Cadence (CSC)
-// Service (0x1816) and BLE Battery Service (0x180F) profiles.
+// It provides a central controller that manages the lifecycle of BLE peripheral interactions,
+// including:
+//   - Scanning for specific BLE devices (filtered by BD_ADDR)
+//   - Establishing and maintaining connections to the BLE devices
+//   - Binding to required services: Cycling Speed and Cadence (CSC) and Battery Service
+//   - Handling notifications for real-time data updates
+//
+// The package abstracts the underlying BLE implementation (using tinygo.org/x/bluetooth)
+// to provide a clean API for the rest of the application
 package ble

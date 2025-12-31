@@ -58,7 +58,7 @@ func loadAndValidateConfig(filePath string) (*Config, error) {
 	}
 
 	// Validate TOML sections
-	if err := cfg.validate(); err != nil {
+	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
