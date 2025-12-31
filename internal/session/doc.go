@@ -1,6 +1,11 @@
-// Package session manages BSC session lifecycle, state, and service coordination
+// Package session orchestrates the core workflow of the BSC application
 //
-// The session package manages the SessionManager object which orchestrates the complete
-// lifecycle of a BSC session including configuration loading, controller initialization,
-// BLE connection, and video playback service management.
+// It provides the Manager, which is responsible for:
+//   - Loading and validating session configurations
+//   - Initializing and synchronizing controllers (BLE, Video, Speed)
+//   - Managing the application state machine (Running, Stopped, Editing)
+//   - Coordinating the clean shutdown of all active components
+//
+// The session package acts as the glue that binds the configuration, hardware interfaces,
+// and user interface together
 package session

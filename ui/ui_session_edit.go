@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
 
 // Maps for dropdown list widgets
@@ -329,7 +330,7 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 
 	// Show Saved alert
 	safeUpdateUI(func() {
-		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "Session saved to "+path)
+		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "'"+cfg.App.SessionTitle+"' saved to "+path)
 	})
 
 	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)
@@ -339,27 +340,51 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 	isLoadedSession := (path == loadedPath) && loadedPath != ""
 
 	if isLoadedSession {
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to currently loaded session, reloading target...")
-
-		// Reload as target so the next start uses the new config
-		if err := sc.SessionManager.LoadTargetSession(path); err != nil {
-			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload target after save generated warnings: %v", err))
-		}
-
-		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "BSC Session Updated", "You have updated the currently running session\n\nChanges will be applied after you restart this session")
-		})
-
+		sc.handleLoadedSessionUpdate(path, cfg)
 	} else {
+
 		// If we saved a different file (or a new file), just reload it for editing context
 		if err := sc.SessionManager.LoadEditSession(path); err != nil {
 			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload edit after save generated warnings: %v", err))
 		}
+
 	}
 
 	// Refresh the Session List (Page 1) to show new session(s)
 	sc.scanForSessions()
 	sc.PopulateSessionList()
+
+}
+
+// handleLoadedSessionUpdate handles session updates when the saved session is currently loaded
+func (sc *SessionController) handleLoadedSessionUpdate(path string, cfg *config.Config) {
+
+	// Check if the session is actually running (or trying to connect)
+	currentState := sc.SessionManager.SessionState()
+	isRunning := currentState > session.StateLoaded
+
+	// Use UpdateLoadedSession to safely update the session state for both cases
+	if err := sc.SessionManager.UpdateLoadedSession(cfg, path); err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("update session config failed validation: %v", err))
+	}
+
+	if isRunning {
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to running session, warning user...")
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "BSC Session Updated", "You have updated the currently running session\n\nChanges will be applied after you restart this session")
+		})
+	} else {
+		// Session is loaded but NOT running.
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to loaded (but idle) session, refreshing UI...")
+
+		// Update Session Status UI
+		safeUpdateUI(func() {
+			updatedSession := Session{Title: cfg.App.SessionTitle, ConfigPath: path}
+			sc.updatePage2WithSession(updatedSession)
+		})
+
+	}
 
 }
 

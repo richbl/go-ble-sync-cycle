@@ -1,5 +1,7 @@
-// Package flags handles command-line flags for BLE Sync Cycle (BSC)
+// Package flags parses and manages command-line arguments for the application
 //
-// This package defines and parses CLI arguments, enabling users to customize application behavior
-// at runtime.
+// It enables runtime customization of behavior, such as:
+//   - Selecting the configuration file path
+//   - Enabling debug mode
+//   - Choosing between CLI and GUI operation modes
 package flags

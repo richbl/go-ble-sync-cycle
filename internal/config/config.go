@@ -93,7 +93,7 @@ func Load(configFile string) (*Config, error) {
 		return nil, err
 	}
 
-	if err := cfg.validate(); err != nil {
+	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -128,8 +128,8 @@ func setSeekToPosition(cfg *Config, clFlags flags.CLIFlags) error {
 	return nil
 }
 
-// validate performs validation across all components
-func (c *Config) validate() error {
+// Validate performs validation across all components
+func (c *Config) Validate() error {
 
 	validators := []struct {
 		validate func() error
