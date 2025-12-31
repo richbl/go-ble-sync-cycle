@@ -63,8 +63,8 @@ func TestLoadSession(t *testing.T) {
 	// Verify path is stored
 	expectedPath := configPath
 
-	if mgr.ConfigPath() != expectedPath {
-		t.Errorf("LoadSession() path = %v, want %v", mgr.ConfigPath(), expectedPath)
+	if mgr.LoadedConfigPath() != expectedPath {
+		t.Errorf("LoadSession() path = %v, want %v", mgr.LoadedConfigPath(), expectedPath)
 	}
 
 	// Verify IsLoaded returns true
@@ -85,7 +85,7 @@ func TestLoadSessionInvalidFile(t *testing.T) {
 	mgr := NewManager()
 
 	// Test loading a non-existent file
-	err := mgr.LoadSession("nonexistent.toml")
+	err := mgr.LoadTargetSession("nonexistent.toml")
 	if err == nil {
 		t.Error("LoadSession() expected error for non-existent file")
 	}
@@ -178,7 +178,7 @@ func TestReset(t *testing.T) {
 	}
 
 	// Verify path is cleared
-	if mgr.ConfigPath() != "" {
+	if mgr.LoadedConfigPath() != "" {
 		t.Error("Reset() path should be empty")
 	}
 
@@ -211,7 +211,7 @@ func TestConcurrentAccess(t *testing.T) {
 			for range iterations {
 				_ = mgr.SessionState()
 				_ = mgr.Config()
-				_ = mgr.ConfigPath()
+				_ = mgr.LoadedConfigPath()
 				_ = mgr.ErrorMessage()
 				_ = mgr.IsLoaded()
 			}
@@ -267,12 +267,12 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	// Load first session
 	loadSession(t, configPath, mgr, "LoadSession() first load failed: %v")
 
-	firstPath := mgr.ConfigPath()
+	firstPath := mgr.LoadedConfigPath()
 
 	// Load second session (same file, but simulates switching)
 	loadSession(t, configPath, mgr, "LoadSession() second load failed: %v")
 
-	secondPath := mgr.ConfigPath()
+	secondPath := mgr.LoadedConfigPath()
 
 	// Verify both loads succeeded
 	if firstPath != secondPath {
@@ -290,7 +290,7 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 func loadSession(t *testing.T, configPath string, mgr *StateManager, errMsg string) {
 
 	t.Helper()
-	err := mgr.LoadSession(configPath)
+	err := mgr.LoadTargetSession(configPath)
 	if err != nil {
 		t.Fatalf(errMsg, err)
 	}
