@@ -47,11 +47,16 @@ func (s State) String() string {
 
 // StateManager coordinates session lifecycle and state
 type StateManager struct {
-	editConfig   *config.Config // The "editing" config (mutable)
 	activeConfig *config.Config // The "currently running" config (immutable)
+
+	loadedConfig     *config.Config // The "loaded" config
+	loadedConfigPath string
+
+	editConfig     *config.Config // The "editing" config
+	editConfigPath string
+
 	controllers  *controllers
 	shutdownMgr  *services.ShutdownManager
-	configPath   string
 	errorMsg     string
 	state        State
 	mu           sync.RWMutex
@@ -65,38 +70,56 @@ func NewManager() *StateManager {
 	}
 }
 
-// LoadSession loads and validates a session configuration file into editConfig
-func (m *StateManager) LoadSession(configPath string) error {
+// LoadTargetSession loads (or reloads) a session configuration for execution (loadedConfig)
+func (m *StateManager) LoadTargetSession(configPath string) error {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Load and validate the configuration from disk
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		// Only set error state if we aren't currently running a valid session
+
 		if m.state != StateRunning && m.state != StatePaused && m.state != StateConnected {
 			m.state = StateError
 		}
+
 		m.errorMsg = err.Error()
 
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	// Update the editing config
-	m.editConfig = cfg
-	m.configPath = configPath
-	m.errorMsg = ""
+	m.loadedConfig = cfg
+	m.loadedConfigPath = configPath
 
-	// Do not downgrade state to 'Loaded' if we are currently 'Running'
+	// When loading a session to run, we also queue it for editing
+	m.editConfig = cfg
+	m.editConfigPath = configPath
+
+	m.errorMsg = ""
 	if m.state == StateIdle || m.state == StateError {
 		m.state = StateLoaded
 	}
 
-	// Set logging level
 	if cfg.App.LogLevel != "" {
 		logger.SetLogLevel(cfg.App.LogLevel)
 	}
+
+	return nil
+}
+
+// LoadEditSession loads a session configuration specifically for editing (editConfig only)
+func (m *StateManager) LoadEditSession(configPath string) error {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to load configuration for edit: %w", err)
+	}
+
+	m.editConfig = cfg
+	m.editConfigPath = configPath
 
 	return nil
 }
@@ -119,28 +142,42 @@ func (m *StateManager) Config() *config.Config {
 	return m.editConfig
 }
 
-// ActiveConfig returns the configuration of the currently running session
+// ActiveConfig returns the configuration of the currently running/loaded session
 func (m *StateManager) ActiveConfig() *config.Config {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// If running, return the snapshot
+	// If running, return an immutable snapshot
 	if m.activeConfig != nil {
 		return m.activeConfig
 	}
 
-	// Fallback to editConfig (e.g., UI display before start)
+	// If a session is loaded to run, return it
+	if m.loadedConfig != nil {
+		return m.loadedConfig
+	}
+
+	// Fallback to editConfig (default behavior)
 	return m.editConfig
 }
 
-// ConfigPath returns the path to the loaded configuration file
-func (m *StateManager) ConfigPath() string {
+// EditConfigPath returns the path to the configuration currently being edited
+func (m *StateManager) EditConfigPath() string {
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.configPath
+	return m.editConfigPath
+}
+
+// LoadedConfigPath returns the path to the loaded/running configuration
+func (m *StateManager) LoadedConfigPath() string {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.loadedConfigPath
 }
 
 // ErrorMessage returns the last error message if state is StateError
@@ -184,8 +221,10 @@ func (m *StateManager) Reset() {
 
 	m.state = StateIdle
 	m.editConfig = nil
+	m.loadedConfig = nil
 	m.activeConfig = nil
-	m.configPath = ""
+	m.editConfigPath = ""
+	m.loadedConfigPath = ""
 	m.errorMsg = ""
 
 }
@@ -196,7 +235,7 @@ func (m *StateManager) IsLoaded() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.editConfig != nil && m.state != StateIdle
+	return (m.loadedConfig != nil || m.editConfig != nil) && m.state != StateIdle
 }
 
 // IsRunning returns true if services are currently running
@@ -247,7 +286,15 @@ func (m *StateManager) prepareStart() error {
 	}
 
 	// Create a snapshot of the config (activeConfig is immutable)
-	m.activeConfig = m.editConfig
+	switch {
+	case m.loadedConfig != nil:
+		m.activeConfig = m.loadedConfig
+	case m.editConfig != nil:
+		m.activeConfig = m.editConfig
+	default:
+
+		return fmt.Errorf(errFormat, "no session loaded", nil)
+	}
 
 	if m.state == StateError {
 		logger.Debug(logger.BackgroundCtx, logger.APP, "reset from Error state to Loaded state")

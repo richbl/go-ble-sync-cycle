@@ -102,7 +102,11 @@ func (sc *SessionController) handleStartError(err error) {
 
 		// Show error state in UI
 		sc.updatePage2Status(StatusFailed, StatusNotConnected, StatusUnknown)
-		displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
+		})
+
 	})
 
 }
@@ -123,6 +127,14 @@ func (sc *SessionController) handleStop() error {
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, StatusUnknown)
 		sc.resetMetrics()
+
+		// User edited the running session! (so update the details)
+		if cfg := sc.SessionManager.ActiveConfig(); cfg != nil {
+			sc.UI.Page2.SessionNameRow.SetSubtitle(cfg.App.SessionTitle)
+		}
+
+		path := sc.SessionManager.LoadedConfigPath()
+		sc.UI.Page2.SessionFileLocationRow.SetSubtitle(path)
 	})
 
 	return nil

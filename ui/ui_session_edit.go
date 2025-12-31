@@ -88,8 +88,8 @@ func (sc *SessionController) loadAndNavigateToEditor(selectedSession Session) {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("preparing to edit Session: %s...", selectedSession.Title))
 
-	// Load the session into the SessionManager (Updates editConfig only)
-	if err := sc.SessionManager.LoadSession(selectedSession.ConfigPath); err != nil {
+	// Load the session into the SessionManager
+	if err := sc.SessionManager.LoadEditSession(selectedSession.ConfigPath); err != nil {
 		logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading session for edit generated warnings: %v", err))
 	}
 
@@ -263,8 +263,8 @@ func (sc *SessionController) saveSession(saveAs bool) {
 	// Harvest the data from the UI widgets
 	newConfig := sc.harvestEditor()
 
-	// We get the path from the SessionManager (which reflects the editConfig's path)
-	currentPath := sc.SessionManager.ConfigPath()
+	// We get the path from the SessionManager
+	currentPath := sc.SessionManager.EditConfigPath()
 
 	// Perform Save or Save As... action
 	if saveAs || currentPath == "" {
@@ -320,16 +320,41 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 	// Perform file I/O
 	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save config: %v", err))
-		displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
+		})
 
 		return
 	}
 
+	// Show Saved alert
+	safeUpdateUI(func() {
+		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "Session saved to "+path)
+	})
+
 	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)
 
-	// If we saved to the path currently being edited, reload it to ensure consistency
-	if err := sc.SessionManager.LoadSession(path); err != nil {
-		logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload after save generated warnings: %v", err))
+	// Check if we are modifying the currently loaded session
+	loadedPath := sc.SessionManager.LoadedConfigPath()
+	isLoadedSession := (path == loadedPath) && loadedPath != ""
+
+	if isLoadedSession {
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to currently loaded session, reloading target...")
+
+		// Reload as target so the next start uses the new config
+		if err := sc.SessionManager.LoadTargetSession(path); err != nil {
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload target after save generated warnings: %v", err))
+		}
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "BSC Session Updated", "You have updated the currently running session\n\nChanges will be applied after you restart this session")
+		})
+
+	} else {
+		// If we saved a different file (or a new file), just reload it for editing context
+		if err := sc.SessionManager.LoadEditSession(path); err != nil {
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("reload edit after save generated warnings: %v", err))
+		}
 	}
 
 	// Refresh the Session List (Page 1) to show new session(s)

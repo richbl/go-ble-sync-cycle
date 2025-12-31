@@ -190,7 +190,10 @@ func (sc *SessionController) scanForSessions() {
 	// Check if any files were actually found
 	if len(sc.Sessions) == 0 {
 		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
-		displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No BSC session configuration files found in the current directory")
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No BSC session configuration files found in the current directory")
+		})
 	}
 
 }
@@ -285,7 +288,7 @@ func (sc *SessionController) performLoadSession(selectedSession Session) {
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("loading Session: %s...", selectedSession.Title))
 
 	// Load the session into the SessionManager
-	err := sc.SessionManager.LoadSession(selectedSession.ConfigPath)
+	err := sc.SessionManager.LoadTargetSession(selectedSession.ConfigPath)
 	if err != nil {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("error loading session: %v", err))
 

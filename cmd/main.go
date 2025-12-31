@@ -41,8 +41,8 @@ func main() {
 	// Create session manager
 	sessionMgr := session.NewManager()
 
-	// Load configuration (config.Load automatically applies --config and --seek flag overrides)
-	if err := sessionMgr.LoadSession(configFile); err != nil {
+	// Load configuration
+	if err := sessionMgr.LoadTargetSession(configFile); err != nil {
 		logger.Fatal(logger.BackgroundCtx, logger.APP, err.Error())
 	}
 
@@ -51,7 +51,7 @@ func main() {
 		logger.Fatal(logger.BackgroundCtx, logger.APP, err.Error())
 	}
 
-	// Wait patiently for shutdown (Ctrl+C or service error)
+	// Wait patiently for shutdown (Ctrl+C or services error)
 	sessionMgr.Wait()
 
 	// Wave goodbye
