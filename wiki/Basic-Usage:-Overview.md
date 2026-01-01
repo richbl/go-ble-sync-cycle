@@ -7,22 +7,9 @@
 At a high level, **BLE Sync Cycle** follows the steps below:
 
 1. Scans for your BLE cycling sensor
-2. Connects to the sensor and starts receiving speed data
-3. Launches a media player for video playback
-4. Automatically adjusts video speed based on your cycling speed
-5. Displays real-time cycling statistics via the on-screen display (OSD)
-6. Gracefully shuts down on user interrupt (Ctrl+C) or end of video playback
-
-### Running the Application
-
-To run the application, you need to first make sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device (i.e., spinning the bicycle wheel).
-
-To run **BLE Sync Cycle**, execute the following command:
-
-```console
-./ble-sync-cycle
-```
-
-If the application hasn't yet been built using the `go build` command, please refer to the [Building the Application](#building-the-application) section above.
-
-> **IMPORTANT:** Be sure the `config.toml` is located in the current working directory (where you ran the `ble-sync-cycle` command), or see the next section on how to override where the application looks for a configuration file.
+2. Connects to the sensor and queries for various BLE services of interest: battery power and cycling speed
+3. Starts receiving real-time speed data at regular intervals
+4. Launches a media player for video playback
+5. Automatically adjusts video speed based on your cycling speed
+6. Displays real-time cycling statistics via the media player's on-screen display (OSD)
+7. Gracefully shuts down on user interrupt, application exit, or at the end of video playback
