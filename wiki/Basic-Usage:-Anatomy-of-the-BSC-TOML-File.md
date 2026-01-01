@@ -2,6 +2,8 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
 </p>
 
+The **BLE Sync Cycle** application is configured using an external configuration file called `config.toml`. A copy of that file with default values is provided in the `internal/config` directory of the project.
+
 Edit the `config.toml` file found in the `internal/config` directory.
 
 With the exception of updating `sensor_bd_addr` to the actual sensor ID to be used, and changing the wheel circumference (`wheel_circumference_mm`), these default settings should be appropriate for most application use cases.
