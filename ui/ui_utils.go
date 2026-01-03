@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -8,6 +10,27 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
+
+// getSessionConfigDir returns the directory path for session configuration files, using
+// os.UserConfigDir(), which follows the XDG Base Directory specification
+func getSessionConfigDir() (string, error) {
+
+	configHome, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	configDir := filepath.Join(configHome, ApplicationID)
+
+	// Ensure the directory exists
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			return "", err
+		}
+	}
+
+	return configDir, nil
+}
 
 // safeUpdateUI helper for main-thread GUI calls
 func safeUpdateUI(fn func()) {

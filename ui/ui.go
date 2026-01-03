@@ -15,6 +15,10 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
+const (
+	ApplicationID = "com.github.richbl.ble-sync-cycle"
+)
+
 //go:embed assets/bsc_gui.ui
 var uiXML string
 
@@ -283,7 +287,7 @@ func setupAllSignals(sc *SessionController) {
 	pageActions := map[string]func(){
 
 		"page1": func() {
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Select: refreshing session list from CWD...")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Select: refreshing session list...")
 			sc.scanForSessions()
 			sc.PopulateSessionList()
 		},
@@ -322,7 +326,7 @@ func StartGUI() {
 	shutdownMgr := services.NewShutdownManager(30 * time.Second)
 
 	// Initialize the application
-	app := gtk.NewApplication("com.github.richbl.ble-sync-cycle", gio.ApplicationFlagsNone)
+	app := gtk.NewApplication(ApplicationID, gio.ApplicationFlagsNone)
 
 	app.ConnectActivate(func() {
 		setupGUIApplication(app, shutdownMgr)

@@ -53,7 +53,7 @@
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkImage" id="page1_logo_image">
-                                <property name="icon-name">bsc_logo</property>
+                                <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                 <property name="icon-size">normal</property>
                                 <property name="pixel-size">128</property>
                               </object>
@@ -166,7 +166,7 @@
                                 <property name="spacing">12</property>
                                 <child>
                                   <object class="GtkImage" id="page2_logo_image">
-                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                     <property name="pixel-size">48</property>
                                   </object>
                                 </child>
@@ -349,7 +349,7 @@
                                 <property name="spacing">12</property>
                                 <child>
                                   <object class="GtkImage" id="page3_logo_image">
-                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                     <property name="pixel-size">48</property>
                                   </object>
                                 </child>
@@ -422,7 +422,7 @@
                                 <property name="spacing">6</property>
                                 <child>
                                   <object class="GtkImage" id="page4_logo_image">
-                                    <property name="icon-name">bsc_logo</property>
+                                    <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                     <property name="icon-size">inherit</property>
                                     <property name="pixel-size">48</property>
                                     <property name="visible">True</property>
