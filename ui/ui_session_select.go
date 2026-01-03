@@ -82,15 +82,22 @@ func (sc *SessionController) setupSessionSelectSignals() {
 
 }
 
-// scanForSessions looks for valid session config files in the current working directory
+// scanForSessions looks for valid session config files in the application's config directory
 func (sc *SessionController) scanForSessions() {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "scanning for session configuration files...")
 
 	sc.Sessions = nil
 
-	// Find all .toml files in the current directory
-	files, err := filepath.Glob("*.toml")
+	// Get session configuration directory
+	configDir, err := getSessionConfigDir()
+	if err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to get session config directory: %v", err))
+		return
+	}
+
+	// Find all .toml files in the config directory
+	files, err := filepath.Glob(filepath.Join(configDir, "*.toml"))
 	if err != nil {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("pattern-matching error when scanning for sessions: %v", err))
 
@@ -128,7 +135,7 @@ func (sc *SessionController) scanForSessions() {
 		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
 
 		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No BSC session configuration files found in the current directory")
+			displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No configuration files found in the configuration directory")
 		})
 	}
 
