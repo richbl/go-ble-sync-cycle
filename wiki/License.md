@@ -4,5 +4,5 @@
 
 - This project is licensed under the MIT License. See the [LICENSE](https://github.com/richbl/go-ble-sync-cycle/blob/main/LICENSE) file for details.
 
-
 - The Bluetooth logo is a trademark of [Bluetooth SIG, Inc.](https://www.bluetooth.com)
+- Adwaita, GTK and the GTK logo are trademarks of the [GNOME Foundation](https://foundation.gnome.org/legal-and-trademarks/)

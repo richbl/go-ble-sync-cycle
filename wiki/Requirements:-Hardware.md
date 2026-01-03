@@ -16,6 +16,6 @@ For my own indoor cycling configuration, I use a Performance Travel Trac 3 fluid
 
 - A Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensor, configured for speed
 
-### Want to Learn More about Bluetooth BLE?
+### Interested in Learning More about Bluetooth BLE?
 
 For an overview of Bluetooth BLE, refer to the excellent article ["Introduction to Bluetooth Low Energy"](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction) by Kevin Townsend.

@@ -136,7 +136,7 @@ func ShowHelp() {
 	}
 
 	fmt.Fprintln(os.Stdout, "")
-	fmt.Fprintln(os.Stdout, "The following flags are available when running in GUI mode:")
+	fmt.Fprintln(os.Stdout, "The following flag is available when running in GUI mode:")
 	fmt.Fprintln(os.Stdout, "")
 
 	for _, fi := range flagInfos {
