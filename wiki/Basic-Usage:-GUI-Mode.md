@@ -2,22 +2,128 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
 </p>
 
-### GUI Mode
+Running **BLE Sync Cycle** in GUI mode is a simple process. To start **BLE Sync Cycle**, simply double-click the **BLE Sync Cycle** icon on your desktop.
 
-#### Starting from Command Line
+Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows idiomatic design principles from the [GNOME Human Interface Guideline](https://developer.gnome.org/hig/), application behavior should be familiar, easy to use, and consistent with other GNOME applications.
 
-#### Starting from a Desktop Environment
+### The BSC Sessions Page
 
-<img width="650" height="934" alt="Screenshot From 2025-12-29 10-56-40" src="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b" />
+On application start, the **BSC Sessions** page is displayed, as shown below. This page is used to create and manage sessions, which are customized configuration files that allow you to configure the behavior of individual **BLE Sync Cycle** cycling sessions.
 
-<img width="650" height="934" alt="Screenshot From 2025-12-29 10-56-53" src="https://github.com/user-attachments/assets/51563302-3cbf-41ec-937d-93b9a9c75bdd" />
-<img width="650" height="934" alt="Screenshot From 2025-12-29 10-57-21" src="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff" />
-<img width="650" height="934" alt="Screenshot From 2025-12-29 10-57-31" src="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105" />
+In it's most simpliest form, a session is simply a file containing configuration data that tells **BLE Sync Cycle** what BLE device to connect to, and what video file to playback when the session begins. Addtional configuration options are available for edit via the BSC Session Editor page.
 
-<img width="650" height="934" alt="Screenshot From 2025-12-29 10-58-16" src="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90" />
+From this page, you can edit a session via the Edit Session button, or load a session via the Load Session button.
 
-<img width="650" height="934" alt="Screenshot From 2025-12-29 11-00-31" src="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f" />
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><img src="[https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b](https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b)" width=700></picture>
 
-<img width="650" height="936" alt="Screenshot From 2025-12-31 21-10-56" src="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44" />
+> Note that session files are stored in the `~/.config/com.github.richbl.ble-sync-cycle` directory. Each session file ends in `.toml`. **BLE Sync Cycle** will look here for session files and then display them on this page if they're valid BSC session files.
 
-<img width="650" height="936" alt="Screenshot From 2025-12-31 21-11-06" src="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec" />
+### The BSC Session Status Page
+
+The **BSC Session Status** page is used to view the current status of a session and to control the session. From this page, you can start, pause, and stop a loaded BSC session. This page is where most of a **BLE Sync Cycle** user's time will be spent.
+
+The **Session Details** section displays the currently loaded session title and the path to the session file.
+
+To start a session, you click the **Start Session** button. Once started, the **Start Session** button is replaced with the **Stop Session** button.
+
+To stop a session, you click the **Stop Session** button.
+
+#### Starting a BSC Session
+
+When a session is started, it must first connect to the configured BLE peripheral device (your BLE speed sensor). This process of establishing a connection can take time (sometimes as much as 30 seconds or more). To track the connection status, the **BLE Sensor Connection** section provides a real-time view of the connection status between the BLE sensor and the central device.
+
+- If the connection is not established, the Bluetooth symbol will be red in color
+- If the connection is in the process of being established, the Bluetooth symbol will be yellow in color
+- If the connection is established, the Bluetooth symbol will turn green
+
+Also note that the battery level of the BLE sensor will be displayed in the **BLE Sensor Connection** section.
+
+<img width="650" height="934" alt="Dark BSC Session Status Page UNCONNECTED" src="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90" />
+
+#### Cycling in a BSC Session
+
+Once a Bluetooth connection is established (the Bluetooth symbol turns green), video playback will begin and real-time cycling data will be displayed in the **Session Metrics** section.
+
+The cycling session will continue as long as there's time remaining in the video playback, until the user stops pedaling (pausing video playback), or the session is stopped by clicking the **Stop Session** button.
+
+<img width="650" height="934" alt="Dark BSC Session Status Page CONNECTED" src="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f" />
+
+### The BSC Session Log Page
+
+While **BLE Sync Cycle** is running,
+
+Throughout a session, the **BSC Session Log** page is used to view the log messages that are generated. These can be helpful when debugging issues that may be encountered while using **BLE Sync Cycle**.
+
+The **Logging Level** section displays the current logging level, which can be changed for each individual BSC session via the **BSC Session Editor** page.
+
+<img width="650" height="934" alt="Dark BSC Sesssion Log Page" src="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff" />
+
+### The BSC Session Editor Page
+
+The **BSC Session Editor** page is used to manage BSC sessions. From this page, you can edit a BSC session or create a new BSC session based on an existing session.
+
+#### The Session Details Section
+
+The **Session Details** section displays the BSC session title and the logging level. Both fields are editable.
+
+#### The BLE Sensor Section
+
+The **BLE Sensor** section displays the Bluetooth Device Address (BD_ADDR) of the BLE cycling sensor to be used for this session. This field is editable, but it must be a valid BD_ADD: a hexidecimal set of six digits called a sextet,separated by colons.
+
+The **Scan Timeout** field is also editable. It specifies the number of seconds to wait for a connection to the BLE sensor.
+
+A value of 30 seconds is generally sufficient. If a shorter value is specified, the BSC session connection process may generate a timeout error, in which case you simply need to restart the BSC session again.
+
+#### The Speed Settings Section
+
+The **Speed Settings** section displays the speed-related settings for the BSC session. These settings are used to interpret and convert the raw BLE sensor speed information into useful speed-related data.
+
+The **Wheel Circumference** field specifies the wheel circumference of the bicycle used during a BSC session. [A good reference article that includes a lookup table for many popular wheel sizes can be found here](https://www.crossroadscyclingco.com/articles/wheel-size-chart-for-bicycle-computer-settings-pg239.htm).
+
+The **Speed Units** field specifies the speed units to use for the BSC session. These units can be either "mph" (miles per hour) or "km/h" (kilometers per hour).
+
+The **Speed Threshold** field specifies the minimum speed change to trigger a video playback update. This value is in seconds and is between 0.00 and 10.00. The default value of 0.25 seconds is generally sufficient.
+
+The **Speed Smoothing** field specifies the number of recent speed readings to generate a stable moving average. This value is between 1 and 25 readings. The default value is 5.
+
+<img width="650" height="934" alt="Dark BSC Session Editor Page A" src="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105" />
+
+#### The Video Settings Section
+
+The **Video Settings** section displays the video playback settings for the media player used in a BSC session.
+
+The **Media Player** field specifies the media player to be used for the BSC session. The options are "VLC" and "mpv".
+
+The **Video File** field specifies the video file to be played during the BSC session. This field opens a file browser dialog to allow you to select a video file.
+
+The **Start Time** field specifies the time in the video file to start playback. This is sometimes referred to as the "seek time." This value is in seconds and is between 0.00 and 1000.00. The default value is 0.00.
+
+The **Window Scale Factor** field specifies the scaling factor for the media player window. This value is between 0.1 and 1.0. The default value is 1.0, where 1.0 is full screen.
+
+The **Update Interval** field specifies the interval in seconds at which the media player will update video playback. This field value is between 0.10 and 3.00 seconds. The default value is 0.25 seconds.
+
+The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed.
+
+<img width="650" height="936" alt="Dark BSC Session Editor Page B" src="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44" />
+
+#### The On-Screen Display (OSD) Section
+
+The **On-Screen Display (OSD)** section displays the on-screen display (OSD) settings for the media player used in a BSC session.
+
+The **Show Cycle Speed** field specifies whether to display the current cycle speed on the on-screen display (OSD). The default value is true.
+
+The **Show Playback Speed** field specifies whether to display the current video playback speed on the on-screen display (OSD). The default value is true.
+
+The **Show Time Remaining** field specifies whether to display the current video time remaining on the on-screen display (OSD). The default value is true.
+
+The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD).
+
+<img width="650" height="936" alt="Dark BSC Session Editor Page C" src="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec" />
+
+### Saving BSC Sessions
+
+After making changes to a BSC session, you can save the changes by clicking the **Save Session** button.
+
+If you want to save a new BSC session, click the **Save Session As...** button and enter a name for the new session.
+
+> Importantly, newly created BSC session files should be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** will always look for BSC session files.

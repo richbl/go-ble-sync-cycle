@@ -8,9 +8,7 @@ Some special thanks are in order:
 
 - The [TinyGo Go Bluetooth package maintainers](https://github.com/tinygo-org/bluetooth) for making BLE device integration in Go relatively straight forward
 
-- The team over at [DiamondBurned](https://github.com/diamondburned) for providing two Go packages that allowed me to develop a GTK4/Adwaita GUI for this application:
-    - [The GoTK4 project](https://github.com/diamondburned/gotk4)
-    - [The GoTK4-Adwaita project](https://github.com/diamondburned/gotk4-adwaita)
+- The [the Diamondburned team](https://github.com/Diamondburned) for their work on GTK4/Adwaita bindings for Go. I relied heavily on both the [GoTK4](https://github.com/diamondburned/gotk4) and the [GoTK4-Adwaita](https://github.com/diamondburned/gotk4-adwaita) projects when developing the GUI for this project
 
 - The [Gen2Brain team for developing go-mpv](https://github.com/gen2brain/go-mpv), which provides access to the [mpv media player](https://mpv.io/) via their Go package
 
