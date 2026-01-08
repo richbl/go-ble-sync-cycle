@@ -20,7 +20,7 @@ The **BLE Sync Cycle** project currently only offers the option for the local co
 
 ### A First-Person View Cycling Video
 
-- A local video file for playback, preferably a first-person view cycling video. Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas
+- A local video file for playback, preferably a first-person view cycling video.  Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas
 
 ### The Target Platform
 
