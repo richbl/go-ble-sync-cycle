@@ -50,7 +50,7 @@ The default `config.toml` file is shown below:
 
 An explanation of the various sections of the `config.toml` file is provided below:
 
-### The `[app]` Section
+### The App Section
 
 The `[app]` section is used for configuration of the **BLE Sync Cycle** application itself. It includes the following parameter:
 
@@ -58,7 +58,7 @@ The `[app]` section is used for configuration of the **BLE Sync Cycle** applicat
 
 - `logging_level`: The logging level to use, which displays messages to the console as the application executes. This can be "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
 
-### The `[ble]` Section
+### The BLE Section
 
 The `[ble]` section configures your computer (referred to as the BLE central controller) to scan for and query the BLE speed sensor (referred to as the BLE peripheral). It includes the following parameters:
 
@@ -67,7 +67,7 @@ The `[ble]` section configures your computer (referred to as the BLE central con
 
 > To find the address (BD_ADDR) of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device BD_ADDRs are typically in the form of "11:22:33:44:55:66."
 
-### The `[speed]` Section
+### The Speed Section
 
 The `[speed]` section defines the configuration for the speed controller component. The speed controller takes raw BLE CSC speed data (a rate of discrete device events per time cycle) and converts it speed (either km/h or mph, depending on `speed_units`). It includes the following parameters:
 
@@ -78,7 +78,7 @@ The `[speed]` section defines the configuration for the speed controller compone
 
 > The smoothing window is a simple ring buffer that stores the last (n) speed measurements, meaning that it will create a moving average for the speed value. This helps to smooth out the speed data and provide a more natural video playback experience.
 
-### The `[video]` Section
+### The Video Section
 
 The `[video]` section defines the configuration for the MPV video player component. It includes the following parameters:
 
@@ -89,7 +89,9 @@ The `[video]` section defines the configuration for the MPV video player compone
 - `update_interval_secs`: The number of seconds to wait between video player updates
 - `speed_multiplier`: The relative playback speed of the video. Usually, a value of 1.0 is used (<1.0 will slow playback; >1.0 will speed up playback), as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the vehicle is in the video during "normal speed" playback, it's recommended to experiment with different values to find a good balance between video playback speed and real-world cycling experience.
 
-### The `[video.OSD]` Section
+### The Video On-Screen Display Section
+
+The `[video.osd]` sub-section of the `[video]` section defines the configuration for the on-screen display (OSD) functionality in the media player. It includes the following parameters:
 
 - `display_cycle_speed`: A boolean value that indicates whether to display the cycle sensor speed on the on-screen display (OSD)
 - `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
