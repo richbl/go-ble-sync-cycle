@@ -56,9 +56,7 @@ The cycling session will continue as long as there's time remaining in the video
 
 ### The BSC Session Log Page
 
-While **BLE Sync Cycle** is running,
-
-Throughout a session, the **BSC Session Log** page is used to view the log messages that are generated. These can be helpful when debugging issues that may be encountered while using **BLE Sync Cycle**.
+While **BLE Sync Cycle** is running, the **BSC Session Log** page is used to view the log messages that are generated. These can be helpful when debugging issues that may be encountered while using **BLE Sync Cycle**.
 
 The **Logging Level** section displays the current logging level, which can be changed for each individual BSC session via the **BSC Session Editor** page.
 
@@ -72,27 +70,27 @@ The **BSC Session Editor** page is used to manage BSC sessions. From this page, 
 
 #### The Session Details Section
 
-The **Session Details** section displays the BSC session title and the logging level. Both fields are editable.
+- The **Session Details** section displays the BSC session title and the logging level. Both fields are editable
 
 #### The BLE Sensor Section
 
-The **BLE Sensor** section displays the Bluetooth Device Address (BD_ADDR) of the BLE cycling sensor to be used for this session. This field is editable, but it must be a valid BD_ADD: a hexadecimal set of six digits called a sextet,separated by colons.
+- The **BLE Sensor** section displays the Bluetooth Device Address (BD_ADDR) of the BLE cycling sensor to be used for this session. This field is editable, but it must be a valid BD_ADD: a hexadecimal set of six digits called a sextet,separated by colons
 
-The **Scan Timeout** field is also editable. It specifies the number of seconds to wait for a connection to the BLE sensor.
+- The **Scan Timeout** field is also editable. It specifies the number of seconds to wait for a connection to the BLE sensor
 
-A value of 30 seconds is generally sufficient. If a shorter value is specified, the BSC session connection process may generate a timeout error, in which case you simply need to restart the BSC session again.
+  A value of 30 seconds is generally sufficient. If a shorter value is specified, the BSC session connection process may generate a timeout error, in which case you simply need to restart the BSC session again.
 
 #### The Speed Settings Section
 
-The **Speed Settings** section displays the speed-related settings for the BSC session. These settings are used to interpret and convert the raw BLE sensor speed information into useful speed-related data.
+- The **Speed Settings** section displays the speed-related settings for the BSC session. These settings are used to interpret and convert the raw BLE sensor speed information into useful speed-related data
 
-The **Wheel Circumference** field specifies the wheel circumference of the bicycle used during a BSC session. [A good reference article that includes a lookup table for many popular wheel sizes can be found here](https://www.crossroadscyclingco.com/articles/wheel-size-chart-for-bicycle-computer-settings-pg239.htm).
+- The **Wheel Circumference** field specifies the wheel circumference of the bicycle used during a BSC session. [A good reference article that includes a lookup table for many popular wheel sizes can be found here](https://www.crossroadscyclingco.com/articles/wheel-size-chart-for-bicycle-computer-settings-pg239.htm)
 
-The **Speed Units** field specifies the speed units to use for the BSC session. These units can be either "mph" (miles per hour) or "km/h" (kilometers per hour).
+- The **Speed Units** field specifies the speed units to use for the BSC session. These units can be either "mph" (miles per hour) or "km/h" (kilometers per hour)
 
-The **Speed Threshold** field specifies the minimum speed change to trigger a video playback update. This value is in seconds and is between 0.00 and 10.00. The default value of 0.25 seconds is generally sufficient.
+- The **Speed Threshold** field specifies the minimum speed change to trigger a video playback update. This value is in seconds and is between 0.00 and 10.00. The default value of 0.25 seconds is generally sufficient
 
-The **Speed Smoothing** field specifies the number of recent speed readings to generate a stable moving average. This value is between 1 and 25 readings. The default value is 5.
+- The **Speed Smoothing** field specifies the number of recent speed readings to generate a stable moving average. This value is between 1 and 25 readings. The default value is 5
 
 <p align="center">
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><img src="[https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105](https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105)" width=600></picture>
@@ -102,17 +100,17 @@ The **Speed Smoothing** field specifies the number of recent speed readings to g
 
 The **Video Settings** section displays the video playback settings for the media player used in a BSC session.
 
-The **Media Player** field specifies the media player to be used for the BSC session. The options are "VLC" and "mpv".
+- The **Media Player** field specifies the media player to be used for the BSC session. The options are "VLC" and "mpv"
 
-The **Video File** field specifies the video file to be played during the BSC session. This field opens a file browser dialog to allow you to select a video file.
+- The **Video File** field specifies the video file to be played during the BSC session. This field opens a file browser dialog to allow you to select a video file
 
-The **Start Time** field specifies the time in the video file to start playback. This is sometimes referred to as the "seek time." This value is in seconds and is between 0.00 and 1000.00. The default value is 0.00.
+- The **Start Time** field specifies the time in the video file to start playback. This is sometimes referred to as the "seek time." This value is in seconds and is between 0.00 and 1000.00. The default value is 0.00
 
-The **Window Scale Factor** field specifies the scaling factor for the media player window. This value is between 0.1 and 1.0. The default value is 1.0, where 1.0 is full screen.
+- The **Window Scale Factor** field specifies the scaling factor for the media player window. This value is between 0.1 and 1.0. The default value is 1.0, where 1.0 is full screen
 
-The **Update Interval** field specifies the interval in seconds at which the media player will update video playback. This field value is between 0.10 and 3.00 seconds. The default value is 0.25 seconds.
+- The **Update Interval** field specifies the interval in seconds at which the media player will update video playback. This field value is between 0.10 and 3.00 seconds. The default value is 0.25 seconds
 
-The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed.
+- The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed
 
 <p align="center">
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><img src="[https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44](https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44)" width=600></picture>
@@ -122,13 +120,13 @@ The **Speed Multiplier** field specifies the playback speed multiplier for the m
 
 The **On-Screen Display (OSD)** section displays the on-screen display (OSD) settings for the media player used in a BSC session.
 
-The **Show Cycle Speed** field specifies whether to display the current cycle speed on the on-screen display (OSD). The default value is true.
+- The **Show Cycle Speed** field specifies whether to display the current cycle speed on the on-screen display (OSD). The default value is true
 
-The **Show Playback Speed** field specifies whether to display the current video playback speed on the on-screen display (OSD). The default value is true.
+- The **Show Playback Speed** field specifies whether to display the current video playback speed on the on-screen display (OSD). The default value is true
 
-The **Show Time Remaining** field specifies whether to display the current video time remaining on the on-screen display (OSD). The default value is true.
+- The **Show Time Remaining** field specifies whether to display the current video time remaining on the on-screen display (OSD). The default value is true
 
-The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD).
+- The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD)
 
 <p align="center">
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><img src="[https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec](https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec)" width=600></picture>
@@ -140,4 +138,4 @@ After making changes to a BSC session, you can save the changes by clicking the 
 
 If you want to save a new BSC session, click the **Save Session As...** button and enter a name for the new session.
 
-> Importantly, newly created BSC session files should be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** will always look for BSC session files.
+> Importantly, newly created BSC session files should be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** looks for BSC session files
