@@ -26,11 +26,11 @@
             - [Seeking to a Specific Time in the Video](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options#seeking-to-a-specific-time-in-the-video)
             - [Displaying Help in BLE Sync Cycle](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Using-the-Command-Line-Options#displaying-help-in-ble-sync-cycle)
 - [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File)
-    - [The App Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-the-BSC-TOML-File#the-app-section)
-    - [The BLE Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-the-BSC-TOML-File#the-ble-section)
-    - [The Speed Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-the-BSC-TOML-File#the-speed-section)
-    - [The Video Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-the-BSC-TOML-File#the-video-section)
-    - [The Video On-Screen Display Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-the-BSC-TOML-File#the-video-on-screen-display-section)
+    - [The App Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File#the-app-section)
+    - [The BLE Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File#the-ble-section)
+    - [The Speed Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File#the-speed-section)
+    - [The Video Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File#the-video-section)
+    - [The Video On-Screen Display Section](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File#the-video-on-screen-display-section)
 
 ## FAQ
 
