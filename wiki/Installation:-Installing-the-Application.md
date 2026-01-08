@@ -2,9 +2,9 @@
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
 </p>
 
-Once the **BLE Sync Cycle** application has been built, it's ready to be installed etiher as a user-level application (recommended) or as a system-level application.
+Once the **BLE Sync Cycle** application has been built, it's ready to be installed either as a user-level application (recommended, as it doesn't require root privileges) or as a system-level application.
 
-There are three files that will need to be installed:
+There are three files that need to be installed:
 
 - The `ble-sync-cycle` executable  
 - The **BLE Sync Cycle** icon file (`com.github.richbl.ble-sync-cycle.svg`)  

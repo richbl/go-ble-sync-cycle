@@ -12,6 +12,6 @@ Some special thanks are in order:
 
 - The [Gen2Brain team for developing go-mpv](https://github.com/gen2brain/go-mpv), which provides access to the [mpv media player](https://mpv.io/) via their Go package
 
-- The [contirbutors of the libvlc-go project](https://github.com/adrg/libvlc-go), which made the integration of the [VLC](https://www.videolan.org/vlc) media player possible
+- The [contributors of the libvlc-go project](https://github.com/adrg/libvlc-go), which made the integration of the [VLC](https://www.videolan.org/vlc) media player possible
 
 - To Kevin Townsend for a very useful and comprehensive overview of Bluetooth BLE. His article is ["Introduction to Bluetooth Low Energy"](https://learn.adafruit.com/introduction-to-bluetooth-low-energy/introduction)

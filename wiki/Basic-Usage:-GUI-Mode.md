@@ -10,11 +10,13 @@ Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows id
 
 On application start, the **BSC Sessions** page is displayed, as shown below. This page is used to create and manage sessions, which are customized configuration files that allow you to configure the behavior of individual **BLE Sync Cycle** cycling sessions.
 
-In it's most simpliest form, a session is simply a file containing configuration data that tells **BLE Sync Cycle** what BLE device to connect to, and what video file to playback when the session begins. Addtional configuration options are available for edit via the BSC Session Editor page.
+In it's most simplest form, a session is simply a file containing configuration data that tells **BLE Sync Cycle** what BLE device to connect to, and what video file to playback when the session begins. Additional configuration options are available for edit via the BSC Session Editor page.
 
 From this page, you can edit a session via the Edit Session button, or load a session via the Load Session button.
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><img src="[https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b](https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b)" width=700></picture>
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><img src="[https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b](https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b)" width=600></picture>
+</p>
 
 > Note that session files are stored in the `~/.config/com.github.richbl.ble-sync-cycle` directory. Each session file ends in `.toml`. **BLE Sync Cycle** will look here for session files and then display them on this page if they're valid BSC session files.
 
@@ -38,7 +40,9 @@ When a session is started, it must first connect to the configured BLE periphera
 
 Also note that the battery level of the BLE sensor will be displayed in the **BLE Sensor Connection** section.
 
-<img width="650" height="934" alt="Dark BSC Session Status Page UNCONNECTED" src="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90"><img src="[https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90](https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90)" width=600></picture>
+</p>
 
 #### Cycling in a BSC Session
 
@@ -46,7 +50,9 @@ Once a Bluetooth connection is established (the Bluetooth symbol turns green), v
 
 The cycling session will continue as long as there's time remaining in the video playback, until the user stops pedaling (pausing video playback), or the session is stopped by clicking the **Stop Session** button.
 
-<img width="650" height="934" alt="Dark BSC Session Status Page CONNECTED" src="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f"><img src="[https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f](https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f)" width=600></picture>
+</p>
 
 ### The BSC Session Log Page
 
@@ -56,7 +62,9 @@ Throughout a session, the **BSC Session Log** page is used to view the log messa
 
 The **Logging Level** section displays the current logging level, which can be changed for each individual BSC session via the **BSC Session Editor** page.
 
-<img width="650" height="934" alt="Dark BSC Sesssion Log Page" src="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff"><img src="[https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff](https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff)" width=600></picture>
+</p>
 
 ### The BSC Session Editor Page
 
@@ -68,7 +76,7 @@ The **Session Details** section displays the BSC session title and the logging l
 
 #### The BLE Sensor Section
 
-The **BLE Sensor** section displays the Bluetooth Device Address (BD_ADDR) of the BLE cycling sensor to be used for this session. This field is editable, but it must be a valid BD_ADD: a hexidecimal set of six digits called a sextet,separated by colons.
+The **BLE Sensor** section displays the Bluetooth Device Address (BD_ADDR) of the BLE cycling sensor to be used for this session. This field is editable, but it must be a valid BD_ADD: a hexadecimal set of six digits called a sextet,separated by colons.
 
 The **Scan Timeout** field is also editable. It specifies the number of seconds to wait for a connection to the BLE sensor.
 
@@ -86,7 +94,9 @@ The **Speed Threshold** field specifies the minimum speed change to trigger a vi
 
 The **Speed Smoothing** field specifies the number of recent speed readings to generate a stable moving average. This value is between 1 and 25 readings. The default value is 5.
 
-<img width="650" height="934" alt="Dark BSC Session Editor Page A" src="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><img src="[https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105](https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105)" width=600></picture>
+</p>
 
 #### The Video Settings Section
 
@@ -104,7 +114,9 @@ The **Update Interval** field specifies the interval in seconds at which the med
 
 The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed.
 
-<img width="650" height="936" alt="Dark BSC Session Editor Page B" src="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><img src="[https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44](https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44)" width=600></picture>
+</p>
 
 #### The On-Screen Display (OSD) Section
 
@@ -118,7 +130,9 @@ The **Show Time Remaining** field specifies whether to display the current video
 
 The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD).
 
-<img width="650" height="936" alt="Dark BSC Session Editor Page C" src="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec" />
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><img src="[https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec](https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec)" width=600></picture>
+</p>
 
 ### Saving BSC Sessions
 
