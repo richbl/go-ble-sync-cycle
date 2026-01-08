@@ -22,9 +22,13 @@
         * OSD position and font size
 
 * Choice of running modes:
-    * GUI Mode: modern GTK4/Adwaita design with full support for in-application session selection, playback, logging and session editing
-    * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
+    * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
+        * Cycling session selection
+        * Session status (including cycling speed and session time remaining), and video playback
+        * Session logging
+        * Session editing and management
 
+    * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
         * Application flags to override configuration file settings:
             * Configuration file path (allows for multiple profiles)
             * Video start time (seek)
@@ -35,3 +39,11 @@
 * On every application startup, the battery level of the BLE sensor is checked and displayed
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
+
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><img src="[https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7](https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7)" width=850></picture>
+</p>
+
+<p align="center">
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><img src="[https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0](https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0)" width=850></picture>
+</p>
