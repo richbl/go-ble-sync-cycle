@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +18,8 @@ func getSessionConfigDir() (string, error) {
 
 	configHome, err := os.UserConfigDir()
 	if err != nil {
-		return "", err
+
+		return "", fmt.Errorf("failed to get user config dir: %w", err)
 	}
 
 	configDir := filepath.Join(configHome, ApplicationID)
@@ -25,7 +27,8 @@ func getSessionConfigDir() (string, error) {
 	// Ensure the directory exists
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(configDir, 0755); err != nil {
-			return "", err
+
+			return "", fmt.Errorf("failed to create config directory: %w", err)
 		}
 	}
 

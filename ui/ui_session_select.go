@@ -93,6 +93,7 @@ func (sc *SessionController) scanForSessions() {
 	configDir, err := getSessionConfigDir()
 	if err != nil {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to get session config directory: %v", err))
+
 		return
 	}
 
