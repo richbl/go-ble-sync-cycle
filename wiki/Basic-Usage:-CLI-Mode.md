@@ -25,7 +25,7 @@ After starting `ble-sync-cycle`, you'll see the following output.
 Note that the output below was generated when `logging_level` is set to `debug` in the `config.toml` file. This means that all log message types (debug, info, warn, error, and fatal) will be displayed.
 
 ```console
-13:14:24 [INF] [APP] BLE Sync Cycle v0.13.0 starting...
+13:14:24 [INF] [APP] BLE Sync Cycle v0.50.0 starting...
 13:14:24 [INF] [APP] running in CLI mode
 13:14:24 [DBG] [APP] logging level changed to DEBUG
 13:14:24 [DBG] [APP] set PendingStart=true, state=Connecting
@@ -41,7 +41,7 @@ Note that the output below was generated when `logging_level` is set to `debug` 
 13:14:24 [DBG] [BLE] scanning for BLE peripheral BD_ADDR=FA:46:1D:77:C8:E1
 13:14:54 [ERR] [APP] BLE connect failed: BLE scan failed: scanning time limit reached (30s)
 13:14:54 [FTL] [APP] BLE connection failed: BLE scan failed: scanning time limit reached (30s)
-13:14:54 [INF] [APP] BLE Sync Cycle v0.13.0 shutdown complete. Goodbye
+13:14:54 [INF] [APP] BLE Sync Cycle v0.50.0 shutdown complete. Goodbye
 ```
 
 In this first example (above), while the application was able to find the BLE peripheral, it failed to discover the CSC services and characteristics before timing out.
@@ -51,7 +51,7 @@ Depending on the BLE peripheral, it may take some time before a BLE peripheral a
 Let's look at a second example, where the BLE peripheral is responding and the CSC services and characteristics are found...
 
 ```console
-13:29:15 [INF] [APP] BLE Sync Cycle v0.13.0 starting...
+13:29:15 [INF] [APP] BLE Sync Cycle v0.50.0 starting...
 13:29:15 [INF] [APP] running in CLI mode
 13:29:15 [DBG] [APP] logging level changed to DEBUG
 13:29:15 [DBG] [APP] set PendingStart=true, state=Connecting
@@ -176,5 +176,5 @@ Finally, let's watch when the user stops the **BLE Sync Cycle** application...
 13:29:22 [DBG] [VID] updating video playback speed to 1.22x...
 13:29:22 [INF] [BLE] interrupt detected, stopping the monitoring for BLE sensor notifications...
 13:29:22 [INF] [VID] interrupt detected, stopping mpv video playback...
-13:29:22 [INF] [APP] BLE Sync Cycle v0.13.0 shutdown complete. Goodbye
+13:29:22 [INF] [APP] BLE Sync Cycle v0.50.0 shutdown complete. Goodbye
 ```
