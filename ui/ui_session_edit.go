@@ -226,6 +226,11 @@ func (sc *SessionController) openVideoFilePicker() {
 	filter.AddPattern("*.mp4")
 	filter.AddPattern("*.mkv")
 	filter.AddPattern("*.avi")
+	filter.AddPattern("*.mov")
+	filter.AddPattern("*.wmv")
+	filter.AddPattern("*.flv")
+	filter.AddPattern("*.webm")
+	filter.AddPattern("*.m4v")
 
 	filters := gio.NewListStore(filter.Type())
 	filters.Append(filter.Object)
@@ -330,7 +335,7 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 
 	// Show Saved alert
 	safeUpdateUI(func() {
-		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "'"+cfg.App.SessionTitle+"' saved to "+path)
+		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "\n"+cfg.App.SessionTitle+"\n\nSaved to "+path)
 	})
 
 	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)

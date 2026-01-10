@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync/atomic"
 
@@ -136,10 +137,111 @@ func (sc *SessionController) scanForSessions() {
 		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
 
 		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "No BSC Sessions", "No configuration files found in the configuration directory")
+			displayConfirmationDialog(
+				sc.UI.Window,
+				"No BSC Sessions",
+				"No Configuration files in the configuration directory.\n\nDo you want to create a new BSC session file?",
+				adw.ResponseSuggested,
+				func() {
+					sc.createNewDefaultSession()
+				},
+			)
 		})
 	}
 
+}
+
+// createNewDefaultSession creates a default configuration file, a placeholder video, and refreshes the list
+func (sc *SessionController) createNewDefaultSession() {
+
+	logger.Info(logger.BackgroundCtx, logger.GUI, "creating new default session configuration...")
+
+	// Determine configuration directory
+	configDir, err := getSessionConfigDir()
+	if err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to get session config directory: %v", err))
+
+		return
+	}
+
+	// Create a placeholder video file so validation passes
+	placeholderVideoPath := filepath.Join(configDir, "sample_video.mp4")
+
+	if _, err := os.Stat(placeholderVideoPath); os.IsNotExist(err) {
+
+		if file, err := os.OpenFile(placeholderVideoPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0664); err == nil {
+			file.Close()
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "created placeholder video file: "+placeholderVideoPath)
+		} else {
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to create placeholder video file: %v", err))
+		}
+
+	}
+
+	// Create default configuration object
+	cfg := createDefaultConfig(placeholderVideoPath)
+
+	filePath := filepath.Join(configDir, "new_session.toml")
+
+	// Save configuration to file
+	if err := config.Save(filePath, cfg, config.GetVersion()); err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save new session file: %v", err))
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "Creation Failed", fmt.Sprintf("Failed to create new session file: %v", err))
+		})
+
+		return
+	}
+
+	logger.Info(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
+
+	// Refresh the GUI list
+	// This will now find the file, load it, validation will pass (video file exists), and it will be added to sc.Sessions
+	sc.scanForSessions()
+
+	safeUpdateUI(func() {
+		sc.PopulateSessionList()
+	})
+
+}
+
+// createDefaultConfig returns a Config struct populated with default values
+func createDefaultConfig(videoPath string) *config.Config {
+
+	return &config.Config{
+		App: config.AppConfig{
+			SessionTitle: "New Session",
+			LogLevel:     "info",
+		},
+		BLE: config.BLEConfig{
+			SensorBDAddr:    "AA:BB:CC:DD:EE:FF",
+			ScanTimeoutSecs: 30,
+		},
+		Speed: config.SpeedConfig{
+			WheelCircumferenceMM: 2155,
+			SpeedUnits:           config.SpeedUnitsMPH,
+			SpeedThreshold:       0.25,
+			SmoothingWindow:      5,
+		},
+		Video: config.VideoConfig{
+			MediaPlayer:       config.MediaPlayerMPV,
+			FilePath:          videoPath,
+			SeekToPosition:    "00:00",
+			WindowScaleFactor: 1.0,
+			UpdateIntervalSec: 1.0,
+			SpeedMultiplier:   1.0,
+			OnScreenDisplay: config.VideoOSDConfig{
+				DisplayCycleSpeed:    true,
+				DisplayPlaybackSpeed: true,
+				DisplayTimeRemaining: true,
+				FontSize:             40,
+				MarginX:              20,
+				MarginY:              20,
+				ShowOSD:              true,
+			},
+		},
+	}
 }
 
 // setupListBoxSignals wires up event listeners for the ListBox

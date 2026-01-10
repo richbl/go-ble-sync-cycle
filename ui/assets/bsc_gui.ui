@@ -599,7 +599,7 @@
                             <child>
                               <object class="AdwActionRow" id="video_file_row">
                                 <property name="activatable">True</property>
-                                <property name="subtitle">/home/richbl/downloads/something.mp4</property>
+                                <property name="subtitle">/</property>
                                 <property name="title" translatable="yes">Video File</property>
                                 <property name="tooltip-text" translatable="yes">File path to the video file for playback</property>
                                 <property name="sensitive">False</property>

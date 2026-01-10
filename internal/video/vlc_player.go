@@ -1,6 +1,7 @@
 package video
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,13 @@ import (
 
 	vlc "github.com/adrg/libvlc-go/v3"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
+)
+
+// VLC-specific error definitions
+var (
+	errMediaParseTimeout = errors.New("timeout waiting for media parsing")
+	errInvalidDuration   = errors.New("video duration is invalid")
+	errNoVideoTrack      = errors.New("media file does not contain a video track")
 )
 
 // vlcPlayer is a wrapper around the go-vlc client
@@ -58,7 +66,77 @@ func (v *vlcPlayer) loadFile(path string) error {
 		}
 	}()
 
+	// Parse the media to validate format and metadata
+	if err := v.parseMedia(media); err != nil {
+		return err
+	}
+
+	// Validate the media content (duration, tracks)
+	if err := v.validateMedia(media); err != nil {
+		return err
+	}
+
 	return wrapError("failed to play video", v.player.Play())
+}
+
+// parseMedia handles the asynchronous parsing of the media file
+func (v *vlcPlayer) parseMedia(media *vlc.Media) error {
+
+	manager, err := media.EventManager()
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to get media event manager", err)
+	}
+
+	parseDone := make(chan struct{})
+	eventCallback := func(_ vlc.Event, _ any) {
+		close(parseDone)
+	}
+
+	eventID, err := manager.Attach(vlc.MediaParsedChanged, eventCallback, nil)
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to attach event handler", err)
+	}
+	defer manager.Detach(eventID)
+
+	// Initiate parsing (Async). Timeout is in milliseconds (5000ms = 5s).
+	if err := media.ParseWithOptions(5000, vlc.MediaParseLocal); err != nil {
+		return fmt.Errorf(errFormat, "failed to initiate media parsing", err)
+	}
+
+	// Wait for parse completion or timeout
+	select {
+	case <-parseDone:
+		return nil
+	case <-time.After(5 * time.Second):
+		return errMediaParseTimeout
+	}
+}
+
+// validateMedia checks the parsed media for validity (duration and video tracks)
+func (v *vlcPlayer) validateMedia(media *vlc.Media) error {
+
+	// Validate Duration (0 indicates empty or invalid media)
+	duration, err := media.Duration()
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to retrieve video duration", err)
+	}
+	if duration <= 0 {
+		return errInvalidDuration
+	}
+
+	// Validate Tracks (ensure at least one video track exists)
+	tracks, err := media.Tracks()
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to retrieve video tracks", err)
+	}
+
+	for _, track := range tracks {
+		if track.Type == vlc.MediaTrackVideo {
+			return nil
+		}
+	}
+
+	return errNoVideoTrack
 }
 
 // setSpeed sets the playback speed of the video
