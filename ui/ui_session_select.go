@@ -160,23 +160,56 @@ func (sc *SessionController) createNewDefaultSession() {
 	configDir, err := getSessionConfigDir()
 	if err != nil {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to get session config directory: %v", err))
+
 		return
 	}
 
 	// Create a placeholder video file so validation passes
-	// The application validation logic requires the video file to exist on disk.
 	placeholderVideoPath := filepath.Join(configDir, "sample_video.mp4")
+
 	if _, err := os.Stat(placeholderVideoPath); os.IsNotExist(err) {
-		if file, err := os.Create(placeholderVideoPath); err == nil {
+
+		if file, err := os.OpenFile(placeholderVideoPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0664); err == nil {
 			file.Close()
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "created placeholder video file: "+placeholderVideoPath)
 		} else {
 			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to create placeholder video file: %v", err))
 		}
+
 	}
 
 	// Create default configuration object
-	cfg := &config.Config{
+	cfg := createDefaultConfig(placeholderVideoPath)
+
+	filePath := filepath.Join(configDir, "new_session.toml")
+
+	// Save configuration to file
+	if err := config.Save(filePath, cfg, config.GetVersion()); err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save new session file: %v", err))
+
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "Creation Failed", fmt.Sprintf("Failed to create new session file: %v", err))
+		})
+
+		return
+	}
+
+	logger.Info(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
+
+	// Refresh the GUI list
+	// This will now find the file, load it, validation will pass (video file exists), and it will be added to sc.Sessions
+	sc.scanForSessions()
+
+	safeUpdateUI(func() {
+		sc.PopulateSessionList()
+	})
+
+}
+
+// createDefaultConfig returns a Config struct populated with default values
+func createDefaultConfig(videoPath string) *config.Config {
+
+	return &config.Config{
 		App: config.AppConfig{
 			SessionTitle: "New Session",
 			LogLevel:     "info",
@@ -193,7 +226,7 @@ func (sc *SessionController) createNewDefaultSession() {
 		},
 		Video: config.VideoConfig{
 			MediaPlayer:       config.MediaPlayerMPV,
-			FilePath:          placeholderVideoPath, // Use the absolute path to the dummy file
+			FilePath:          videoPath,
 			SeekToPosition:    "00:00",
 			WindowScaleFactor: 1.0,
 			UpdateIntervalSec: 1.0,
@@ -209,27 +242,6 @@ func (sc *SessionController) createNewDefaultSession() {
 			},
 		},
 	}
-
-	filePath := filepath.Join(configDir, "new_session.toml")
-
-	// Save configuration to file
-	if err := config.Save(filePath, cfg, config.GetVersion()); err != nil {
-		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save new session file: %v", err))
-		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "Creation Failed", fmt.Sprintf("Failed to create new session file: %v", err))
-		})
-		return
-	}
-
-	logger.Info(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
-
-	// Refresh the GUI list
-	// This will now find the file, load it, validation will pass (video file exists), and it will be added to sc.Sessions
-	sc.scanForSessions()
-
-	safeUpdateUI(func() {
-		sc.PopulateSessionList()
-	})
 }
 
 // setupListBoxSignals wires up event listeners for the ListBox

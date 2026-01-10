@@ -88,7 +88,7 @@ func (v *vlcPlayer) parseMedia(media *vlc.Media) error {
 	}
 
 	parseDone := make(chan struct{})
-	eventCallback := func(_ vlc.Event, _ interface{}) {
+	eventCallback := func(_ vlc.Event, _ any) {
 		close(parseDone)
 	}
 

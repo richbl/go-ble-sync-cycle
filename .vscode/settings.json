@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "richbl",
+    "projectKey": "richbl_go-ble-sync-cycle"
+  }
+}
