@@ -53,7 +53,7 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	ui.Window.ConnectCloseRequest(func() bool {
 
 		safeUpdateUI(func() {
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "Exit action triggered from window manager close button")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "exit action triggered from window manager close button")
 			ui.createExitDialog()
 		})
 

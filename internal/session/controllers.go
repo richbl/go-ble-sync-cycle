@@ -17,7 +17,8 @@ import (
 
 // Error definitions
 var (
-	errNoActiveConfig = errors.New("cannot initialize controllers: no active configuration")
+	errNoActiveConfig  = errors.New("cannot initialize controllers: no active configuration")
+	errNoActiveSession = errors.New("no active session to stop")
 )
 
 // controllers holds the application component controllers
@@ -37,6 +38,7 @@ func (m *StateManager) StartSession() error {
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "creating ShutdownManager")
+
 	shutdownMgr := services.NewShutdownManager(30 * time.Second)
 	shutdownMgr.Start()
 
@@ -68,6 +70,7 @@ func (m *StateManager) StartSession() error {
 	}
 
 	controllers.bleDevice = bleDevice
+
 	logger.Debug(ctx, logger.APP, "BLE connected OK")
 
 	// Finalize successful start
@@ -79,7 +82,9 @@ func (m *StateManager) StartSession() error {
 	m.mu.Unlock()
 
 	logger.Debug(ctx, logger.APP, "starting services...")
+
 	m.startServices(controllers, shutdownMgr)
+
 	logger.Debug(ctx, logger.APP, "services started")
 
 	return nil
@@ -96,11 +101,11 @@ func (m *StateManager) StopSession() error {
 	m.mu.Unlock()
 
 	if shutdownMgr == nil && !wasPending {
-		return fmt.Errorf(errFormat, "no active session to stop", nil)
+		return errNoActiveSession
 	}
 
 	if wasPending {
-		logger.Info(*shutdownMgr.Context(), logger.BLE, "stop requested, canceling pending BLE setup...")
+		logger.Info(*shutdownMgr.Context(), logger.BLE, "stop requested, canceling pending session setup...")
 	} else {
 		logger.Info(*shutdownMgr.Context(), logger.BLE, "stop requested, canceling active session...")
 	}
@@ -116,10 +121,10 @@ func (m *StateManager) StopSession() error {
 	m.mu.Lock()
 	m.controllers = nil
 	m.shutdownMgr = nil
-	m.activeConfig = nil // Clear the active snapshot on stop
+	m.activeConfig = nil
 	m.mu.Unlock()
 
-	// Emulate CLI cleanup: stop any ongoing scan under mutex
+	// Stop any ongoing scan under mutex
 	ble.AdapterMu.Lock()
 	defer ble.AdapterMu.Unlock()
 
@@ -157,14 +162,13 @@ func (m *StateManager) CurrentSpeed() (float64, string) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// Use ActiveConfig here to ensure we return the units of the *Running* session
+	// Use ActiveConfig here to ensure we return the units of the active running session
 	cfg := m.activeConfig
 	if cfg == nil {
-		// Fallback for UI display when not running
 		cfg = m.editConfig
 	}
 
-	// Guard against nil controllers (session stopped or not started)
+	// Check for nil controllers (session stopped or not started)
 	if m.controllers == nil || m.controllers.speedController == nil || cfg == nil {
 		return 0.0, ""
 	}
@@ -217,15 +221,18 @@ func (m *StateManager) initializeControllers() (*controllers, error) {
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "creating speed controller...")
+
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "creating video controller...")
+
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create video controller: %w", err)
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "creating BLE controller...")
+
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create BLE controller: %w", err)
@@ -291,14 +298,48 @@ func (m *StateManager) connectBLE(ctrl *controllers, shutdownMgr *services.Shutd
 // startServices launches BLE and video services in background goroutines
 func (m *StateManager) startServices(ctrl *controllers, shutdownMgr *services.ShutdownManager) {
 
-	// Run BLE service
+	logger.Debug(*shutdownMgr.Context(), logger.APP, "starting BLE service goroutine")
+
 	shutdownMgr.Run(func(ctx context.Context) error {
-		return ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
+
+		logger.Debug(ctx, logger.APP, "BLE goroutine executing")
+
+		err := ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
+
+		// If this goroutine fails, reset state back to Loaded
+		if err != nil && !errors.Is(err, context.Canceled) {
+			m.mu.Lock()
+			if m.state == StateRunning {
+				m.state = StateLoaded
+			}
+			m.mu.Unlock()
+		}
+
+		return fmt.Errorf(errFormat, "BLE service failed", err)
 	})
 
-	// Run video service
+	logger.Debug(*shutdownMgr.Context(), logger.APP, "starting video service goroutine")
+
 	shutdownMgr.Run(func(ctx context.Context) error {
-		return ctrl.videoPlayer.Start(ctx, ctrl.speedController)
+
+		logger.Debug(ctx, logger.APP, "video goroutine executing")
+
+		err := ctrl.videoPlayer.Start(ctx, ctrl.speedController)
+
+		logger.Debug(ctx, logger.APP, fmt.Sprintf("video goroutine returning: %v", err))
+
+		// If this goroutine fails, reset state back to Loaded
+		if err != nil && !errors.Is(err, context.Canceled) {
+			m.mu.Lock()
+			if m.state == StateRunning {
+				m.state = StateLoaded
+			}
+			m.mu.Unlock()
+		}
+
+		return fmt.Errorf(errFormat, "video service failed", err)
 	})
+
+	logger.Debug(*shutdownMgr.Context(), logger.APP, "BLE And video services started")
 
 }

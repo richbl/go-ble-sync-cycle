@@ -14,8 +14,10 @@ import "C"
 
 import (
 	"fmt"
+	"time"
 
 	mpv "github.com/gen2brain/go-mpv"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // mpvPlayer is a wrapper around the go-mpv client
@@ -40,9 +42,156 @@ func newMpvPlayer() (*mpvPlayer, error) {
 	return m, nil
 }
 
-// loadFile loads a video file into the mpv player
+// loadFile loads a video file into the mpv player and validates it
 func (m *mpvPlayer) loadFile(path string) error {
-	return wrapError("failed to load video file", m.player.Command([]string{"loadfile", path}))
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
+
+	if err := m.player.Command([]string{"loadfile", path}); err != nil {
+
+		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
+
+		return wrapError("failed to load video file", err)
+	}
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "command succeeded, now validating file...")
+
+	// Wait for file-loaded event and validate the file
+	err := m.validateLoadedFile()
+	if err != nil {
+		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("video file validation failed: %v", err))
+
+		return err
+	}
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
+
+	return nil
+}
+
+// validateLoadedFile waits for the file-loaded event and checks if video dimensions are valid
+func (m *mpvPlayer) validateLoadedFile() error {
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "starting mpv video file validation loop")
+
+	// Set a maximum number of events to process before giving up
+	const maxEvents = 20
+	eventCount := 0
+	var validationErr error
+
+	// Wait for the file-loaded event
+	for eventCount < maxEvents {
+		event := m.player.WaitEvent(0.5)
+		if event == nil {
+			eventCount++
+
+			continue
+		}
+
+		switch event.EventID {
+		case mpv.EventFileLoaded:
+
+			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "media file successfully loaded: validating dimensions")
+
+			// File loaded successfully, now validate dimensions
+			if err := m.checkVideoDimensions(); err != nil {
+				validationErr = err
+
+				break
+			}
+			// Validation successful - drain any remaining events before returning
+			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "validation successful, draining remaining events")
+
+			m.drainEvents()
+
+			return nil
+
+			// During file loading, ANY end event means the file failed to load
+		case mpv.EventEnd:
+			return m.handleEndFile(event)
+
+		default:
+			// Ignore all other events and continue waiting
+			eventCount++
+
+			continue
+		}
+
+	}
+
+	if validationErr != nil {
+		return validationErr
+	}
+
+	logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("timeout after processing %d events", maxEvents))
+
+	return errMediaParseTimeout
+}
+
+// handleEndFile processes the EventEnd event during file loading
+func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "EventEnd received during loading")
+
+	endFile := event.EndFile()
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("EndFile reason: %s, error: %v", endFile.Reason.String(), endFile.Error))
+
+	var validationErr error
+
+	if endFile.Error != nil {
+		validationErr = fmt.Errorf("failed to load file: %w", endFile.Error)
+	} else {
+		switch endFile.Reason {
+		case mpv.EndFileError:
+			validationErr = errVideoComplete
+		case mpv.EndFileEOF:
+			validationErr = errInvalidVideoDimensions
+		default:
+			validationErr = errPlaybackEndedUnexpectedly
+		}
+	}
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "draining remaining events after error")
+
+	m.drainEvents()
+
+	return validationErr
+}
+
+// checkVideoDimensions validates that the video has valid dimensions
+func (m *mpvPlayer) checkVideoDimensions() error {
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "checkVideoDimensions: starting dimension check")
+
+	// Get video width
+	width, err := m.player.GetProperty("width", mpv.FormatInt64)
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to get video width", err)
+	}
+
+	// Get video height
+	height, err := m.player.GetProperty("height", mpv.FormatInt64)
+	if err != nil {
+		return fmt.Errorf(errFormat, "failed to get video height", err)
+	}
+
+	// Validate dimensions: width and height must both be non-zero values for a valid video
+	widthInt, ok := width.(int64)
+	if !ok {
+		return errInvalidVideoDimensions
+	}
+
+	heightInt, ok := height.(int64)
+	if !ok {
+		return errInvalidVideoDimensions
+	}
+
+	if widthInt == 0 || heightInt == 0 {
+		return errInvalidVideoDimensions
+	}
+
+	return nil
 }
 
 // setSpeed sets the playback speed of the video
@@ -57,6 +206,11 @@ func (m *mpvPlayer) setPause(paused bool) error {
 
 // timeRemaining gets the remaining time of the video
 func (m *mpvPlayer) timeRemaining() (int64, error) {
+
+	// Check if player is initialized
+	if m.player == nil {
+		return 0, errPlayerNotInitialized
+	}
 
 	timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
 	if err != nil {
@@ -121,7 +275,7 @@ func (m *mpvPlayer) setOSD(options osdConfig) error {
 	return nil
 }
 
-// setupEvents prepares the player to listen for the end-of-file event
+// setupEvents prepares the player to listen for end-of-file and file-loaded events
 func (m *mpvPlayer) setupEvents() error {
 	return wrapError("failed to setup end-of-file observe event", m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag))
 }
@@ -156,5 +310,46 @@ func (m *mpvPlayer) showOSDText(text string) error {
 
 // terminatePlayer terminates the mpv player instance and cleans up resources
 func (m *mpvPlayer) terminatePlayer() {
-	m.player.TerminateDestroy()
+
+	logger.Debug(logger.BackgroundCtx, "starting player termination")
+
+	if m.player != nil {
+
+		// Run TerminateDestroy in a goroutine with timeout to prevent blocking
+		done := make(chan struct{})
+
+		go func() {
+			m.player.TerminateDestroy()
+			close(done)
+		}()
+
+		// Wait with timeout
+		select {
+		case <-done:
+			logger.Debug(logger.BackgroundCtx, "call to terminate mpv completed successfully")
+		case <-time.After(2 * time.Second):
+			logger.Warn(logger.BackgroundCtx, "call to terminate mpv timed out after 2s, continuing mpv shutdown")
+		}
+
+		m.player = nil
+	}
+}
+
+// drainEvents drains any remaining events from MPV's event queue, preventing mpv from blocking
+// on unprocessed events during shutdown
+func (m *mpvPlayer) drainEvents() {
+
+	drained := 0
+
+	// Drain events for up to one second
+	for range 10 {
+
+		event := m.player.WaitEvent(0.1)
+		if event == nil {
+			break
+		}
+
+		drained++
+	}
+
 }

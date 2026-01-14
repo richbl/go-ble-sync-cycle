@@ -7,10 +7,14 @@ import (
 
 // Error definitions
 var (
-	errInvalidTimeFormat      = errors.New("invalid time format")
-	errOSDUpdate              = errors.New("failed to update OSD")
-	errVideoComplete          = errors.New("video playback completed")
-	errUnsupportedVideoPlayer = errors.New("unsupported video player specified")
+	errInvalidTimeFormat         = errors.New("invalid time format")
+	errOSDUpdate                 = errors.New("failed to update OSD")
+	errVideoComplete             = errors.New("video playback completed")
+	errUnsupportedVideoPlayer    = errors.New("unsupported video player specified")
+	errPlayerNotInitialized      = errors.New("media player not initialized")
+	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")
+	errInvalidVideoDimensions    = errors.New("video dimensions are invalid")
+	errPlaybackEndedUnexpectedly = errors.New("playback ended unexpectedly")
 )
 
 const (
@@ -46,10 +50,13 @@ type osdConfig struct {
 
 // mediaPlayer defines the interface abstraction for a video player
 type mediaPlayer interface {
+
+	// Playback methods
 	loadFile(path string) error
 	setSpeed(speed float64) error
 	setPause(paused bool) error
 	timeRemaining() (int64, error)
+	terminatePlayer()
 
 	// Configuration methods
 	setFullscreen(fullscreen bool) error
@@ -63,7 +70,6 @@ type mediaPlayer interface {
 
 	// On Screen Display (OSD) methods
 	showOSDText(text string) error
-	terminatePlayer()
 }
 
 // wrapError helper function adds return context only if an error occurred

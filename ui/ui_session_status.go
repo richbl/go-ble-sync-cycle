@@ -102,10 +102,7 @@ func (sc *SessionController) handleStartError(err error) {
 
 		// Show error state in UI
 		sc.updatePage2Status(StatusFailed, StatusNotConnected, StatusUnknown)
-
-		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
-		})
+		displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
 
 	})
 
