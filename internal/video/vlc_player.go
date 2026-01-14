@@ -13,9 +13,7 @@ import (
 
 // VLC-specific error definitions
 var (
-	errMediaParseTimeout = errors.New("timeout waiting for media parsing")
-	errInvalidDuration   = errors.New("video duration is invalid")
-	errNoVideoTrack      = errors.New("media file does not contain a video track")
+	errNoVideoTrack = errors.New("media file does not contain a video track")
 )
 
 // vlcPlayer is a wrapper around the go-vlc client
@@ -71,7 +69,7 @@ func (v *vlcPlayer) loadFile(path string) error {
 		return err
 	}
 
-	// Validate the media content (duration, tracks)
+	// Validate the media content (dimensions)
 	if err := v.validateMedia(media); err != nil {
 		return err
 	}
@@ -88,6 +86,7 @@ func (v *vlcPlayer) parseMedia(media *vlc.Media) error {
 	}
 
 	parseDone := make(chan struct{})
+
 	eventCallback := func(_ vlc.Event, _ any) {
 		close(parseDone)
 	}
@@ -96,42 +95,44 @@ func (v *vlcPlayer) parseMedia(media *vlc.Media) error {
 	if err != nil {
 		return fmt.Errorf(errFormat, "failed to attach event handler", err)
 	}
+
 	defer manager.Detach(eventID)
 
-	// Initiate parsing (Async). Timeout is in milliseconds (5000ms = 5s).
-	if err := media.ParseWithOptions(5000, vlc.MediaParseLocal); err != nil {
+	// Initiate parsing (async), with 5s timeout
+	parseTimeout := 5
+	if err := media.ParseWithOptions(parseTimeout*1000, vlc.MediaParseLocal); err != nil {
 		return fmt.Errorf(errFormat, "failed to initiate media parsing", err)
 	}
 
-	// Wait for parse completion or timeout
+	// Wait here for parse completion or timeout
 	select {
 	case <-parseDone:
 		return nil
-	case <-time.After(5 * time.Second):
+	case <-time.After(time.Duration(parseTimeout) * time.Second):
 		return errMediaParseTimeout
 	}
+
 }
 
-// validateMedia checks the parsed media for validity (duration and video tracks)
+// validateMedia checks the parsed media for validity (video track with dimensions)
 func (v *vlcPlayer) validateMedia(media *vlc.Media) error {
 
-	// Validate Duration (0 indicates empty or invalid media)
-	duration, err := media.Duration()
-	if err != nil {
-		return fmt.Errorf(errFormat, "failed to retrieve video duration", err)
-	}
-	if duration <= 0 {
-		return errInvalidDuration
-	}
-
-	// Validate Tracks (ensure at least one video track exists)
+	// Get tracks to validate video presence and dimensions
 	tracks, err := media.Tracks()
 	if err != nil {
 		return fmt.Errorf(errFormat, "failed to retrieve video tracks", err)
 	}
 
+	// Look for a video track with valid dimensions
 	for _, track := range tracks {
+
 		if track.Type == vlc.MediaTrackVideo {
+
+			// Check video dimensions (width and height must both be non-zero)
+			if track.Video.Width == 0 || track.Video.Height == 0 {
+				return errInvalidVideoDimensions
+			}
+
 			return nil
 		}
 	}
@@ -151,6 +152,11 @@ func (v *vlcPlayer) setPause(paused bool) error {
 
 // timeRemaining gets the remaining time of the video
 func (v *vlcPlayer) timeRemaining() (int64, error) {
+
+	// Check if player is initialized
+	if v.player == nil {
+		return 0, errPlayerNotInitialized
+	}
 
 	length, err := v.player.MediaLength()
 	if err != nil {

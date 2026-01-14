@@ -12,11 +12,14 @@ import (
 )
 
 const (
-	errFormat = "%v: %w"
+	errFormat    = "%v: %w"
+	errFormatRev = "%w: %v"
 )
 
 var (
-	errNoSessionLoaded = errors.New("no session loaded")
+	errNoSessionLoaded       = errors.New("no session loaded")
+	errSessionAlreadyStarted = errors.New("session already started")
+	errInvalidState          = errors.New("invalid state for start")
 )
 
 // State represents the current state of a session
@@ -311,7 +314,7 @@ func (m *StateManager) prepareStart() error {
 	if m.editConfig == nil {
 		logger.Debug(logger.BackgroundCtx, logger.APP, "exiting: no config")
 
-		return fmt.Errorf(errFormat, errNoSessionLoaded, nil)
+		return errNoSessionLoaded
 	}
 
 	// Create a snapshot of the config (activeConfig is immutable)
@@ -322,7 +325,7 @@ func (m *StateManager) prepareStart() error {
 		m.activeConfig = m.editConfig
 	default:
 
-		return fmt.Errorf(errFormat, "no session loaded", nil)
+		return errNoSessionLoaded
 	}
 
 	if m.state == StateError {
@@ -333,13 +336,13 @@ func (m *StateManager) prepareStart() error {
 	if m.state != StateLoaded {
 		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("exiting: invalid state for start: %s", m.state))
 
-		return fmt.Errorf(errFormat, fmt.Sprintf("session already started or in invalid state: %s", m.state), nil)
+		return fmt.Errorf(errFormatRev, errInvalidState, m.state)
 	}
 
 	if m.controllers != nil {
 		logger.Debug(logger.BackgroundCtx, logger.APP, "exiting: controllers already exist")
 
-		return fmt.Errorf(errFormat, "session already started", nil)
+		return errSessionAlreadyStarted
 	}
 
 	m.PendingStart = true
