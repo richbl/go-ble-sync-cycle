@@ -298,48 +298,43 @@ func (m *StateManager) connectBLE(ctrl *controllers, shutdownMgr *services.Shutd
 // startServices launches BLE and video services in background goroutines
 func (m *StateManager) startServices(ctrl *controllers, shutdownMgr *services.ShutdownManager) {
 
-	logger.Debug(*shutdownMgr.Context(), logger.APP, "starting BLE service goroutine")
+	m.runService(shutdownMgr, "BLE", func(ctx context.Context) error {
+		return ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
+	})
+
+	m.runService(shutdownMgr, "video", func(ctx context.Context) error {
+		return ctrl.videoPlayer.Start(ctx, ctrl.speedController)
+	})
+
+	logger.Debug(*shutdownMgr.Context(), logger.APP, "BLE and video services started")
+
+}
+
+// runService helper to launch a service with standard error handling and logging
+func (m *StateManager) runService(shutdownMgr *services.ShutdownManager, service string, action func(context.Context) error) {
+
+	logger.Debug(*shutdownMgr.Context(), logger.APP, fmt.Sprintf("starting %s service goroutine", service))
 
 	shutdownMgr.Run(func(ctx context.Context) error {
+		logger.Debug(ctx, logger.APP, service+" service starting")
 
-		logger.Debug(ctx, logger.APP, "BLE goroutine executing")
+		err := action(ctx)
 
-		err := ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
-
-		// If this goroutine fails, reset state back to Loaded
+		// If this goroutine fails, we must reset the state and clean up resources
 		if err != nil && !errors.Is(err, context.Canceled) {
 			m.mu.Lock()
+			// Only update if we were previously running (avoids clobbering other states if raced)
 			if m.state == StateRunning {
-				m.state = StateLoaded
+				m.state = StateError
+				m.errorMsg = fmt.Sprintf("%s service failed: %v", service, err)
 			}
+			// Rest resources state
+			m.controllers = nil
+			m.activeConfig = nil
 			m.mu.Unlock()
 		}
 
-		return fmt.Errorf(errFormat, "BLE service failed", err)
+		return fmt.Errorf(errFormat, service+" service failed", err)
 	})
-
-	logger.Debug(*shutdownMgr.Context(), logger.APP, "starting video service goroutine")
-
-	shutdownMgr.Run(func(ctx context.Context) error {
-
-		logger.Debug(ctx, logger.APP, "video goroutine executing")
-
-		err := ctrl.videoPlayer.Start(ctx, ctrl.speedController)
-
-		logger.Debug(ctx, logger.APP, fmt.Sprintf("video goroutine returning: %v", err))
-
-		// If this goroutine fails, reset state back to Loaded
-		if err != nil && !errors.Is(err, context.Canceled) {
-			m.mu.Lock()
-			if m.state == StateRunning {
-				m.state = StateLoaded
-			}
-			m.mu.Unlock()
-		}
-
-		return fmt.Errorf(errFormat, "video service failed", err)
-	})
-
-	logger.Debug(*shutdownMgr.Context(), logger.APP, "BLE And video services started")
 
 }
