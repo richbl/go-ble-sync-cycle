@@ -311,7 +311,7 @@ func (m *mpvPlayer) showOSDText(text string) error {
 // terminatePlayer terminates the mpv player instance and cleans up resources
 func (m *mpvPlayer) terminatePlayer() {
 
-	logger.Debug(logger.BackgroundCtx, "starting player termination")
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "starting player termination")
 
 	if m.player != nil {
 
@@ -326,9 +326,9 @@ func (m *mpvPlayer) terminatePlayer() {
 		// Wait with timeout
 		select {
 		case <-done:
-			logger.Debug(logger.BackgroundCtx, "call to terminate mpv completed successfully")
+			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "call to terminate mpv completed successfully")
 		case <-time.After(2 * time.Second):
-			logger.Warn(logger.BackgroundCtx, "call to terminate mpv timed out after 2s, continuing mpv shutdown")
+			logger.Warn(logger.BackgroundCtx, logger.VIDEO, "call to terminate mpv timed out after 2s, continuing mpv shutdown")
 		}
 
 		m.player = nil

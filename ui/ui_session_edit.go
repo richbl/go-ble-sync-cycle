@@ -325,9 +325,11 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 
 	// Perform file I/O
 	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
+
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save config: %v", err))
+
 		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "Save Error", err.Error())
+			displayAlertDialog(sc.UI.Window, "BSC Session Save Error", fmt.Sprintf("The file %s could not be saved.\n\nPlease review the BSC Session Log for details.", path))
 		})
 
 		return
@@ -335,10 +337,10 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 
 	// Show Saved alert
 	safeUpdateUI(func() {
-		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "\n"+cfg.App.SessionTitle+"\n\nSaved to "+path)
+		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "")
 	})
 
-	logger.Info(logger.BackgroundCtx, logger.GUI, "session saved to "+path)
+	logger.Info(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session file '%s' saved to: %s", cfg.App.SessionTitle, path))
 
 	// Check if we are modifying the currently loaded session
 	loadedPath := sc.SessionManager.LoadedConfigPath()
@@ -377,11 +379,11 @@ func (sc *SessionController) handleLoadedSessionUpdate(path string, cfg *config.
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to running session, warning user...")
 
 		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "BSC Session Updated", "You have updated the currently running session\n\nChanges will be applied after you restart this session")
+			displayAlertDialog(sc.UI.Window, "Active BSC Session Updated", "You have updated the currently-running session. Changes will be applied after you restart the session.")
 		})
 	} else {
 		// Session is loaded but NOT running.
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to loaded (but idle) session, refreshing UI...")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "detected update to loaded session, refreshing UI...")
 
 		// Update Session Status UI
 		safeUpdateUI(func() {

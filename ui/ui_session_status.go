@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
+	"github.com/richbl/go-ble-sync-cycle/internal/ble"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
@@ -83,7 +84,7 @@ func (sc *SessionController) handleStart() {
 	})
 
 	// Launch goroutine to start session
-	go sc.startSessionGoroutine()
+	go sc.startSessionGUI()
 
 }
 
@@ -102,7 +103,16 @@ func (sc *SessionController) handleStartError(err error) {
 
 		// Show error state in UI
 		sc.updatePage2Status(StatusFailed, StatusNotConnected, StatusUnknown)
-		displayAlertDialog(sc.UI.Window, "Start Session Failed", err.Error())
+
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session start failed: %v", err))
+
+		// Check for scanning timeout special case, and show appropriate message
+		if errors.Is(err, ble.ErrScanTimeout) {
+			sessionConnectTimeout := sc.SessionManager.ActiveConfig().BLE.ScanTimeoutSecs
+			displayAlertDialog(sc.UI.Window, "BSC Session Start Timeout", fmt.Sprintf("Failed to start the BSC Session due to a BLE device timeout (%ds).\n\nPlease restart the BSC Session.", sessionConnectTimeout))
+		} else {
+			displayAlertDialog(sc.UI.Window, "Start Session Failed", "Failed to start the BSC Session.\n\nPlease review the BSC Session Log for details.")
+		}
 
 	})
 
@@ -137,8 +147,8 @@ func (sc *SessionController) handleStop() error {
 	return nil
 }
 
-// startSessionGoroutine runs the StartSession method and updates UI based on result
-func (sc *SessionController) startSessionGoroutine() {
+// startSessionGUI runs the StartSession method and updates UI based on result
+func (sc *SessionController) startSessionGUI() {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "start goroutine launched")
 
@@ -273,12 +283,32 @@ func (sc *SessionController) startMetricsLoop() {
 	// Poll every 250ms
 	sc.metricsLoop = glib.TimeoutAdd(250, func() bool {
 
-		// If session isn't running, stop the loop (return false)
-		if sc.SessionManager.SessionState() != session.StateRunning {
+		state := sc.SessionManager.SessionState()
+
+		// Check for async failure (e.g., video invalid)
+		if state == session.StateError {
+
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session error")
+
+			// Reset UI and backend state
+			if err := sc.handleStop(); err != nil {
+				logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to clean up after session error: %v", err))
+			}
+
+			// Show alert
+			logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("Invalid video file format: %v", sc.SessionManager.ErrorMessage()))
+
+			displayAlertDialog(sc.UI.Window, "BSC Session Load Failed", "Invalid video file format. Edit the session file and try again.\n\nPlease review the BSC Session Log for details.")
+
 			return false
 		}
 
-		// Get data from SessionManager
+		// If session isn't running, stop the loop
+		if state != session.StateRunning {
+			return false
+		}
+
+		// Update metrics
 		speed, _ := sc.SessionManager.CurrentSpeed()
 		timeRem := sc.SessionManager.VideoTimeRemaining()
 		rate := sc.SessionManager.VideoPlaybackRate()

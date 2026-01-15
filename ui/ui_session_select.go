@@ -140,7 +140,7 @@ func (sc *SessionController) scanForSessions() {
 			displayConfirmationDialog(
 				sc.UI.Window,
 				"No BSC Sessions",
-				"No Configuration files in the configuration directory.\n\nDo you want to create a new BSC session file?",
+				"No Configuration files found in the BSC configuration directory.\n\nDo you want to create a new BSC session file?",
 				adw.ResponseSuggested,
 				func() {
 					sc.createNewDefaultSession()
@@ -164,8 +164,8 @@ func (sc *SessionController) createNewDefaultSession() {
 		return
 	}
 
-	// Create a placeholder video file so validation passes
-	placeholderVideoPath := filepath.Join(configDir, "sample_video.mp4")
+	// Create a placeholder video file so validation passes (and session can be displayed)
+	placeholderVideoPath := filepath.Join(configDir, "new_session_null_video.mp4")
 
 	if _, err := os.Stat(placeholderVideoPath); os.IsNotExist(err) {
 
@@ -188,7 +188,7 @@ func (sc *SessionController) createNewDefaultSession() {
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save new session file: %v", err))
 
 		safeUpdateUI(func() {
-			displayAlertDialog(sc.UI.Window, "Creation Failed", fmt.Sprintf("Failed to create new session file: %v", err))
+			displayAlertDialog(sc.UI.Window, "BSC Session Save Error", "Failed to save a new session file.\n\nPlease review the BSC Session Log for details.")
 		})
 
 		return
@@ -197,12 +197,14 @@ func (sc *SessionController) createNewDefaultSession() {
 	logger.Info(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
 
 	// Refresh the GUI list
-	// This will now find the file, load it, validation will pass (video file exists), and it will be added to sc.Sessions
 	sc.scanForSessions()
 
 	safeUpdateUI(func() {
 		sc.PopulateSessionList()
 	})
+
+	// Navigate to the newly created session for editing
+	sc.loadAndNavigateToEditor(sc.Sessions[0])
 
 }
 
