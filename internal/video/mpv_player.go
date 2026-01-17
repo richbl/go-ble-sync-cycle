@@ -144,7 +144,7 @@ func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 	} else {
 		switch endFile.Reason {
 		case mpv.EndFileError:
-			validationErr = errVideoComplete
+			validationErr = ErrVideoComplete
 		case mpv.EndFileEOF:
 			validationErr = errInvalidVideoDimensions
 		default:
@@ -283,24 +283,32 @@ func (m *mpvPlayer) setupEvents() error {
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
 func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
-	event := m.player.WaitEvent(timeout)
-	if event == nil {
-		return &playerEvent{id: eventNone}
-	}
-
-	if event.EventID == mpv.EventPropertyChange {
-		prop := event.Property()
-
-		if prop.Data != nil && prop.Name == "eof-reached" {
-			reached, ok := prop.Data.(bool)
-			if ok && reached {
-				return &playerEvent{id: eventEndFile}
-			}
+	for {
+		// If no event found then return a "none" event
+		e := m.player.WaitEvent(timeout)
+		if e == nil || e.EventID == mpv.EventNone {
+			return &playerEvent{id: eventNone}
 		}
 
+		// Look for mpv property change event (because it's the only one we really care about)
+		if e.EventID == mpv.EventPropertyChange {
+
+			prop := e.Property()
+			if value, ok := prop.Data.(int); ok {
+
+				// Confirm that the changed event is the eof-reached event
+				if prop.Name == "eof-reached" && value == 1 {
+					return &playerEvent{id: eventEndFile}
+				}
+
+			}
+
+		}
+
+		// Continue draining the queue with no timeout
+		timeout = 0
 	}
 
-	return &playerEvent{id: eventNone}
 }
 
 // showOSDText displays text on the OSD

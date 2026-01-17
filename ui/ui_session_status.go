@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/richbl/go-ble-sync-cycle/internal/ble"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
+	"github.com/richbl/go-ble-sync-cycle/internal/video"
 )
 
 const (
@@ -285,20 +287,22 @@ func (sc *SessionController) startMetricsLoop() {
 
 		state := sc.SessionManager.SessionState()
 
-		// Check for async failure (e.g., video invalid)
+		// Check for async failure (e.g., invalid video file)
 		if state == session.StateError {
 
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session error")
 
-			// Reset UI and backend state
+			// Differentiate between a crash (invalid file) and EOF (video complete) based on error message
+			if strings.Contains(sc.SessionManager.ErrorMessage(), video.ErrVideoComplete.Error()) {
+				displayAlertDialog(sc.UI.Window, "The BSC Session has Ended", "The video playback has finished.\n\nSession stopped.")
+			} else {
+				displayAlertDialog(sc.UI.Window, "BSC Session Load Failed", "Invalid video file format. Edit the session file and try again.\n\nPlease review the BSC Session Log for details.")
+			}
+
+			// Reset UI and application state
 			if err := sc.handleStop(); err != nil {
 				logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to clean up after session error: %v", err))
 			}
-
-			// Show alert
-			logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("Invalid video file format: %v", sc.SessionManager.ErrorMessage()))
-
-			displayAlertDialog(sc.UI.Window, "BSC Session Load Failed", "Invalid video file format. Edit the session file and try again.\n\nPlease review the BSC Session Log for details.")
 
 			return false
 		}

@@ -290,7 +290,7 @@ func TestPlaybackControllerStart(t *testing.T) {
 
 	// Start the controller in a separate goroutine
 	wg.Go(func() {
-		startErr = controller.Start(ctx, speedCtrl)
+		startErr = controller.StartPlayback(ctx, speedCtrl)
 	})
 
 	// Allow time for initial setup
