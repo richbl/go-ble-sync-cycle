@@ -7,9 +7,10 @@ import (
 
 // Error definitions
 var (
+	ErrVideoComplete = errors.New("video playback completed")
+
 	errInvalidTimeFormat         = errors.New("invalid time format")
 	errOSDUpdate                 = errors.New("failed to update OSD")
-	errVideoComplete             = errors.New("video playback completed")
 	errUnsupportedVideoPlayer    = errors.New("unsupported video player specified")
 	errPlayerNotInitialized      = errors.New("media player not initialized")
 	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")

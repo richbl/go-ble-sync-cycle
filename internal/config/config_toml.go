@@ -66,7 +66,7 @@ func Save(filePath string, cfg *Config, version string) error {
 	}
 
 	// Create a new file
-	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0664)
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0664)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}

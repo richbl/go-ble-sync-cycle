@@ -89,8 +89,8 @@ func newOSDConfig(displayConfig config.VideoOSDConfig) osdConfig {
 	}
 }
 
-// Start configures and starts playback of the media player
-func (p *PlaybackController) Start(ctx context.Context, speedController *speed.Controller) error {
+// StartPlayback configures and starts playback of the media player
+func (p *PlaybackController) StartPlayback(ctx context.Context, speedController *speed.Controller) error {
 
 	logger.Info(ctx, logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
 
@@ -202,7 +202,7 @@ func (p *PlaybackController) handlePlayerEvents() error {
 
 	event := p.player.waitEvent(0) // Use a non-blocking wait
 	if event != nil && event.id == eventEndFile {
-		return fmt.Errorf("%w", errVideoComplete)
+		return fmt.Errorf("%w", ErrVideoComplete)
 	}
 
 	return nil

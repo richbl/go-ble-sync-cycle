@@ -303,7 +303,7 @@ func (m *StateManager) startServices(ctrl *controllers, shutdownMgr *services.Sh
 	})
 
 	m.runService(shutdownMgr, "video", func(ctx context.Context) error {
-		return ctrl.videoPlayer.Start(ctx, ctrl.speedController)
+		return ctrl.videoPlayer.StartPlayback(ctx, ctrl.speedController)
 	})
 
 	logger.Debug(*shutdownMgr.Context(), logger.APP, "BLE and video services started")
