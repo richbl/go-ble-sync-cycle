@@ -60,7 +60,7 @@ type mediaPlayer interface {
 	terminatePlayer()
 
 	// Configuration methods
-	setFullscreen(fullscreen bool) error
+	setPlaybackSize(windowSize float64) error
 	setKeepOpen(keepOpen bool) error // Used by mpv to prevent application exit on video EOF
 	seek(position string) error
 	setOSD(options osdConfig) error

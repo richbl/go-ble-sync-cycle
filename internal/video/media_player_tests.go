@@ -113,10 +113,10 @@ func testPlayerConfiguration(t *testing.T, factory playerFactory, playerName str
 	player, cleanup := setupPlayerTest(t, factory)
 	defer cleanup()
 
-	t.Run("setFullscreen", func(t *testing.T) {
+	t.Run("setPlaybackSize", func(t *testing.T) {
 
-		if err := player.setFullscreen(true); err != nil {
-			t.Errorf("setFullscreen(true) error = %v", err)
+		if err := player.setPlaybackSize(1.0); err != nil {
+			t.Errorf("setPlaybackSize(1.0) error = %v", err)
 		}
 
 	})

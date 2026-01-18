@@ -226,18 +226,16 @@ func (m *mpvPlayer) timeRemaining() (int64, error) {
 	return timeRemainingInt, nil
 }
 
-// setFullscreen toggles fullscreen mode
-func (m *mpvPlayer) setFullscreen(fullscreen bool) error {
+// setPlaybackSize sets media player window size
+func (m *mpvPlayer) setPlaybackSize(windowSize float64) error {
 
-	context := "failed to disable fullscreen"
-	value := "no"
-
-	if fullscreen {
-		context = "failed to enable fullscreen"
-		value = "yes"
+	// Enable fullscreen if window size is 1.0 (100%)
+	if windowSize == 1.0 {
+		return wrapError("failed to enable fullscreen", m.player.SetOptionString("fullscreen", "yes"))
 	}
 
-	return wrapError(context, m.player.SetOptionString("fullscreen", value))
+	// Not going fullscreen, so set window size
+	return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%", int(windowSize*100))))
 }
 
 // setKeepOpen configures the player to keep the window open after playback completes

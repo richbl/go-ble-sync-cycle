@@ -141,7 +141,7 @@ func (p *PlaybackController) configurePlayback() error {
 		return fmt.Errorf(errFormat, "failed to setup player events", err)
 	}
 
-	if err := p.player.setFullscreen(p.videoConfig.WindowScaleFactor == 1.0); err != nil {
+	if err := p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor); err != nil {
 		return err
 	}
 

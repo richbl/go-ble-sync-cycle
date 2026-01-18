@@ -171,9 +171,16 @@ func (v *vlcPlayer) timeRemaining() (int64, error) {
 	return (int64)((length - currentTime) / 1000), nil // Convert ms to seconds
 }
 
-// setFullscreen toggles fullscreen mode
-func (v *vlcPlayer) setFullscreen(fullscreen bool) error {
-	return wrapError("failed to set fullscreen", v.player.SetFullScreen(fullscreen))
+// setPlaybackSize sets media player window size
+func (v *vlcPlayer) setPlaybackSize(windowSize float64) error {
+
+	// Enable fullscreen if window size is 1.0 (100%)
+	if windowSize == 1.0 {
+		return wrapError("failed to enable fullscreen", v.player.SetFullScreen(true))
+	}
+
+	// Not going fullscreen, so set window size
+	return wrapError("failed to set window size", v.player.SetScale(windowSize))
 }
 
 // Stub: setKeepOpen is not supported in VLC
