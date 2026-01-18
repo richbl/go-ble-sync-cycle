@@ -141,9 +141,9 @@ func (m *mockMediaPlayer) setupEvents() error {
 }
 
 // seek seeks to a specified position in the video
-func (m *mockMediaPlayer) setFullscreen(_ bool) error {
+func (m *mockMediaPlayer) setPlaybackSize(_ float64) error {
 
-	m.recordCall("setFullscreen")
+	m.recordCall("setPlaybackSize")
 
 	return m.setFullscreenErr
 }
@@ -314,12 +314,12 @@ func verifyInitializationCalls(t *testing.T, mockPlayer *mockMediaPlayer) {
 
 	t.Helper()
 	expectedCalls := map[string]int{
-		"loadFile":      1,
-		"setupEvents":   1,
-		"setFullscreen": 1,
-		"setKeepOpen":   1,
-		"setOSD":        1,
-		"seek":          1,
+		"loadFile":        1,
+		"setupEvents":     1,
+		"setPlaybackSize": 1,
+		"setKeepOpen":     1,
+		"setOSD":          1,
+		"seek":            1,
 	}
 
 	for method, count := range expectedCalls {
