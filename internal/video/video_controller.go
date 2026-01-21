@@ -133,34 +133,61 @@ func (p *PlaybackController) PlaybackSpeed() float64 {
 // configurePlayback sets up the player window based on configuration
 func (p *PlaybackController) configurePlayback() error {
 
-	if err := p.player.loadFile(p.videoConfig.FilePath); err != nil {
-		return fmt.Errorf("failed to load video file: %s :%w", p.videoConfig.FilePath, err)
+	// mpv requires playback options to be set before the file is loaded
+	isMPV := p.videoConfig.MediaPlayer == config.MediaPlayerMPV
+	if isMPV {
+		if err := p.setPlaybackOptions(); err != nil {
+			return err
+		}
 	}
 
+	// Load the video file
+	if err := p.player.loadFile(p.videoConfig.FilePath); err != nil {
+		return fmt.Errorf("%s: %s: %w", errFailedToLoadVideo.Error(), p.videoConfig.FilePath, err)
+	}
+
+	// vlc requires playback options to be set after the file is loaded
+	if !isMPV {
+		if err := p.setPlaybackOptions(); err != nil {
+			return err
+		}
+	}
+
+	// Set up player events
 	if err := p.player.setupEvents(); err != nil {
 		return fmt.Errorf(errFormat, "failed to setup player events", err)
 	}
 
-	if err := p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor); err != nil {
-		return err
-	}
-
+	// Configure media player to stay open after playback completes
 	if err := p.player.setKeepOpen(true); err != nil {
 		return err
 	}
 
+	// Configure OSD display
 	if p.osdConfig.showOSD {
 		if err := p.player.setOSD(p.osdConfig); err != nil {
 			return err
 		}
 	}
 
-	if err := p.player.seek(p.videoConfig.SeekToPosition); err != nil {
+	// Precalculate playback speed multiplier based on speed units
+	p.speedUnitMultiplier = p.videoConfig.SpeedMultiplier / (speedUnitConversion[p.speedConfig.SpeedUnits] * speedDivisor)
+
+	return nil
+}
+
+// setPlaybackOptions sets load-time sensitive playback options for the media players
+func (p *PlaybackController) setPlaybackOptions() error {
+
+	// Set playback window size
+	if err := p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor); err != nil {
 		return err
 	}
 
-	// Precalculate playback speed multiplier based on speed units
-	p.speedUnitMultiplier = p.videoConfig.SpeedMultiplier / (speedUnitConversion[p.speedConfig.SpeedUnits] * speedDivisor)
+	// Set seek position into video playback
+	if err := p.player.seek(p.videoConfig.SeekToPosition); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -317,6 +344,7 @@ func (p *PlaybackController) logDebugInfo(ctx context.Context, speedController *
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"last playback speed: %.2f %s", p.speedState.last, p.speedConfig.SpeedUnits))
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"sensor speed delta: %.2f %s", math.Abs(p.speedState.current-p.speedState.last), p.speedConfig.SpeedUnits))
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Magenta+"playback speed update threshold: %.2f %s", p.speedConfig.SpeedThreshold, p.speedConfig.SpeedUnits))
+
 }
 
 // formatSeconds converts seconds into HH:MM:SS format

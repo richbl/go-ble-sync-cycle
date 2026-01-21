@@ -3,6 +3,7 @@ package video
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +19,13 @@ var (
 
 // vlcPlayer is a wrapper around the go-vlc client
 type vlcPlayer struct {
-	player    *vlc.Player
-	marquee   *vlc.Marquee
-	eventChan chan eventID
+	player       *vlc.Player
+	marquee      *vlc.Marquee
+	eventChan    chan eventID
+	screenWidth  int
+	screenHeight int
+	videoWidth   int
+	videoHeight  int
 }
 
 // newVLCPlayer creates a new vlcPlayer instance
@@ -42,10 +47,20 @@ func newVLCPlayer() (*vlcPlayer, error) {
 		return nil, fmt.Errorf(errFormat, "failed to create VLC player", err)
 	}
 
+	// Get display resolution (needed by VLC for accurate video playback scaling)
+	var displayWidth int
+	var displayHeight int
+
+	if displayWidth, displayHeight, err = screenResolution(); err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to get screen resolution: %v", err))
+	}
+
 	return &vlcPlayer{
-		player:    player,
-		marquee:   player.Marquee(),
-		eventChan: make(chan eventID, 1),
+		player:       player,
+		marquee:      player.Marquee(),
+		eventChan:    make(chan eventID, 1),
+		screenWidth:  displayWidth,
+		screenHeight: displayHeight,
 	}, nil
 
 }
@@ -55,7 +70,7 @@ func (v *vlcPlayer) loadFile(path string) error {
 
 	media, err := v.player.LoadMediaFromPath(path)
 	if err != nil {
-		return fmt.Errorf(errFormat, "failed to load video file", err)
+		return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
 	}
 
 	defer func() {
@@ -128,13 +143,29 @@ func (v *vlcPlayer) validateMedia(media *vlc.Media) error {
 
 		if track.Type == vlc.MediaTrackVideo {
 
-			// Check video dimensions (width and height must both be non-zero)
-			if track.Video.Width == 0 || track.Video.Height == 0 {
+			// Move video dimension fields into local vars (avoid potential uint-->int conversion issues)
+			trackWidth := track.Video.Width
+			trackHeight := track.Video.Height
+
+			// Check video dimensions (width and height must both be non-zero, else an invalid video file format)
+			if trackWidth == 0 || trackHeight == 0 {
 				return errInvalidVideoDimensions
 			}
 
+			// Ensure dimensions will not overflow during uint-->int conversion
+			if trackWidth > uint(math.MaxInt) || trackHeight > uint(math.MaxInt) {
+				return errInvalidVideoDimensions
+			}
+
+			// Safely convert the local variables (look Ma, no linter warns!)
+			v.videoWidth = int(trackWidth)
+			v.videoHeight = int(trackHeight)
+
+			logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("found native video dimensions: %dx%d", trackWidth, trackHeight))
+
 			return nil
 		}
+
 	}
 
 	return errNoVideoTrack
@@ -174,9 +205,24 @@ func (v *vlcPlayer) timeRemaining() (int64, error) {
 // setPlaybackSize sets media player window size
 func (v *vlcPlayer) setPlaybackSize(windowSize float64) error {
 
+	// Check if screen dimensions are valid
+	invalidScreenSize := v.screenWidth == 0 || v.screenHeight == 0
+
+	// If screen dimensions are invalid, then we can only set fullscreen
+	if invalidScreenSize {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, "invalid screen dimensions; will attempt to set fullscreen...")
+	}
+
 	// Enable fullscreen if window size is 1.0 (100%)
-	if windowSize == 1.0 {
+	if windowSize == 1.0 || invalidScreenSize {
 		return wrapError("failed to enable fullscreen", v.player.SetFullScreen(true))
+	}
+
+	// Scale video window size based on video resolution relative to screen dimensions
+	if v.videoHeight > v.videoWidth {
+		windowSize *= (float64(v.screenHeight) / float64(v.videoHeight))
+	} else {
+		windowSize *= (float64(v.screenWidth) / float64(v.videoWidth))
 	}
 
 	// Not going fullscreen, so set window size
@@ -250,7 +296,7 @@ func (v *vlcPlayer) seek(position string) error {
 		return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
 	}
 
-	return wrapError("failed to seek to specified position in media player", v.player.SetMediaTime(timeMs))
+	return wrapError(errUnableToSeek.Error(), v.player.SetMediaTime(timeMs))
 }
 
 // setOSD configures the On-Screen Display (OSD)
@@ -288,8 +334,7 @@ func (v *vlcPlayer) setupEvents() error {
 		v.eventChan <- eventEndFile
 	}
 
-	_, err = manager.Attach(vlc.MediaPlayerEndReached, eventCallback, nil)
-	if err != nil {
+	if _, err = manager.Attach(vlc.MediaPlayerEndReached, eventCallback, nil); err != nil {
 		return fmt.Errorf(errFormat, "failed to attach VLC event handler", err)
 	}
 
@@ -302,6 +347,7 @@ func (v *vlcPlayer) waitEvent(timeout float64) *playerEvent {
 	select {
 	case eventID := <-v.eventChan:
 		return &playerEvent{id: eventID}
+
 	case <-time.After(time.Duration(timeout * float64(time.Second))):
 		return &playerEvent{id: eventNone}
 	}
@@ -310,6 +356,11 @@ func (v *vlcPlayer) waitEvent(timeout float64) *playerEvent {
 
 // showOSDText displays text on the video using VLC's marquee feature
 func (v *vlcPlayer) showOSDText(text string) error {
+
+	if v.player == nil || v.marquee == nil {
+		return errPlayerNotInitialized
+	}
+
 	return wrapError("failed to set marquee text", v.marquee.SetText(text))
 }
 

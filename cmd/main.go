@@ -43,12 +43,12 @@ func main() {
 
 	// Load configuration
 	if err := sessionMgr.LoadTargetSession(configFile); err != nil {
-		logger.Fatal(logger.BackgroundCtx, logger.APP, err.Error())
+		logger.Fatal(logger.BackgroundCtx, logger.APP, err)
 	}
 
 	// Start the session (initializes controllers, connects BLE, starts services)
 	if err := sessionMgr.StartSession(); err != nil {
-		logger.Fatal(logger.BackgroundCtx, logger.APP, err.Error())
+		logger.Fatal(logger.BackgroundCtx, logger.APP, err)
 	}
 
 	// Wait patiently for shutdown (Ctrl+C or services error)

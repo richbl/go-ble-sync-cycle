@@ -48,15 +48,14 @@ func (m *mpvPlayer) loadFile(path string) error {
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
 
 	if err := m.player.Command([]string{"loadfile", path}); err != nil {
-
 		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
 
-		return wrapError("failed to load video file", err)
+		return wrapError(errFailedToLoadVideo.Error(), err)
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "command succeeded, now validating file...")
 
-	// Wait for file-loaded event and validate the file
+	// Wait for file-loaded event and then validate the file
 	err := m.validateLoadedFile()
 	if err != nil {
 		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("video file validation failed: %v", err))
@@ -99,14 +98,14 @@ func (m *mpvPlayer) validateLoadedFile() error {
 
 				break
 			}
-			// Validation successful - drain any remaining events before returning
+			// Validation successful: drain any remaining events before returning
 			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "validation successful, draining remaining events")
 
 			m.drainEvents()
 
 			return nil
 
-			// During file loading, ANY end event means the file failed to load
+			// During file loading, a premature end event means the file is invalid
 		case mpv.EventEnd:
 			return m.handleEndFile(event)
 
@@ -143,10 +142,13 @@ func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 		validationErr = fmt.Errorf("failed to load file: %w", endFile.Error)
 	} else {
 		switch endFile.Reason {
+
 		case mpv.EndFileError:
 			validationErr = ErrVideoComplete
+
 		case mpv.EndFileEOF:
 			validationErr = errInvalidVideoDimensions
+
 		default:
 			validationErr = errPlaybackEndedUnexpectedly
 		}
@@ -234,8 +236,12 @@ func (m *mpvPlayer) setPlaybackSize(windowSize float64) error {
 		return wrapError("failed to enable fullscreen", m.player.SetOptionString("fullscreen", "yes"))
 	}
 
+	// scale video window size: height and width always have the same scale value to handle different
+	// portrait/landscape aspect ratios
+	scaleValue := int(windowSize * 100)
+
 	// Not going fullscreen, so set window size
-	return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%", int(windowSize*100))))
+	return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%x%d%%", scaleValue, scaleValue)))
 }
 
 // setKeepOpen configures the player to keep the window open after playback completes
@@ -252,7 +258,7 @@ func (m *mpvPlayer) setKeepOpen(keepOpen bool) error {
 
 // seek moves the playback position to the specified time position
 func (m *mpvPlayer) seek(position string) error {
-	return wrapError("failed to seek to specified position in media player", m.player.SetOptionString("start", position))
+	return wrapError(errUnableToSeek.Error(), m.player.SetPropertyString("start", position))
 }
 
 // setOSD configures the On-Screen Display (OSD)
@@ -281,32 +287,27 @@ func (m *mpvPlayer) setupEvents() error {
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
 func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
-	for {
-		// If no event found then return a "none" event
-		e := m.player.WaitEvent(timeout)
-		if e == nil || e.EventID == mpv.EventNone {
-			return &playerEvent{id: eventNone}
-		}
-
-		// Look for mpv property change event (because it's the only one we really care about)
-		if e.EventID == mpv.EventPropertyChange {
-
-			prop := e.Property()
-			if value, ok := prop.Data.(int); ok {
-
-				// Confirm that the changed event is the eof-reached event
-				if prop.Name == "eof-reached" && value == 1 {
-					return &playerEvent{id: eventEndFile}
-				}
-
-			}
-
-		}
-
-		// Continue draining the queue with no timeout
-		timeout = 0
+	// Start waiting for events
+	e := m.player.WaitEvent(timeout)
+	if e == nil || e.EventID == mpv.EventNone {
+		return &playerEvent{id: eventNone}
 	}
 
+	switch e.EventID {
+
+	case mpv.EventPropertyChange:
+		prop := e.Property()
+		if prop.Name == "eof-reached" {
+			if val, ok := prop.Data.(int); ok && val == 1 {
+				return &playerEvent{id: eventEndFile}
+			}
+		}
+
+	case mpv.EventEnd:
+		return &playerEvent{id: eventEndFile}
+	}
+
+	return &playerEvent{id: eventNone}
 }
 
 // showOSDText displays text on the OSD
