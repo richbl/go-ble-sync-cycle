@@ -3,12 +3,14 @@ package video
 import (
 	"errors"
 	"fmt"
+
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // Error definitions
 var (
-	ErrVideoComplete = errors.New("video playback completed")
-
+	// Playback-specific errors
 	errInvalidTimeFormat         = errors.New("invalid time format")
 	errOSDUpdate                 = errors.New("failed to update OSD")
 	errUnsupportedVideoPlayer    = errors.New("unsupported video player specified")
@@ -16,6 +18,14 @@ var (
 	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")
 	errInvalidVideoDimensions    = errors.New("video dimensions are invalid")
 	errPlaybackEndedUnexpectedly = errors.New("playback ended unexpectedly")
+	errFailedToLoadVideo         = errors.New("failed to load video")
+	errUnableToSeek              = errors.New("failed to seek to specified position in media player")
+	ErrVideoComplete             = errors.New("video playback completed")
+
+	// GLFW-specific errors
+	errFailedToInitializeGLFW = errors.New("failed to initialize GLFW")
+	errFailedToAcquireMonitor = errors.New("failed to acquire primary monitor (GLFW)")
+	errFailedToGetVideoMode   = errors.New("failed to get video mode (GLFW)")
 )
 
 const (
@@ -29,7 +39,7 @@ const (
 type eventID int
 
 const (
-	eventNone    eventID = iota // No event occurred (e.g., on timeout)
+	eventNone    eventID = iota // No media player event occurred
 	eventEndFile                // The end of the video file has been reached
 )
 
@@ -81,4 +91,36 @@ func wrapError(context string, err error) error {
 	}
 
 	return fmt.Errorf(errFormat, context, err)
+}
+
+// screenResolution returns the screen resolution of the primary monitor (needed by VLC for video
+// playback scaling)
+func screenResolution() (int, int, error) {
+
+	// Initialize framework
+	if err := glfw.Init(); err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
+
+		return 0, 0, errFailedToInitializeGLFW
+	}
+
+	defer glfw.Terminate()
+
+	// Get the primary monitor
+	monitor := glfw.GetPrimaryMonitor()
+	if monitor == nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToAcquireMonitor)
+
+		return 0, 0, errFailedToAcquireMonitor
+	}
+
+	// Get the current video dimensions (width, height)
+	mode := monitor.GetVideoMode()
+	if mode == nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToGetVideoMode)
+
+		return 0, 0, errFailedToGetVideoMode
+	}
+
+	return mode.Width, mode.Height, nil
 }
