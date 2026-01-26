@@ -16,6 +16,7 @@ const (
 	errFormatRev = "%w: %v"
 )
 
+// Error definitions
 var (
 	errNoSessionLoaded       = errors.New("no session loaded")
 	errSessionAlreadyStarted = errors.New("session already started")
@@ -76,8 +77,7 @@ func NewManager() *StateManager {
 // LoadTargetSession loads (or reloads) a session configuration for execution (loadedConfig)
 func (m *StateManager) LoadTargetSession(configPath string) error {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	cfg, err := config.Load(configPath)
 	if err != nil {
@@ -113,8 +113,7 @@ func (m *StateManager) LoadTargetSession(configPath string) error {
 // LoadEditSession loads a session configuration specifically for editing (editConfig only)
 func (m *StateManager) LoadEditSession(configPath string) error {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	cfg, err := config.Load(configPath)
 	if err != nil {
@@ -130,8 +129,7 @@ func (m *StateManager) LoadEditSession(configPath string) error {
 // UpdateLoadedSession updates the loaded session configuration
 func (m *StateManager) UpdateLoadedSession(cfg *config.Config, path string) error {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
@@ -159,8 +157,7 @@ func (m *StateManager) UpdateLoadedSession(cfg *config.Config, path string) erro
 // SessionState returns the current session state (thread-safe)
 func (m *StateManager) SessionState() State {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.state
 }
@@ -168,8 +165,7 @@ func (m *StateManager) SessionState() State {
 // Config returns a copy of the current editing configuration (thread-safe)
 func (m *StateManager) Config() *config.Config {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.editConfig
 }
@@ -177,8 +173,7 @@ func (m *StateManager) Config() *config.Config {
 // ActiveConfig returns the configuration of the currently running/loaded session
 func (m *StateManager) ActiveConfig() *config.Config {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	// If running, return an immutable snapshot
 	if m.activeConfig != nil {
@@ -197,8 +192,7 @@ func (m *StateManager) ActiveConfig() *config.Config {
 // EditConfigPath returns the path to the configuration currently being edited
 func (m *StateManager) EditConfigPath() string {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.editConfigPath
 }
@@ -206,8 +200,7 @@ func (m *StateManager) EditConfigPath() string {
 // LoadedConfigPath returns the path to the loaded/running configuration
 func (m *StateManager) LoadedConfigPath() string {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.loadedConfigPath
 }
@@ -215,8 +208,7 @@ func (m *StateManager) LoadedConfigPath() string {
 // ErrorMessage returns the last error message if state is StateError
 func (m *StateManager) ErrorMessage() string {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.errorMsg
 }
@@ -224,8 +216,7 @@ func (m *StateManager) ErrorMessage() string {
 // SetState updates the session state (used by service controllers)
 func (m *StateManager) SetState(newState State) {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 	m.state = newState
 
 }
@@ -233,8 +224,7 @@ func (m *StateManager) SetState(newState State) {
 // SetError sets the error state with a message
 func (m *StateManager) SetError(err error) {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	m.state = StateError
 	if err != nil {
@@ -248,8 +238,7 @@ func (m *StateManager) SetError(err error) {
 // Reset clears the session back to Idle state
 func (m *StateManager) Reset() {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	m.state = StateIdle
 	m.editConfig = nil
@@ -264,8 +253,7 @@ func (m *StateManager) Reset() {
 // IsLoaded returns true if a session is currently loaded
 func (m *StateManager) IsLoaded() bool {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return (m.loadedConfig != nil || m.editConfig != nil) && m.state != StateIdle
 }
@@ -273,8 +261,7 @@ func (m *StateManager) IsLoaded() bool {
 // IsRunning returns true if services are currently running
 func (m *StateManager) IsRunning() bool {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	return m.state == StateRunning
 }
@@ -282,8 +269,7 @@ func (m *StateManager) IsRunning() bool {
 // Context returns the session's context
 func (m *StateManager) Context() context.Context {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	if m.shutdownMgr != nil {
 		return *m.shutdownMgr.Context()
@@ -308,8 +294,7 @@ func (m *StateManager) Wait() {
 // prepareStart validates state and snapshots editConfig to activeConfig
 func (m *StateManager) prepareStart() error {
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	defer m.writeLock()()
 
 	if m.editConfig == nil {
 		logger.Debug(logger.BackgroundCtx, logger.APP, "exiting: no config")
@@ -362,20 +347,18 @@ func (m *StateManager) storeShutdownMgr(s *services.ShutdownManager) {
 
 }
 
-// cleanupStartFailure handles cleaning manager state when session startup fails
-func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
+// readLock acquires a read lock and returns a function to release it
+func (m *StateManager) readLock() func() {
+
+	m.mu.RLock()
+
+	return m.mu.RUnlock
+}
+
+// writeLock acquires a write lock and returns a function to release it
+func (m *StateManager) writeLock() func() {
 
 	m.mu.Lock()
-	m.PendingStart = false
-	m.state = StateLoaded
-	m.controllers = nil
-	m.shutdownMgr = nil
-	m.activeConfig = nil
-	m.mu.Unlock()
 
-	// ensure the shutdown manager... uh... shuts down
-	if shutdownMgr != nil {
-		shutdownMgr.Shutdown()
-	}
-
+	return m.mu.Unlock
 }

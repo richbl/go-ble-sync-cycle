@@ -3,6 +3,7 @@ package video
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -123,4 +124,36 @@ func screenResolution() (int, int, error) {
 	}
 
 	return mode.Width, mode.Height, nil
+}
+
+// execGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive,
+// only returning an error
+func execGuarded(mu *sync.RWMutex, isNil func() bool, action func() error) error {
+
+	mu.RLock()
+	defer mu.RUnlock()
+
+	if isNil() {
+		return errPlayerNotInitialized
+	}
+
+	return action()
+}
+
+// queryGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive,
+// returning a value and an error
+//
+//nolint:ireturn // Legitimate use of generics for internal player abstraction
+func queryGuarded[T any](mu *sync.RWMutex, isNil func() bool, action func() (T, error)) (T, error) {
+
+	mu.RLock()
+	defer mu.RUnlock()
+
+	if isNil() {
+		var zero T
+
+		return zero, errPlayerNotInitialized
+	}
+
+	return action()
 }

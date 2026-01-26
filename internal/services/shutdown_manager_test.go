@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	sm "github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
@@ -16,6 +17,8 @@ var (
 
 // TestNewShutdownManager tests the creation of a new shutdown manager
 func TestNewShutdownManager(t *testing.T) {
+
+	logger.Initialize("debug")
 
 	timeout := 5 * time.Second
 	manager := sm.NewShutdownManager(timeout)

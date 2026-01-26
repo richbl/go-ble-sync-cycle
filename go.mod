@@ -7,13 +7,13 @@ require (
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20250703085337-e94555b846b6
 	github.com/diamondburned/gotk4/pkg v0.3.2-0.20250703063411-16654385f59a
 	github.com/gen2brain/go-mpv v0.2.3
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
 	github.com/stretchr/testify v1.11.1
 	tinygo.org/x/bluetooth v0.13.0
 )
 
 require (
 	github.com/KarpelesLab/weak v0.1.1 // indirect
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20231121144256-b99613f794b6 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 )

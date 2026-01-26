@@ -94,8 +94,13 @@ func (m *StateManager) StartSession() error {
 func (m *StateManager) StopSession() error {
 
 	m.mu.Lock()
+
 	shutdownMgr := m.shutdownMgr
 	wasPending := m.PendingStart
+
+	// Log what we're destroying
+	m.logControllersRelease(shutdownMgr)
+
 	m.state = StateLoaded
 	m.PendingStart = false
 	m.mu.Unlock()
@@ -104,50 +109,90 @@ func (m *StateManager) StopSession() error {
 		return errNoActiveSession
 	}
 
-	if wasPending {
-		logger.Info(*shutdownMgr.Context(), logger.BLE, "stop requested, canceling pending session setup...")
-	} else {
-		logger.Info(*shutdownMgr.Context(), logger.BLE, "stop requested, canceling active session...")
+	ctx := logger.BackgroundCtx
+	if shutdownMgr != nil {
+		ctx = *shutdownMgr.Context()
 	}
 
-	// Trigger shutdown (cancels ctx, waits wg—like Ctrl+C)
+	if wasPending {
+		logger.Info(ctx, logger.APP, "stop requested, canceling pending session setup...")
+	} else {
+		logger.Info(ctx, logger.APP, "stop requested, canceling active session...")
+	}
+
 	fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 
+	// Stop the shutdown manager
 	if shutdownMgr != nil {
 		shutdownMgr.Shutdown()
 	}
 
-	// Clear resources under lock
+	m.clearResources()
+	m.stopBLEScan(ctx)
+
+	if wasPending {
+		logger.Info(ctx, logger.APP, "stopped pending session startup")
+	} else {
+		logger.Info(ctx, logger.APP, "session stopped")
+	}
+
+	return nil
+}
+
+// logControllersRelease logs the release of controller objects
+func (m *StateManager) logControllersRelease(shutdownMgr *services.ShutdownManager) {
+
+	if m.controllers == nil || shutdownMgr == nil {
+		return
+	}
+
+	ctx := *shutdownMgr.Context()
+
+	if m.controllers.bleController != nil {
+		logger.Info(ctx, logger.BLE, fmt.Sprintf("releasing BLE controller object (id:%04d)", m.controllers.bleController.InstanceID))
+	}
+	if m.controllers.speedController != nil {
+		logger.Info(ctx, logger.SPEED, fmt.Sprintf("releasing speed controller object (id:%04d)", m.controllers.speedController.InstanceID))
+	}
+	if m.controllers.videoPlayer != nil {
+		logger.Info(ctx, logger.VIDEO, fmt.Sprintf("releasing video controller object (id:%04d)", m.controllers.videoPlayer.InstanceID))
+	}
+
+}
+
+// clearResources clears the session resources
+func (m *StateManager) clearResources() {
+
 	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.controllers = nil
 	m.shutdownMgr = nil
 	m.activeConfig = nil
-	m.mu.Unlock()
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, "controllers and shutdown manager objects released")
+
+}
+
+// stopBLEScan stops the BLE scan
+func (m *StateManager) stopBLEScan(ctx context.Context) {
 
 	// Stop any ongoing scan under mutex
 	ble.AdapterMu.Lock()
 	defer ble.AdapterMu.Unlock()
 
 	if err := bluetooth.DefaultAdapter.StopScan(); err != nil {
-		logger.Warn(*shutdownMgr.Context(), logger.BLE, fmt.Sprintf("failed to stop current BLE scan: %v", err))
+		logger.Warn(ctx, logger.BLE, fmt.Sprintf("failed to stop current BLE scan: %v", err))
 	} else {
-		logger.Info(*shutdownMgr.Context(), logger.BLE, "BLE scan stopped")
+		logger.Info(ctx, logger.BLE, "BLE scan stopped")
 	}
 
-	if wasPending {
-		logger.Info(*shutdownMgr.Context(), logger.APP, "stopped pending session startup")
-	} else {
-		logger.Info(*shutdownMgr.Context(), logger.APP, "session stopped")
-	}
-
-	return nil
 }
 
 // BatteryLevel returns the current battery level from the BLE controller
 func (m *StateManager) BatteryLevel() byte {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	if m.controllers != nil && m.controllers.bleController != nil {
 		return m.controllers.bleController.BatteryLevelLast()
@@ -159,8 +204,7 @@ func (m *StateManager) BatteryLevel() byte {
 // CurrentSpeed returns the current smoothed speed from the speed controller
 func (m *StateManager) CurrentSpeed() (float64, string) {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	// Use ActiveConfig here to ensure we return the units of the active running session
 	cfg := m.activeConfig
@@ -179,8 +223,7 @@ func (m *StateManager) CurrentSpeed() (float64, string) {
 // VideoTimeRemaining returns the formatted time remaining string (HH:MM:SS)
 func (m *StateManager) VideoTimeRemaining() string {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	noTime := "--:--:--"
 
@@ -199,8 +242,7 @@ func (m *StateManager) VideoTimeRemaining() string {
 // VideoPlaybackRate returns the current video playback multiplier (e.g. 1.0x)
 func (m *StateManager) VideoPlaybackRate() float64 {
 
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	defer m.readLock()()
 
 	if m.controllers == nil || m.controllers.videoPlayer == nil {
 		return 0.0
@@ -216,27 +258,31 @@ func (m *StateManager) initializeControllers() (*controllers, error) {
 	cfg := m.activeConfig
 	m.mu.RUnlock()
 
+	logger.Debug(logger.BackgroundCtx, logger.APP, "creating and initializing controllers...")
+
 	if cfg == nil {
 		return nil, errNoActiveConfig
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.APP, "creating speed controller...")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "creating new speed controller...")
 
 	speedController := speed.NewSpeedController(cfg.Speed.SmoothingWindow)
 
-	logger.Debug(logger.BackgroundCtx, logger.APP, "creating video controller...")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "creating new video controller...")
 
 	videoPlayer, err := video.NewPlaybackController(cfg.Video, cfg.Speed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create video controller: %w", err)
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.APP, "creating BLE controller...")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "creating new BLE controller...")
 
 	bleController, err := ble.NewBLEController(cfg.BLE, cfg.Speed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create BLE controller: %w", err)
 	}
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, "all controllers created and initialized")
 
 	return &controllers{
 		speedController: speedController,
@@ -307,6 +353,29 @@ func (m *StateManager) startServices(ctrl *controllers, shutdownMgr *services.Sh
 	})
 
 	logger.Debug(*shutdownMgr.Context(), logger.APP, "BLE and video services started")
+
+}
+
+// cleanupStartFailure handles cleaning manager state when session startup fails
+func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, "resetting controllers and session state...")
+
+	m.mu.Lock()
+	m.PendingStart = false
+	m.state = StateLoaded
+	m.controllers = nil
+	m.shutdownMgr = nil
+	m.activeConfig = nil
+
+	m.mu.Unlock()
+
+	// ensure the shutdown manager... uh... shuts down
+	if shutdownMgr != nil {
+		shutdownMgr.Shutdown()
+	}
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, "controllers and session state reset complete")
 
 }
 

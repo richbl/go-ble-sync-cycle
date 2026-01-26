@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	vlc "github.com/adrg/libvlc-go/v3"
@@ -22,6 +23,7 @@ type vlcPlayer struct {
 	player       *vlc.Player
 	marquee      *vlc.Marquee
 	eventChan    chan eventID
+	mu           sync.RWMutex
 	screenWidth  int
 	screenHeight int
 	videoWidth   int
@@ -68,28 +70,31 @@ func newVLCPlayer() (*vlcPlayer, error) {
 // loadFile loads a video file into the VLC player
 func (v *vlcPlayer) loadFile(path string) error {
 
-	media, err := v.player.LoadMediaFromPath(path)
-	if err != nil {
-		return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
-	}
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
 
-	defer func() {
-		if err := media.Release(); err != nil {
-			logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to release VLC media: %v", err))
+		media, err := v.player.LoadMediaFromPath(path)
+		if err != nil {
+			return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
 		}
-	}()
 
-	// Parse the media to validate format and metadata
-	if err := v.parseMedia(media); err != nil {
-		return err
-	}
+		defer func() {
+			if err := media.Release(); err != nil {
+				logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to release VLC media: %v", err))
+			}
+		}()
 
-	// Validate the media content (dimensions)
-	if err := v.validateMedia(media); err != nil {
-		return err
-	}
+		// Parse the media to validate format and metadata
+		if err := v.parseMedia(media); err != nil {
+			return err
+		}
 
-	return wrapError("failed to play video", v.player.Play())
+		// Validate the media content (dimensions)
+		if err := v.validateMedia(media); err != nil {
+			return err
+		}
+
+		return wrapError("failed to play video", v.player.Play())
+	})
 }
 
 // parseMedia handles the asynchronous parsing of the media file
@@ -173,60 +178,65 @@ func (v *vlcPlayer) validateMedia(media *vlc.Media) error {
 
 // setSpeed sets the playback speed of the video
 func (v *vlcPlayer) setSpeed(speed float64) error {
-	return wrapError("failed to set video playback speed", v.player.SetPlaybackRate(float32(speed)))
+
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
+		return wrapError("failed to set video playback speed", v.player.SetPlaybackRate(float32(speed)))
+	})
 }
 
 // setPause sets the pause state of the video
 func (v *vlcPlayer) setPause(paused bool) error {
-	return wrapError("failed to pause video", v.player.SetPause(paused))
+
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
+		return wrapError("failed to pause video", v.player.SetPause(paused))
+	})
 }
 
 // timeRemaining gets the remaining time of the video
 func (v *vlcPlayer) timeRemaining() (int64, error) {
 
-	// Check if player is initialized
-	if v.player == nil {
-		return 0, errPlayerNotInitialized
-	}
+	return queryGuarded[int64](&v.mu, func() bool { return v.player == nil }, func() (int64, error) {
 
-	length, err := v.player.MediaLength()
-	if err != nil {
-		return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
-	}
+		length, err := v.player.MediaLength()
+		if err != nil {
+			return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
+		}
 
-	currentTime, err := v.player.MediaTime()
-	if err != nil {
-		return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
-	}
+		currentTime, err := v.player.MediaTime()
+		if err != nil {
+			return 0, fmt.Errorf(errFormat, errTimeRemaining, err)
+		}
 
-	return (int64)((length - currentTime) / 1000), nil // Convert ms to seconds
+		return (int64)((length - currentTime) / 1000), nil // Convert ms to seconds
+	})
 }
 
 // setPlaybackSize sets media player window size
 func (v *vlcPlayer) setPlaybackSize(windowSize float64) error {
 
-	// Check if screen dimensions are valid
-	invalidScreenSize := v.screenWidth == 0 || v.screenHeight == 0
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
 
-	// If screen dimensions are invalid, then we can only set fullscreen
-	if invalidScreenSize {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, "invalid screen dimensions; will attempt to set fullscreen...")
-	}
+		// Check if screen dimensions are valid
+		invalidScreenSize := v.screenWidth == 0 || v.screenHeight == 0
 
-	// Enable fullscreen if window size is 1.0 (100%)
-	if windowSize == 1.0 || invalidScreenSize {
-		return wrapError("failed to enable fullscreen", v.player.SetFullScreen(true))
-	}
+		if invalidScreenSize {
+			logger.Warn(logger.BackgroundCtx, logger.VIDEO, "invalid screen dimensions; will attempt to set fullscreen...")
+		}
 
-	// Scale video window size based on video resolution relative to screen dimensions
-	if v.videoHeight > v.videoWidth {
-		windowSize *= (float64(v.screenHeight) / float64(v.videoHeight))
-	} else {
-		windowSize *= (float64(v.screenWidth) / float64(v.videoWidth))
-	}
+		// Enable fullscreen if window size is 1.0 (100%)
+		if windowSize == 1.0 || invalidScreenSize {
+			return wrapError("failed to enable fullscreen", v.player.SetFullScreen(true))
+		}
 
-	// Not going fullscreen, so set window size
-	return wrapError("failed to set window size", v.player.SetScale(windowSize))
+		// Scale video window size based on video resolution relative to screen dimensions
+		if v.videoHeight > v.videoWidth {
+			windowSize *= (float64(v.screenHeight) / float64(v.videoHeight))
+		} else {
+			windowSize *= (float64(v.screenWidth) / float64(v.videoWidth))
+		}
+
+		return wrapError("failed to set window size", v.player.SetScale(windowSize))
+	})
 }
 
 // Stub: setKeepOpen is not supported in VLC
@@ -291,54 +301,63 @@ func parseSS(position string) (int64, error) {
 // seek moves the playback position to the specified time (MM:SS format)
 func (v *vlcPlayer) seek(position string) error {
 
-	timeMs, err := parseTimePosition(position)
-	if err != nil {
-		return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
-	}
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
 
-	return wrapError(errUnableToSeek.Error(), v.player.SetMediaTime(timeMs))
+		timeMs, err := parseTimePosition(position)
+		if err != nil {
+			return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
+		}
+
+		return wrapError(errUnableToSeek.Error(), v.player.SetMediaTime(timeMs))
+	})
 }
 
 // setOSD configures the On-Screen Display (OSD)
 func (v *vlcPlayer) setOSD(options osdConfig) error {
 
-	if err := v.marquee.SetX(options.marginX); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD X position", err)
-	}
+	return execGuarded(&v.mu, func() bool { return v.player == nil || v.marquee == nil }, func() error {
 
-	if err := v.marquee.SetY(options.marginY); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
-	}
+		if err := v.marquee.SetX(options.marginX); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD X position", err)
+		}
 
-	if err := v.marquee.SetSize(options.fontSize); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD font size", err)
-	}
+		if err := v.marquee.SetY(options.marginY); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
+		}
 
-	if err := v.marquee.Enable(true); err != nil {
-		return fmt.Errorf(errFormat, "failed to enable OSD", err)
-	}
+		if err := v.marquee.SetSize(options.fontSize); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD font size", err)
+		}
 
-	return nil
+		if err := v.marquee.Enable(true); err != nil {
+			return fmt.Errorf(errFormat, "failed to enable OSD", err)
+		}
+
+		return nil
+	})
 }
 
 // setupEvents subscribes to VLC playback events
 func (v *vlcPlayer) setupEvents() error {
 
-	manager, err := v.player.EventManager()
-	if err != nil {
-		return fmt.Errorf(errFormat, "failed to get VLC event manager", err)
-	}
+	return execGuarded(&v.mu, func() bool { return v.player == nil }, func() error {
 
-	// eventCallback is triggered when the video playback ends
-	eventCallback := func(_ vlc.Event, _ any) {
-		v.eventChan <- eventEndFile
-	}
+		manager, err := v.player.EventManager()
+		if err != nil {
+			return fmt.Errorf(errFormat, "failed to get VLC event manager", err)
+		}
 
-	if _, err = manager.Attach(vlc.MediaPlayerEndReached, eventCallback, nil); err != nil {
-		return fmt.Errorf(errFormat, "failed to attach VLC event handler", err)
-	}
+		// eventCallback is triggered when the video playback ends
+		eventCallback := func(_ vlc.Event, _ any) {
+			v.eventChan <- eventEndFile
+		}
 
-	return nil
+		if _, err = manager.Attach(vlc.MediaPlayerEndReached, eventCallback, nil); err != nil {
+			return fmt.Errorf(errFormat, "failed to attach VLC event handler", err)
+		}
+
+		return nil
+	})
 }
 
 // waitEvent waits for a player event with timeout
@@ -357,15 +376,16 @@ func (v *vlcPlayer) waitEvent(timeout float64) *playerEvent {
 // showOSDText displays text on the video using VLC's marquee feature
 func (v *vlcPlayer) showOSDText(text string) error {
 
-	if v.player == nil || v.marquee == nil {
-		return errPlayerNotInitialized
-	}
-
-	return wrapError("failed to set marquee text", v.marquee.SetText(text))
+	return execGuarded(&v.mu, func() bool { return v.player == nil || v.marquee == nil }, func() error {
+		return wrapError("failed to set marquee text", v.marquee.SetText(text))
+	})
 }
 
 // terminatePlayer cleans up VLC resources
 func (v *vlcPlayer) terminatePlayer() {
+
+	v.mu.Lock()
+	defer v.mu.Unlock()
 
 	if v.eventChan != nil {
 		close(v.eventChan)
@@ -373,7 +393,6 @@ func (v *vlcPlayer) terminatePlayer() {
 	}
 
 	if v.player != nil {
-
 		if err := v.player.Stop(); err != nil {
 			logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to stop VLC player: %v", err))
 		}
@@ -383,11 +402,12 @@ func (v *vlcPlayer) terminatePlayer() {
 		}
 
 		v.player = nil
+		v.marquee = nil
 
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "destroyed VLC handle: C resources released")
 	}
 
 	if err := vlc.Release(); err != nil {
 		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", err))
 	}
-
 }

@@ -43,6 +43,8 @@ func calculateAverage(data []float64) float64 {
 // TestNewSpeedController tests the initialization of a new Controller
 func TestNewSpeedController(t *testing.T) {
 
+	logger.Initialize("debug")
+
 	controller := NewSpeedController(td.window)
 
 	// Verify initialization

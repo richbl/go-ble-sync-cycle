@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"tinygo.org/x/bluetooth"
@@ -34,6 +35,7 @@ type blePeripheralDetails struct {
 type Controller struct {
 	blePeripheralDetails blePeripheralDetails
 	speedConfig          config.SpeedConfig
+	InstanceID           int64
 }
 
 // actionParams encapsulates parameters for BLE actions
@@ -45,6 +47,9 @@ type actionParams[T any] struct {
 
 // Mutex for synchronizing adapter access
 var AdapterMu sync.Mutex
+
+// Instance counter to distinguish between controller object instances
+var bleInstanceCounter atomic.Int64
 
 // Error definitions
 var (
@@ -80,13 +85,18 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 	AdapterMu.Lock()
 	defer AdapterMu.Unlock()
 
+	// Increment instance counter
+	instanceID := bleInstanceCounter.Add(1)
+
+	logger.Debug(logger.BackgroundCtx, logger.BLE, fmt.Sprintf("creating BLE controller object (id:%04d)...", instanceID))
+
 	bleAdapter := bluetooth.DefaultAdapter
 
 	if err := bleAdapter.Enable(); err != nil {
-		return nil, fmt.Errorf(errFormat, "failed to enable BLE central controller", err)
+		return nil, fmt.Errorf(errFormat, "failed to enable BLE controller", err)
 	}
 
-	logger.Info(logger.BackgroundCtx, logger.BLE, "created new BLE central controller")
+	logger.Info(logger.BackgroundCtx, logger.BLE, fmt.Sprintf("created BLE controller object (id:%04d)", instanceID))
 
 	return &Controller{
 		blePeripheralDetails: blePeripheralDetails{
@@ -94,6 +104,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 			bleAdapter: *bleAdapter,
 		},
 		speedConfig: speedConfig,
+		InstanceID:  instanceID,
 	}, nil
 }
 
