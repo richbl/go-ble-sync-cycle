@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -21,28 +22,39 @@ type smContext struct {
 	cancel context.CancelFunc
 }
 
-// ShutdownManager represents a shutdown manager that manages a component lifecycle
+// ShutdownManager manages an application lifecycle
 type ShutdownManager struct {
-	context smContext
-	errChan chan error
-	cleanup []func()
-	wg      sync.WaitGroup
-	timeout time.Duration
+	context    smContext
+	errChan    chan error
+	cleanup    []func()
+	wg         sync.WaitGroup
+	timeout    time.Duration
+	InstanceID int64
 }
+
+// Instance counter to distinguish between shutdown manager objects
+var shutdownInstanceCounter atomic.Int64
 
 // NewShutdownManager creates a new shutdown manager
 func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 
+	instanceID := shutdownInstanceCounter.Add(1)
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("creating shutdown manager object (id:%04d)...", instanceID))
+
 	// Create a context with a timeout
 	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("created shutdown manager object (id:%04d)", instanceID))
 
 	return &ShutdownManager{
 		context: smContext{
 			ctx:    ctx,
 			cancel: cancel,
 		},
-		timeout: timeout,
-		errChan: make(chan error, 1),
+		timeout:    timeout,
+		InstanceID: instanceID,
+		errChan:    make(chan error, 1),
 	}
 }
 
@@ -88,6 +100,8 @@ func (sm *ShutdownManager) Start() {
 // Shutdown shuts down the shutdown manager
 func (sm *ShutdownManager) Shutdown() {
 
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutting down shutdown manager object (id:%04d)...", sm.InstanceID))
+
 	sm.context.cancel()
 	done := make(chan struct{})
 
@@ -98,14 +112,19 @@ func (sm *ShutdownManager) Shutdown() {
 
 	select {
 	case <-done:
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager (id:%04d) services stopped", sm.InstanceID))
+
 	case <-time.After(sm.timeout):
-		logger.Warn(sm.context.ctx, logger.APP, "shutdown timed out")
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager (id:%04d) shutdown timed out", sm.InstanceID))
+
 	}
 
 	// Execute cleanup functions in reverse order
 	for i := len(sm.cleanup) - 1; i >= 0; i-- {
 		sm.cleanup[i]()
 	}
+
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager object (id:%04d) shutdown complete", sm.InstanceID))
 
 }
 

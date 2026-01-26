@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -20,16 +21,20 @@ type state struct {
 
 // Controller manages speed measurements with smoothing over a specified time window
 type Controller struct {
-	speeds *ring.Ring
-	state  state
-	window int
-	mu     sync.RWMutex
+	speeds     *ring.Ring
+	state      state
+	window     int
+	mu         sync.RWMutex
+	InstanceID int64
 }
 
 // Error definitions
 var (
 	errUnsupportedSpeedType = errors.New("unsupported speed type encountered")
 )
+
+// Instance counter to distinguish between controller object instances
+var speedInstanceCounter atomic.Int64
 
 // Format for wrapping errors
 const (
@@ -40,6 +45,11 @@ const (
 // determines the number of speed measurements used for smoothing
 func NewSpeedController(window int) *Controller {
 
+	// Increment instance counter
+	instanceID := speedInstanceCounter.Add(1)
+
+	logger.Debug(logger.BackgroundCtx, logger.SPEED, fmt.Sprintf("creating speed controller object (id:%04d)...", instanceID))
+
 	r := ring.New(window)
 
 	for range window {
@@ -47,9 +57,12 @@ func NewSpeedController(window int) *Controller {
 		r = r.Next()
 	}
 
+	logger.Debug(logger.BackgroundCtx, logger.SPEED, fmt.Sprintf("created speed controller object (id:%04d)", instanceID))
+
 	return &Controller{
-		speeds: r,
-		window: window,
+		speeds:     r,
+		InstanceID: instanceID,
+		window:     window,
 	}
 }
 
@@ -69,7 +82,7 @@ func (sc *Controller) UpdateSpeed(ctx context.Context, speed float64) {
 
 		value, ok := x.(float64)
 		if !ok {
-			logger.Error(ctx, logger.BLE, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
+			logger.Error(ctx, logger.SPEED, fmt.Errorf(errFormatRev, errUnsupportedSpeedType, value))
 
 			return
 		}
@@ -100,6 +113,7 @@ func (sc *Controller) SpeedBuffer(ctx context.Context) []string {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
+	// Cycle (ha!) through the ring buffer and append the values
 	var speeds []string
 	sc.speeds.Do(func(x any) {
 

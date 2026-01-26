@@ -14,6 +14,7 @@ import "C"
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	mpv "github.com/gen2brain/go-mpv"
@@ -23,6 +24,7 @@ import (
 // mpvPlayer is a wrapper around the go-mpv client
 type mpvPlayer struct {
 	player *mpv.Mpv
+	mu     sync.RWMutex
 }
 
 // newMpvPlayer creates a new mpvPlayer instance
@@ -45,27 +47,30 @@ func newMpvPlayer() (*mpvPlayer, error) {
 // loadFile loads a video file into the mpv player and validates it
 func (m *mpvPlayer) loadFile(path string) error {
 
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 
-	if err := m.player.Command([]string{"loadfile", path}); err != nil {
-		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
 
-		return wrapError(errFailedToLoadVideo.Error(), err)
-	}
+		if err := m.player.Command([]string{"loadfile", path}); err != nil {
+			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
 
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "command succeeded, now validating file...")
+			return wrapError(errFailedToLoadVideo.Error(), err)
+		}
 
-	// Wait for file-loaded event and then validate the file
-	err := m.validateLoadedFile()
-	if err != nil {
-		logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("video file validation failed: %v", err))
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "command succeeded, now validating file...")
 
-		return err
-	}
+		// Wait for file-loaded event and then validate the file
+		err := m.validateLoadedFile()
+		if err != nil {
+			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("video file validation failed: %v", err))
 
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
+			return err
+		}
 
-	return nil
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
+
+		return nil
+	})
 }
 
 // validateLoadedFile waits for the file-loaded event and checks if video dimensions are valid
@@ -198,130 +203,163 @@ func (m *mpvPlayer) checkVideoDimensions() error {
 
 // setSpeed sets the playback speed of the video
 func (m *mpvPlayer) setSpeed(speed float64) error {
-	return wrapError("failed to set video playback speed", m.player.SetProperty("speed", mpv.FormatDouble, speed))
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		return wrapError("failed to set video playback speed", m.player.SetProperty("speed", mpv.FormatDouble, speed))
+	})
 }
 
 // setPause sets the pause state of the video
 func (m *mpvPlayer) setPause(paused bool) error {
-	return wrapError("failed to pause video", m.player.SetProperty("pause", mpv.FormatFlag, paused))
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		return wrapError("failed to pause video", m.player.SetProperty("pause", mpv.FormatFlag, paused))
+	})
 }
 
 // timeRemaining gets the remaining time of the video
 func (m *mpvPlayer) timeRemaining() (int64, error) {
 
-	// Check if player is initialized
-	if m.player == nil {
-		return 0, errPlayerNotInitialized
-	}
+	return queryGuarded[int64](&m.mu, func() bool { return m.player == nil }, func() (int64, error) {
 
-	timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
-	if err != nil {
-		return 0, fmt.Errorf(errFormat, "failed to get video time remaining", err)
-	}
+		// Check if player is initialized
+		if m.player == nil {
+			return 0, errPlayerNotInitialized
+		}
 
-	timeRemainingInt, ok := timeRemaining.(int64)
-	if !ok {
-		return 0, errInvalidTimeFormat
+		timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
+		if err != nil {
+			return 0, fmt.Errorf(errFormat, "failed to get video time remaining", err)
+		}
 
-	}
+		timeRemainingInt, ok := timeRemaining.(int64)
+		if !ok {
+			return 0, errInvalidTimeFormat
+		}
 
-	return timeRemainingInt, nil
+		return timeRemainingInt, nil
+	})
 }
 
 // setPlaybackSize sets media player window size
 func (m *mpvPlayer) setPlaybackSize(windowSize float64) error {
 
-	// Enable fullscreen if window size is 1.0 (100%)
-	if windowSize == 1.0 {
-		return wrapError("failed to enable fullscreen", m.player.SetOptionString("fullscreen", "yes"))
-	}
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 
-	// scale video window size: height and width always have the same scale value to handle different
-	// portrait/landscape aspect ratios
-	scaleValue := int(windowSize * 100)
+		// Enable fullscreen if window size is 1.0 (100%)
+		if windowSize == 1.0 {
+			return wrapError("failed to enable fullscreen", m.player.SetOptionString("fullscreen", "yes"))
+		}
 
-	// Not going fullscreen, so set window size
-	return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%x%d%%", scaleValue, scaleValue)))
+		// scale video window size
+		scaleValue := int(windowSize * 100)
+
+		// Not going fullscreen, so set window size
+		return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%x%d%%", scaleValue, scaleValue)))
+	})
 }
 
 // setKeepOpen configures the player to keep the window open after playback completes
 func (m *mpvPlayer) setKeepOpen(keepOpen bool) error {
 
-	value := "no"
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		value := "no"
+		if keepOpen {
+			value = "yes"
+		}
 
-	if keepOpen {
-		value = "yes"
-	}
-
-	return wrapError("failed to set keep-open media player option", m.player.SetOptionString("keep-open", value))
+		return wrapError("failed to set keep-open media player option", m.player.SetOptionString("keep-open", value))
+	})
 }
 
 // seek moves the playback position to the specified time position
 func (m *mpvPlayer) seek(position string) error {
-	return wrapError(errUnableToSeek.Error(), m.player.SetPropertyString("start", position))
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		return wrapError(errUnableToSeek.Error(), m.player.SetPropertyString("start", position))
+	})
 }
 
 // setOSD configures the On-Screen Display (OSD)
 func (m *mpvPlayer) setOSD(options osdConfig) error {
 
-	if err := m.player.SetOption("osd-margin-x", mpv.FormatInt64, int64(options.marginX)); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD X position", err)
-	}
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 
-	if err := m.player.SetOption("osd-margin-y", mpv.FormatInt64, int64(options.marginY)); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
-	}
+		if err := m.player.SetOption("osd-margin-x", mpv.FormatInt64, int64(options.marginX)); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD X position", err)
+		}
 
-	if err := m.player.SetOption("osd-font-size", mpv.FormatInt64, int64(options.fontSize)); err != nil {
-		return fmt.Errorf(errFormat, "failed to set OSD font size", err)
-	}
+		if err := m.player.SetOption("osd-margin-y", mpv.FormatInt64, int64(options.marginY)); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
+		}
 
-	return nil
+		if err := m.player.SetOption("osd-font-size", mpv.FormatInt64, int64(options.fontSize)); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD font size", err)
+		}
+
+		return nil
+	})
 }
 
 // setupEvents prepares the player to listen for end-of-file and file-loaded events
 func (m *mpvPlayer) setupEvents() error {
-	return wrapError("failed to setup end-of-file observe event", m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag))
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		return wrapError("failed to setup end-of-file observe event", m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag))
+	})
 }
 
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
 func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
-	// Start waiting for events
-	e := m.player.WaitEvent(timeout)
-	if e == nil || e.EventID == mpv.EventNone {
+	res, _ := queryGuarded[*playerEvent](&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
+
+		e := m.player.WaitEvent(timeout)
+		if e == nil || e.EventID == mpv.EventNone {
+			return &playerEvent{id: eventNone}, nil
+		}
+
+		switch e.EventID {
+
+		case mpv.EventPropertyChange:
+			prop := e.Property()
+			if prop.Name == "eof-reached" {
+				if val, ok := prop.Data.(int); ok && val == 1 {
+					return &playerEvent{id: eventEndFile}, nil
+				}
+			}
+
+		case mpv.EventEnd:
+			return &playerEvent{id: eventEndFile}, nil
+		}
+
+		return &playerEvent{id: eventNone}, nil
+	})
+
+	if res == nil {
 		return &playerEvent{id: eventNone}
 	}
 
-	switch e.EventID {
-
-	case mpv.EventPropertyChange:
-		prop := e.Property()
-		if prop.Name == "eof-reached" {
-			if val, ok := prop.Data.(int); ok && val == 1 {
-				return &playerEvent{id: eventEndFile}
-			}
-		}
-
-	case mpv.EventEnd:
-		return &playerEvent{id: eventEndFile}
-	}
-
-	return &playerEvent{id: eventNone}
+	return res
 }
 
 // showOSDText displays text on the OSD
 func (m *mpvPlayer) showOSDText(text string) error {
-	return wrapError("failed to show OSD text", m.player.SetOptionString("osd-msg1", text))
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+		return wrapError("failed to show OSD text", m.player.SetOptionString("osd-msg1", text))
+	})
 }
 
 // terminatePlayer terminates the mpv player instance and cleans up resources
 func (m *mpvPlayer) terminatePlayer() {
 
+	m.mu.Lock() // create write lock
+	defer m.mu.Unlock()
+
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "starting player termination")
 
 	if m.player != nil {
-
 		// Run TerminateDestroy in a goroutine with timeout to prevent blocking
 		done := make(chan struct{})
 
@@ -332,13 +370,17 @@ func (m *mpvPlayer) terminatePlayer() {
 
 		// Wait with timeout
 		select {
+
 		case <-done:
 			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "call to terminate mpv completed successfully")
+
 		case <-time.After(2 * time.Second):
 			logger.Warn(logger.BackgroundCtx, logger.VIDEO, "call to terminate mpv timed out after 2s, continuing mpv shutdown")
 		}
 
-		m.player = nil
+		m.player = nil // Handle is now destroyed; future RLock calls will fail gracefully
+
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "destroyed MPV handle: C resources released")
 	}
 }
 

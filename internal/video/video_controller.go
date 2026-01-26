@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
@@ -20,6 +21,7 @@ type PlaybackController struct {
 	videoConfig config.VideoConfig
 	speedConfig config.SpeedConfig
 	osdConfig   osdConfig
+	InstanceID  int64
 
 	// Media player state
 	player              mediaPlayer
@@ -32,6 +34,9 @@ type speedState struct {
 	current float64
 	last    float64
 }
+
+// Instance counter to distinguish between controller object instances
+var videoInstanceCounter atomic.Int64
 
 const (
 	// Divisor used to convert speed relative to playback rate
@@ -51,6 +56,11 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 	var player mediaPlayer
 	var err error
 
+	// Increment instance counter
+	instanceID := videoInstanceCounter.Add(1)
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("creating video controller object (id:%04d)...", instanceID))
+
 	switch videoConfig.MediaPlayer {
 
 	case config.MediaPlayerMPV:
@@ -67,11 +77,14 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 		return nil, fmt.Errorf("failed to create %s player: %w", videoConfig.MediaPlayer, err)
 	}
 
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("created video controller object (id:%04d)", instanceID))
+
 	return &PlaybackController{
 		videoConfig: videoConfig,
 		speedConfig: speedConfig,
 		osdConfig:   newOSDConfig(videoConfig.OnScreenDisplay),
 		player:      player,
+		InstanceID:  instanceID,
 		speedState:  &speedState{},
 	}, nil
 }
@@ -94,7 +107,15 @@ func (p *PlaybackController) StartPlayback(ctx context.Context, speedController 
 
 	logger.Info(ctx, logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
 
-	defer p.player.terminatePlayer()
+	defer func() {
+
+		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("terminating video controller object (id:%04d)...", p.InstanceID))
+
+		p.player.terminatePlayer()
+
+		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("destroyed video controller object (id:%04d)", p.InstanceID))
+
+	}()
 
 	// Configure the media player
 	if err := p.configurePlayback(); err != nil {
