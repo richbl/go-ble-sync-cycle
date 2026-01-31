@@ -13,6 +13,7 @@ static void set_c_locale_numeric() {
 import "C"
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -28,7 +29,7 @@ type mpvPlayer struct {
 }
 
 // newMpvPlayer creates a new mpvPlayer instance
-func newMpvPlayer() (*mpvPlayer, error) {
+func newMpvPlayer(ctx context.Context) (*mpvPlayer, error) {
 
 	// Ensure C locale is set to "C" for numeric formats
 	C.set_c_locale_numeric()
@@ -40,6 +41,8 @@ func newMpvPlayer() (*mpvPlayer, error) {
 	if err := m.player.Initialize(); err != nil {
 		return nil, fmt.Errorf(errFormat, "failed to initialize mpv player", err)
 	}
+
+	logger.Info(ctx, logger.VIDEO, "mpv player object created")
 
 	return m, nil
 }
@@ -67,7 +70,7 @@ func (m *mpvPlayer) loadFile(path string) error {
 			return err
 		}
 
-		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
+		logger.Info(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
 
 		return nil
 	})
@@ -136,9 +139,7 @@ func (m *mpvPlayer) validateLoadedFile() error {
 func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "EventEnd received during loading")
-
 	endFile := event.EndFile()
-
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("EndFile reason: %s, error: %v", endFile.Reason.String(), endFile.Error))
 
 	var validationErr error
@@ -160,7 +161,6 @@ func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "draining remaining events after error")
-
 	m.drainEvents()
 
 	return validationErr
@@ -312,7 +312,7 @@ func (m *mpvPlayer) setupEvents() error {
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
 func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
-	res, _ := queryGuarded[*playerEvent](&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
+	res, _ := queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
 
 		e := m.player.WaitEvent(timeout)
 		if e == nil || e.EventID == mpv.EventNone {

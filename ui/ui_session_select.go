@@ -134,7 +134,7 @@ func (sc *SessionController) scanForSessions() {
 
 	// Check if any files were actually found
 	if len(sc.Sessions) == 0 {
-		logger.Info(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
 
 		safeUpdateUI(func() {
 			displayConfirmationDialog(
@@ -154,7 +154,7 @@ func (sc *SessionController) scanForSessions() {
 // createNewDefaultSession creates a default configuration file, a placeholder video, and refreshes the list
 func (sc *SessionController) createNewDefaultSession() {
 
-	logger.Info(logger.BackgroundCtx, logger.GUI, "creating new default session configuration...")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "creating new default session configuration...")
 
 	// Determine configuration directory
 	configDir, err := getSessionConfigDir()
@@ -194,7 +194,7 @@ func (sc *SessionController) createNewDefaultSession() {
 		return
 	}
 
-	logger.Info(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "successfully created new session file at "+filePath)
 
 	// Refresh the GUI list
 	sc.scanForSessions()

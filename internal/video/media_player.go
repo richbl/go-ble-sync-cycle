@@ -1,6 +1,7 @@
 package video
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -96,11 +97,11 @@ func wrapError(context string, err error) error {
 
 // screenResolution returns the screen resolution of the primary monitor (needed by VLC for video
 // playback scaling)
-func screenResolution() (int, int, error) {
+func screenResolution(ctx context.Context) (int, int, error) {
 
 	// Initialize framework
 	if err := glfw.Init(); err != nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
+		logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
 
 		return 0, 0, errFailedToInitializeGLFW
 	}
@@ -110,7 +111,7 @@ func screenResolution() (int, int, error) {
 	// Get the primary monitor
 	monitor := glfw.GetPrimaryMonitor()
 	if monitor == nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToAcquireMonitor)
+		logger.Warn(ctx, logger.VIDEO, errFailedToAcquireMonitor)
 
 		return 0, 0, errFailedToAcquireMonitor
 	}
@@ -118,7 +119,7 @@ func screenResolution() (int, int, error) {
 	// Get the current video dimensions (width, height)
 	mode := monitor.GetVideoMode()
 	if mode == nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToGetVideoMode)
+		logger.Warn(ctx, logger.VIDEO, errFailedToGetVideoMode)
 
 		return 0, 0, errFailedToGetVideoMode
 	}
@@ -140,8 +141,7 @@ func execGuarded(mu *sync.RWMutex, isNil func() bool, action func() error) error
 	return action()
 }
 
-// queryGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive,
-// returning a value and an error
+// queryGuarded permits concurrent commands while the player is alive
 //
 //nolint:ireturn // Legitimate use of generics for internal player abstraction
 func queryGuarded[T any](mu *sync.RWMutex, isNil func() bool, action func() (T, error)) (T, error) {

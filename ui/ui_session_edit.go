@@ -340,7 +340,7 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 		displayAlertDialog(sc.UI.Window, "BSC Session Saved", "")
 	})
 
-	logger.Info(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session file '%s' saved to: %s", cfg.App.SessionTitle, path))
+	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session file '%s' saved to: %s", cfg.App.SessionTitle, path))
 
 	// Check if we are modifying the currently loaded session
 	loadedPath := sc.SessionManager.LoadedConfigPath()

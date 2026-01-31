@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/flags"
@@ -29,14 +31,14 @@ func main() {
 
 	// Check for application mode (CLI or GUI)
 	if !flags.IsCLIMode() {
-		logger.Info(logger.BackgroundCtx, logger.APP, "now running in GUI mode...")
+		logger.Debug(logger.BackgroundCtx, logger.APP, "now running in GUI mode...")
 		ui.StartGUI()
 
 		return
 	}
 
 	// Continue running in CLI mode
-	logger.Info(logger.BackgroundCtx, logger.APP, "running in CLI mode")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "running in CLI mode")
 
 	// Create session manager
 	sessionMgr := session.NewManager()
@@ -48,7 +50,12 @@ func main() {
 
 	// Start the session (initializes controllers, connects BLE, starts services)
 	if err := sessionMgr.StartSession(); err != nil {
-		logger.Fatal(logger.BackgroundCtx, logger.APP, err)
+
+		if errors.Is(err, context.Canceled) {
+			logger.Info(logger.BackgroundCtx, logger.APP, "application exiting due to user cancellation")
+		} else {
+			logger.Fatal(logger.BackgroundCtx, logger.APP, err)
+		}
 	}
 
 	// Wait patiently for shutdown (Ctrl+C or services error)

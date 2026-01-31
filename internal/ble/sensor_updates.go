@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"os"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -50,7 +49,7 @@ func initSpeedData(wheelCircumferenceMM int, speedUnitMultiplier float64) *speed
 // BLEUpdates starts the real-time monitoring of BLE sensor notifications
 func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(ctx, logger.BLE, "starting the monitoring for BLE sensor notifications...")
+	logger.Debug(ctx, logger.BLE, "starting the monitoring for BLE sensor notifications...")
 
 	errChan := make(chan error, 1)
 
@@ -78,8 +77,8 @@ func (m *Controller) BLEUpdates(ctx context.Context, speedController *speed.Cont
 	// Manage context cancellation
 	go func() {
 		<-ctx.Done()
-		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
-		logger.Info(ctx, logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
+
+		logger.Debug(ctx, logger.BLE, "interrupt detected, stopping the monitoring for BLE sensor notifications...")
 
 		// Disable real-time notifications from BLE sensor
 		if err := m.blePeripheralDetails.bleCharacteristic.EnableNotifications(nil); err != nil {

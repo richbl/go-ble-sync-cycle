@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -80,7 +79,7 @@ const (
 )
 
 // NewBLEController creates a new BLE central controller for accessing a BLE peripheral
-func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig) (*Controller, error) {
+func NewBLEController(ctx context.Context, bleConfig config.BLEConfig, speedConfig config.SpeedConfig) (*Controller, error) {
 
 	AdapterMu.Lock()
 	defer AdapterMu.Unlock()
@@ -88,7 +87,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 	// Increment instance counter
 	instanceID := bleInstanceCounter.Add(1)
 
-	logger.Debug(logger.BackgroundCtx, logger.BLE, fmt.Sprintf("creating BLE controller object (id:%04d)...", instanceID))
+	logger.Debug(ctx, logger.BLE, fmt.Sprintf("creating BLE controller object (id:%04d)...", instanceID))
 
 	bleAdapter := bluetooth.DefaultAdapter
 
@@ -96,7 +95,7 @@ func NewBLEController(bleConfig config.BLEConfig, speedConfig config.SpeedConfig
 		return nil, fmt.Errorf(errFormat, "failed to enable BLE controller", err)
 	}
 
-	logger.Info(logger.BackgroundCtx, logger.BLE, fmt.Sprintf("created BLE controller object (id:%04d)", instanceID))
+	logger.Debug(ctx, logger.BLE, fmt.Sprintf("created BLE controller object (id:%04d)", instanceID))
 
 	return &Controller{
 		blePeripheralDetails: blePeripheralDetails{
@@ -161,23 +160,34 @@ func performBLEAction[T any](ctx context.Context, m *Controller, params actionPa
 	scanCtx, cancel := context.WithTimeout(ctx, time.Duration(m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)*time.Second)
 	defer cancel()
 	found := make(chan T, 1)
+	done := make(chan struct{})
 	errChan := make(chan error, 1)
 
+	// Start the BLE discovery action
 	go func() {
+		defer close(done)
 		logger.Debug(scanCtx, logger.BLE, params.logMessage)
 		params.action(scanCtx, found, errChan)
 	}()
 
 	select {
+
 	case result := <-found:
 		return result, nil
+
 	case err := <-errChan:
 		var zero T
 
 		return zero, err
+
 	case <-scanCtx.Done():
 		var zero T
 		err := handleActionTimeout(scanCtx, m, params.stopAction)
+		logger.Debug(ctx, logger.BLE, "waiting for BLE peripheral disconnect...")
+
+		<-done // Wait for the action to complete
+
+		logger.Debug(ctx, logger.BLE, "BLE peripheral device disconnected")
 
 		return zero, err
 	}
@@ -190,7 +200,6 @@ func handleActionTimeout(ctx context.Context, m *Controller, stopAction func() e
 	if stopAction != nil {
 
 		if err := stopAction(); err != nil {
-			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 			logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to stop action: %v", err))
 		}
 
@@ -200,8 +209,6 @@ func handleActionTimeout(ctx context.Context, m *Controller, stopAction func() e
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		return fmt.Errorf("%w (%ds)", ErrScanTimeout, m.blePeripheralDetails.bleConfig.ScanTimeoutSecs)
 	}
-
-	fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 
 	return fmt.Errorf(errFormat, "user interrupt detected", ctx.Err())
 }
@@ -217,7 +224,14 @@ func (m *Controller) scanAction(ctx context.Context, found chan<- bluetooth.Scan
 		return
 	}
 
-	found <- <-foundChan
+	// Wait for the scan to complete
+	select {
+
+	case result := <-foundChan:
+		found <- result
+
+	default:
+	}
 
 }
 
@@ -235,37 +249,46 @@ func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- blu
 
 }
 
-// startScanning starts the BLE peripheral scan
+// startScanning starts the BLE peripheral scan and handles device discovery
 func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.ScanResult) error {
+
+	// Check if already canceled before starting scanning operation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("session stop requested before BLE scan: %w", err)
+	}
 
 	AdapterMu.Lock()
 	defer AdapterMu.Unlock()
 
-	err := m.blePeripheralDetails.bleAdapter.Scan(func(_ *bluetooth.Adapter, result bluetooth.ScanResult) {
+	// Use an atomic flag to ensure we only trigger the device discovery logic once
+	var foundOnce atomic.Bool
 
-		select {
-		case <-ctx.Done():
-			logger.Debug(ctx, logger.BLE, "scan canceled via context")
+	err := m.blePeripheralDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+
+		// Check if context canceled before continuing scanning operation
+		if ctx.Err() != nil {
+			_ = adapter.StopScan()
 
 			return
-		default:
 		}
 
+		// Address comparison
 		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorBDAddr {
 
-			if stopErr := m.blePeripheralDetails.bleAdapter.StopScan(); stopErr != nil {
-				logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to stop scan: %v", stopErr))
+			if foundOnce.CompareAndSwap(false, true) {
+				logger.Debug(ctx, logger.BLE, "BLE peripheral found; stopping scan...")
+				_ = adapter.StopScan()
+
+				select {
+				case found <- result:
+					logger.Debug(ctx, logger.BLE, "scan result sent to controller")
+				default:
+					logger.Warn(ctx, logger.BLE, "controller object no longer listening; scan results ignored")
+				}
+
 			}
 
-			select {
-			case found <- result:
-			default:
-				logger.Warn(ctx, logger.BLE, "scan results channel full... try restarting the BLE device")
-			}
-
-			return
 		}
-
 	})
 
 	if err != nil {

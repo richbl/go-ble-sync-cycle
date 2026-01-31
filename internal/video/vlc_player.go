@@ -1,6 +1,7 @@
 package video
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -31,7 +32,7 @@ type vlcPlayer struct {
 }
 
 // newVLCPlayer creates a new vlcPlayer instance
-func newVLCPlayer() (*vlcPlayer, error) {
+func newVLCPlayer(ctx context.Context) (*vlcPlayer, error) {
 
 	// Initialize VLC library
 	if err := vlc.Init("--no-video-title-show", "--quiet"); err != nil {
@@ -43,7 +44,7 @@ func newVLCPlayer() (*vlcPlayer, error) {
 	if err != nil {
 
 		if releaseErr := vlc.Release(); releaseErr != nil {
-			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", releaseErr))
+			logger.Error(ctx, logger.VIDEO, fmt.Sprintf("failed to release VLC library: %v", releaseErr))
 		}
 
 		return nil, fmt.Errorf(errFormat, "failed to create VLC player", err)
@@ -53,9 +54,11 @@ func newVLCPlayer() (*vlcPlayer, error) {
 	var displayWidth int
 	var displayHeight int
 
-	if displayWidth, displayHeight, err = screenResolution(); err != nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to get screen resolution: %v", err))
+	if displayWidth, displayHeight, err = screenResolution(ctx); err != nil {
+		logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("failed to get screen resolution: %v", err))
 	}
+
+	logger.Info(ctx, logger.VIDEO, "VLC player object created")
 
 	return &vlcPlayer{
 		player:       player,
@@ -195,7 +198,7 @@ func (v *vlcPlayer) setPause(paused bool) error {
 // timeRemaining gets the remaining time of the video
 func (v *vlcPlayer) timeRemaining() (int64, error) {
 
-	return queryGuarded[int64](&v.mu, func() bool { return v.player == nil }, func() (int64, error) {
+	return queryGuarded(&v.mu, func() bool { return v.player == nil }, func() (int64, error) {
 
 		length, err := v.player.MediaLength()
 		if err != nil {
@@ -404,7 +407,7 @@ func (v *vlcPlayer) terminatePlayer() {
 		v.player = nil
 		v.marquee = nil
 
-		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "destroyed VLC handle: C resources released")
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "VLC player stopped and instance released")
 	}
 
 	if err := vlc.Release(); err != nil {

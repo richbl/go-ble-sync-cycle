@@ -98,12 +98,10 @@ func AddWriter(w io.Writer) {
 }
 
 // SetLogLevel dynamically updates the logging level of the running application
-func SetLogLevel(levelStr string) {
+func SetLogLevel(ctx context.Context, levelStr string) {
 
 	newLevel := parseLogLevel(levelStr)
 	logLevelVar.Set(newLevel)
-
-	Debug(BackgroundCtx, APP, "logging level changed to "+newLevel.String())
 
 }
 
@@ -368,9 +366,18 @@ func (h *CustomTextHandler) appendAttrs(buf *bytes.Buffer, attrs []slog.Attr) er
 	return nil
 }
 
-// UseGUIWriterOnly replaces all writers with only the GUI writer (used in GUI mode).
+// UseGUIWriterOnly replaces all writers with only the GUI writer (used in GUI mode)
 func UseGUIWriterOnly(w io.Writer) {
 	logOutput.mu.Lock()
 	defer logOutput.mu.Unlock()
 	logOutput.writers = []io.Writer{w}
+}
+
+// SetOutputToStdout resets the logger output to the standard output (terminal)
+func SetOutputToStdout() {
+
+	logOutput.mu.Lock()
+	defer logOutput.mu.Unlock()
+	logOutput.writers = []io.Writer{os.Stdout}
+
 }

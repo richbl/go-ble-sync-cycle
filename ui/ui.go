@@ -3,7 +3,6 @@ package ui
 import (
 	_ "embed" // required for go:embed
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -220,10 +219,10 @@ func hydrateSessionLog(builder *gtk.Builder) *PageSessionLog {
 	// Enable logging to the console in GUI mode if requested
 	if flags.IsGUIConsoleLogging() {
 		logger.AddWriter(sessionLog.LogWriter)
-		logger.Info(logger.BackgroundCtx, logger.GUI, "logging via Session Log started with added console/CLI output")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "logging via Session Log started with added console/CLI output")
 	} else {
 		logger.UseGUIWriterOnly(sessionLog.LogWriter)
-		logger.Info(logger.BackgroundCtx, logger.GUI, "logging via Session Log started")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "logging via Session Log started")
 	}
 
 	return sessionLog
@@ -333,28 +332,27 @@ func StartGUI() {
 	})
 
 	// Set up signal handling for CTRL+C that integrates with GTK event loop
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting ShutdownManager signal handler")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting ShutdownManager signal handler...")
 	shutdownMgr.Start()
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "ShutdownManager signal handler started")
 
 	// Monitor shutdown signal in a goroutine and trigger GTK quit when signaled
 	go func() {
 		ctx := *shutdownMgr.Context()
 		<-ctx.Done()
-		fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
 		logger.Info(logger.BackgroundCtx, logger.GUI, "shutdown signal received, triggering GTK application quit")
 
 		safeUpdateUI(func() {
 			app.Quit()
 		})
+
 	}()
 
 	// Run the GUI application... fly and be free!
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting GTK event loop")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "GTK event loop started")
 	app.Run(nil)
 
-	// Application has exited, perform cleanup
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "GTK event loop exited, performing cleanup")
-	shutdownMgr.Shutdown()
+	// Application has exited, so say goodbye
 	services.WaveGoodbye(logger.BackgroundCtx)
 
 }

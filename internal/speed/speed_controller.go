@@ -43,12 +43,11 @@ const (
 
 // NewSpeedController creates a new speed controller with a specified window size, which
 // determines the number of speed measurements used for smoothing
-func NewSpeedController(window int) *Controller {
+func NewSpeedController(ctx context.Context, window int) *Controller {
 
 	// Increment instance counter
 	instanceID := speedInstanceCounter.Add(1)
-
-	logger.Debug(logger.BackgroundCtx, logger.SPEED, fmt.Sprintf("creating speed controller object (id:%04d)...", instanceID))
+	logger.Debug(ctx, logger.SPEED, fmt.Sprintf("creating speed controller object (id:%04d)...", instanceID))
 
 	r := ring.New(window)
 
@@ -57,7 +56,7 @@ func NewSpeedController(window int) *Controller {
 		r = r.Next()
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.SPEED, fmt.Sprintf("created speed controller object (id:%04d)", instanceID))
+	logger.Debug(ctx, logger.SPEED, fmt.Sprintf("created speed controller object (id:%04d)", instanceID))
 
 	return &Controller{
 		speeds:     r,
@@ -69,7 +68,6 @@ func NewSpeedController(window int) *Controller {
 // UpdateSpeed updates the current speed measurement and calculates a smoothed average
 func (sc *Controller) UpdateSpeed(ctx context.Context, speed float64) {
 
-	// Lock the mutex to protect the fields
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
@@ -88,6 +86,7 @@ func (sc *Controller) UpdateSpeed(ctx context.Context, speed float64) {
 		}
 
 		sum += value
+
 	})
 
 	// Ahh... smoothness

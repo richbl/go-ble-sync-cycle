@@ -51,12 +51,12 @@ func (s State) String() string {
 
 // StateManager coordinates session lifecycle and state
 type StateManager struct {
-	activeConfig *config.Config // The "currently running" config (immutable)
+	activeConfig *config.Config // The "currently running" config
 
-	loadedConfig     *config.Config // The "loaded" config
+	loadedConfig     *config.Config // The "loaded" (but not running) config
 	loadedConfigPath string
 
-	editConfig     *config.Config // The "editing" config
+	editConfig     *config.Config // The "getting edited" config
 	editConfigPath string
 
 	controllers  *controllers
@@ -74,7 +74,7 @@ func NewManager() *StateManager {
 	}
 }
 
-// LoadTargetSession loads (or reloads) a session configuration for execution (loadedConfig)
+// LoadTargetSession loads (or reloads) a session configuration for execution
 func (m *StateManager) LoadTargetSession(configPath string) error {
 
 	defer m.writeLock()()
@@ -104,13 +104,13 @@ func (m *StateManager) LoadTargetSession(configPath string) error {
 	}
 
 	if cfg.App.LogLevel != "" {
-		logger.SetLogLevel(cfg.App.LogLevel)
+		logger.SetLogLevel(logger.BackgroundCtx, cfg.App.LogLevel)
 	}
 
 	return nil
 }
 
-// LoadEditSession loads a session configuration specifically for editing (editConfig only)
+// LoadEditSession loads a session configuration specifically for editing
 func (m *StateManager) LoadEditSession(configPath string) error {
 
 	defer m.writeLock()()
@@ -154,7 +154,7 @@ func (m *StateManager) UpdateLoadedSession(cfg *config.Config, path string) erro
 	return nil
 }
 
-// SessionState returns the current session state (thread-safe)
+// SessionState returns the current session state
 func (m *StateManager) SessionState() State {
 
 	defer m.readLock()()
@@ -162,7 +162,7 @@ func (m *StateManager) SessionState() State {
 	return m.state
 }
 
-// Config returns a copy of the current editing configuration (thread-safe)
+// Config returns a copy of the current editing configuration
 func (m *StateManager) Config() *config.Config {
 
 	defer m.readLock()()
@@ -302,7 +302,7 @@ func (m *StateManager) prepareStart() error {
 		return errNoSessionLoaded
 	}
 
-	// Create a snapshot of the config (activeConfig is immutable)
+	// Create a snapshot of the config
 	switch {
 	case m.loadedConfig != nil:
 		m.activeConfig = m.loadedConfig
