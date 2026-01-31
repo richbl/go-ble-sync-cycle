@@ -226,7 +226,7 @@ func TestNewPlaybackController(t *testing.T) {
 	vc, sc := createTestConfig()
 
 	t.Run("successful creation", func(t *testing.T) {
-		controller, err := NewPlaybackController(vc, sc)
+		controller, err := NewPlaybackController(logger.BackgroundCtx, vc, sc)
 		if err != nil {
 			t.Skip("Skipping test: cannot create real player in unit test environment.")
 		}
@@ -240,7 +240,7 @@ func TestNewPlaybackController(t *testing.T) {
 	t.Run("unsupported media player", func(t *testing.T) {
 		vcInvalid := vc
 		vcInvalid.MediaPlayer = "invalid-player"
-		controller, err := NewPlaybackController(vcInvalid, sc)
+		controller, err := NewPlaybackController(logger.BackgroundCtx, vcInvalid, sc)
 		if err == nil {
 			t.Error("expected an error for unsupported media player, but got nil")
 		}
@@ -260,7 +260,7 @@ func setupTestController(t *testing.T) (*PlaybackController, *mockMediaPlayer, *
 
 	vc, sc := createTestConfig()
 	mockPlayer := newMockMediaPlayer()
-	speedCtrl := speed.NewSpeedController(5)
+	speedCtrl := speed.NewSpeedController(logger.BackgroundCtx, 5)
 	controller := &PlaybackController{
 		videoConfig: vc,
 		speedConfig: sc,
@@ -366,7 +366,7 @@ func runSingleUpdateSpeedTest(t *testing.T, vc config.VideoConfig, sc config.Spe
 	controller.speedUnitMultiplier = 0.1 // For simplicity
 
 	// Create a fresh speed controller per test to avoid cross-test state
-	speedCtrl := speed.NewSpeedController(5)
+	speedCtrl := speed.NewSpeedController(logger.BackgroundCtx, 5)
 
 	// Fill the speed controller's buffer to get a predictable smoothed speed
 	for range 5 {

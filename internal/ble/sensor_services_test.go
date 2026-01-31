@@ -125,7 +125,7 @@ func createTestBLEController(t *testing.T) *Controller {
 
 	t.Helper()
 
-	controller, err := NewBLEController(
+	controller, err := NewBLEController(logger.BackgroundCtx,
 		config.BLEConfig{ScanTimeoutSecs: 10},
 		config.SpeedConfig{},
 	)

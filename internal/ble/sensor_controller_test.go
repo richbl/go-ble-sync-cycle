@@ -37,7 +37,7 @@ func createTestController(speedUnits string) (*Controller, error) {
 		SpeedUnits:           speedUnits,
 	}
 
-	return NewBLEController(bleConfig, speedConfig)
+	return NewBLEController(logger.BackgroundCtx, bleConfig, speedConfig)
 }
 
 // waitForScanReset waits for the scan to reset

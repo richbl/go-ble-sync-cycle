@@ -39,12 +39,10 @@ var shutdownInstanceCounter atomic.Int64
 func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 
 	instanceID := shutdownInstanceCounter.Add(1)
-
 	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("creating shutdown manager object (id:%04d)...", instanceID))
 
 	// Create a context with a timeout
 	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
-
 	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("created shutdown manager object (id:%04d)", instanceID))
 
 	return &ShutdownManager{
@@ -90,8 +88,11 @@ func (sm *ShutdownManager) Start() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
+	// Wait for a shutdown signal
 	go func() {
 		<-sigChan
+		logger.ClearCLILine()
+		logger.Info(logger.BackgroundCtx, logger.APP, "shutdown request detected, shutting down now...")
 		sm.Shutdown()
 	}()
 
@@ -111,6 +112,7 @@ func (sm *ShutdownManager) Shutdown() {
 	}()
 
 	select {
+
 	case <-done:
 		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager (id:%04d) services stopped", sm.InstanceID))
 
@@ -137,8 +139,10 @@ func (sm *ShutdownManager) Context() *context.Context {
 func (sm *ShutdownManager) Wait() {
 
 	select {
+
 	case <-sm.context.ctx.Done():
 		sm.Shutdown()
+
 	case err := <-sm.errChan:
 		if err != nil {
 			logger.Error(sm.context.ctx, logger.APP, fmt.Sprintf("service error: %v", err))
@@ -157,8 +161,14 @@ func WaveHello(ctx context.Context) {
 // WaveGoodbye outputs a goodbye message and exits the program
 func WaveGoodbye(ctx context.Context) {
 
+	// Redirect logging to the console, clear the CLI line, and set the log level so this final
+	// shutdown message is visible regardless of application mode (CLI or GUI)
+	logger.SetOutputToStdout()
 	logger.ClearCLILine()
+	logger.SetLogLevel(ctx, "debug")
+
 	logger.Info(ctx, logger.APP, config.GetFullVersion()+" shutdown complete. Goodbye")
+
 	os.Exit(0)
 
 }

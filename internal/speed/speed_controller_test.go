@@ -45,7 +45,7 @@ func TestNewSpeedController(t *testing.T) {
 
 	logger.Initialize("debug")
 
-	controller := NewSpeedController(td.window)
+	controller := NewSpeedController(logger.BackgroundCtx, td.window)
 
 	// Verify initialization
 	if got := controller.window; got != td.window {
@@ -67,7 +67,7 @@ func TestNewSpeedController(t *testing.T) {
 // TestUpdateSpeed tests the UpdateSpeed method of Controller
 func TestUpdateSpeed(t *testing.T) {
 
-	controller := NewSpeedController(td.window)
+	controller := NewSpeedController(logger.BackgroundCtx, td.window)
 
 	// Update with test speeds
 	for _, speed := range td.speeds {
@@ -99,7 +99,7 @@ func TestSmoothedSpeed(t *testing.T) {
 	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			controller := NewSpeedController(td.window)
+			controller := NewSpeedController(logger.BackgroundCtx, td.window)
 
 			for _, speed := range tt.updates {
 				controller.UpdateSpeed(logger.BackgroundCtx, speed)
@@ -118,7 +118,7 @@ func TestSmoothedSpeed(t *testing.T) {
 func TestSpeedBuffer(t *testing.T) {
 
 	// Define test cases
-	controller := NewSpeedController(td.window)
+	controller := NewSpeedController(logger.BackgroundCtx, td.window)
 	speeds := []float64{3.5, 2.5, 1.5, 0.0, 0.0}
 	want := []string{"3.50", "2.50", "1.50", "0.00", "0.00"}
 
@@ -144,7 +144,7 @@ func TestSpeedBuffer(t *testing.T) {
 func TestConcurrency(t *testing.T) {
 
 	// Create Controller
-	controller := NewSpeedController(td.window)
+	controller := NewSpeedController(logger.BackgroundCtx, td.window)
 	var wg sync.WaitGroup
 
 	// Run concurrent updates

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -51,23 +50,22 @@ var speedUnitConversion = map[string]float64{
 }
 
 // NewPlaybackController creates a new video player instance with the given config
-func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.SpeedConfig) (*PlaybackController, error) {
+func NewPlaybackController(ctx context.Context, videoConfig config.VideoConfig, speedConfig config.SpeedConfig) (*PlaybackController, error) {
 
 	var player mediaPlayer
 	var err error
 
 	// Increment instance counter
 	instanceID := videoInstanceCounter.Add(1)
-
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("creating video controller object (id:%04d)...", instanceID))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("creating video controller object (id:%04d)...", instanceID))
 
 	switch videoConfig.MediaPlayer {
 
 	case config.MediaPlayerMPV:
-		player, err = newMpvPlayer()
+		player, err = newMpvPlayer(ctx)
 
 	case config.MediaPlayerVLC:
-		player, err = newVLCPlayer()
+		player, err = newVLCPlayer(ctx)
 
 	default:
 		return nil, errUnsupportedVideoPlayer
@@ -77,7 +75,7 @@ func NewPlaybackController(videoConfig config.VideoConfig, speedConfig config.Sp
 		return nil, fmt.Errorf("failed to create %s player: %w", videoConfig.MediaPlayer, err)
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("created video controller object (id:%04d)", instanceID))
+	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("created video controller object (id:%04d)", instanceID))
 
 	return &PlaybackController{
 		videoConfig: videoConfig,
@@ -110,9 +108,7 @@ func (p *PlaybackController) StartPlayback(ctx context.Context, speedController 
 	defer func() {
 
 		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("terminating video controller object (id:%04d)...", p.InstanceID))
-
 		p.player.terminatePlayer()
-
 		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("destroyed video controller object (id:%04d)", p.InstanceID))
 
 	}()
@@ -217,17 +213,19 @@ func (p *PlaybackController) setPlaybackOptions() error {
 func (p *PlaybackController) eventLoop(ctx context.Context, speedController *speed.Controller) error {
 
 	// Start a ticker to check updates from SpeedController
-
 	ticker := time.NewTicker(time.Duration(p.videoConfig.UpdateIntervalSec * float64(time.Second)))
+
 	defer ticker.Stop()
 
 	for {
+
 		// Check player events (give priority to video completion)
 		if err := p.handlePlayerEvents(); err != nil {
 			return err
 		}
 
 		select {
+
 		case <-ticker.C:
 
 			if err := p.updateSpeedFromController(ctx, speedController); err != nil {
@@ -235,9 +233,7 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 			}
 
 		case <-ctx.Done():
-
-			fmt.Fprint(os.Stdout, "\r") // Clear the ^C character from the terminal line
-			logger.Info(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
+			logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
 			return nil // No need to show this context cancellation error
 		}
@@ -299,7 +295,6 @@ func (p *PlaybackController) updateSpeed(ctx context.Context) error {
 
 	// Update the playback speed based on current speed and unit multiplier
 	playbackSpeed := p.PlaybackSpeed()
-
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
 
 	if err := p.player.setSpeed(playbackSpeed); err != nil {

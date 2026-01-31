@@ -2,11 +2,13 @@ package video
 
 import (
 	"testing"
+
+	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // vlcPlayerFactory creates a new vlcPlayer instance for testing
 func vlcPlayerFactory() (*vlcPlayer, error) {
-	return newVLCPlayer()
+	return newVLCPlayer(logger.BackgroundCtx)
 }
 
 // TestVLCPlayerLifecycle tests the lifecycle of the vlcPlayer

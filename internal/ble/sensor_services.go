@@ -232,7 +232,7 @@ func (m *Controller) BatteryLevel(ctx context.Context, services []Characteristic
 	}
 
 	m.blePeripheralDetails.batteryLevel = batteryLevel
-	logger.Info(ctx, logger.BLE, "found battery characteristic UUID="+m.blePeripheralDetails.batteryCharacteristic.UUID().String())
+	logger.Debug(ctx, logger.BLE, "found battery characteristic UUID="+m.blePeripheralDetails.batteryCharacteristic.UUID().String())
 	logger.Info(ctx, logger.BLE, fmt.Sprintf("BLE sensor battery level: %d%%", m.blePeripheralDetails.batteryLevel))
 
 	return nil
@@ -253,7 +253,7 @@ func (m *Controller) CSCServices(ctx context.Context, device ServiceDiscoverer) 
 		return nil, fmt.Errorf(errFormat, ErrCSCServiceDiscovery, err)
 	}
 
-	logger.Info(ctx, logger.BLE, "found CSC service UUID="+cscServiceConfig.serviceUUID.String())
+	logger.Debug(ctx, logger.BLE, "found CSC service UUID="+cscServiceConfig.serviceUUID.String())
 
 	return result, nil
 }
@@ -282,7 +282,7 @@ func (m *Controller) CSCCharacteristics(ctx context.Context, services []Characte
 		return fmt.Errorf(errFormat, ErrCSCCharDiscovery, err)
 	}
 
-	logger.Info(ctx, logger.BLE, "found CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String())
+	logger.Debug(ctx, logger.BLE, "found CSC characteristic UUID="+cscServiceConfig.characteristicUUID.String())
 
 	return nil
 }
