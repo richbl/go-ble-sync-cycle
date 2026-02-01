@@ -105,7 +105,7 @@ func (ui *AppUI) createExitDialog() {
 		"Are you sure you want to exit?",
 		adw.ResponseDestructive,
 		func() {
-			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed exit")
+			logger.Info(logger.BackgroundCtx, logger.GUI, "user confirmed application exit, so...")
 			ui.shutdownMgr.Shutdown()
 		},
 	)

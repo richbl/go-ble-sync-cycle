@@ -140,7 +140,8 @@ func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "EventEnd received during loading")
 	endFile := event.EndFile()
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("EndFile reason: %s, error: %v", endFile.Reason.String(), endFile.Error))
+
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv EndFile event trigger: %v", endFile.Error))
 
 	var validationErr error
 

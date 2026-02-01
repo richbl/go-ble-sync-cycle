@@ -36,7 +36,7 @@ func (sc *SessionController) setupSessionControlSignals() {
 
 }
 
-// handleSessionControl processes clicks on the session control button
+// handleSessionControl processes clicks on the session start/stop button
 func (sc *SessionController) handleSessionControl() error {
 
 	// Debounce session control button
@@ -49,7 +49,7 @@ func (sc *SessionController) handleSessionControl() error {
 	})
 
 	currentState := sc.SessionManager.SessionState()
-	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("button clicked: State=%s", currentState))
+	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("Session Start/Stop button clicked: session status: %s", currentState))
 
 	if currentState >= session.StateConnecting || sc.starting.Load() {
 
@@ -127,14 +127,11 @@ func (sc *SessionController) handleStartError(err error) {
 // handleStop processes stopping the session
 func (sc *SessionController) handleStop() error {
 
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "stop branch entered")
-
 	if err := sc.SessionManager.StopSession(); err != nil {
-		return fmt.Errorf(errFormat, "unable to stop services", err)
+		return fmt.Errorf(errFormat, "unable to stop session services", err)
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "stop session returned")
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for stop")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services stopped")
 
 	safeUpdateUI(func() {
 		sc.updateSessionControlButton(false)
@@ -156,11 +153,8 @@ func (sc *SessionController) handleStop() error {
 // startSessionGUI runs the StartSession method and updates UI based on result
 func (sc *SessionController) startSessionGUI() {
 
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "start goroutine launched")
-
 	defer func() {
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "start goroutine exiting")
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI post-start")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "session services stopped")
 
 		safeUpdateUI(func() {
 			// Re-toggle to Start if success/error, but only if stopped
@@ -173,7 +167,7 @@ func (sc *SessionController) startSessionGUI() {
 	}()
 
 	// Start the session
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "calling StartSession()")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services starting...")
 	err := sc.SessionManager.StartSession()
 	if err != nil {
 		sc.handleStartError(err)
@@ -182,8 +176,7 @@ func (sc *SessionController) startSessionGUI() {
 	}
 
 	// Update UI to show success state
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "StartSession() successful")
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for successful start")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services started")
 
 	safeUpdateUI(func() {
 		battery := fmt.Sprintf("%d%%", sc.SessionManager.BatteryLevel())
@@ -221,7 +214,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	// Enable the button now that session is loaded
 	sc.UI.Page2.SessionControlRow.SetSensitive(true)
 
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "page 2 updated with session: "+sess.Title)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "Session Status page updated with session: "+sess.Title)
 
 }
 

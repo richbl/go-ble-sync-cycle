@@ -43,7 +43,7 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	// Create the "Exit" menu item action handler
 	exitAction := gio.NewSimpleAction("exit", nil)
 	exitAction.ConnectActivate(func(_ *glib.Variant) {
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "Exit action triggered from app menu item")
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "exit action triggered from GUI app menu item")
 		ui.createExitDialog()
 	})
 
@@ -53,7 +53,7 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	ui.Window.ConnectCloseRequest(func() bool {
 
 		safeUpdateUI(func() {
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "exit action triggered from window manager close button")
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "exit action triggered from GUI close button")
 			ui.createExitDialog()
 		})
 

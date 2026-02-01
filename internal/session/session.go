@@ -104,7 +104,7 @@ func (m *StateManager) LoadTargetSession(configPath string) error {
 	}
 
 	if cfg.App.LogLevel != "" {
-		logger.SetLogLevel(logger.BackgroundCtx, cfg.App.LogLevel)
+		logger.SetLogLevel(cfg.App.LogLevel)
 	}
 
 	return nil
@@ -332,7 +332,6 @@ func (m *StateManager) prepareStart() error {
 
 	m.PendingStart = true
 	m.state = StateConnecting
-	logger.Debug(logger.BackgroundCtx, logger.APP, "set PendingStart=true, state=Connecting")
 
 	return nil
 }
@@ -342,7 +341,7 @@ func (m *StateManager) storeShutdownMgr(s *services.ShutdownManager) {
 
 	m.mu.Lock()
 	m.shutdownMgr = s
-	logger.Debug(logger.BackgroundCtx, logger.APP, "shutdownMgr stored")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "shutdown manager object state stored")
 	m.mu.Unlock()
 
 }

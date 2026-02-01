@@ -98,7 +98,7 @@ func AddWriter(w io.Writer) {
 }
 
 // SetLogLevel dynamically updates the logging level of the running application
-func SetLogLevel(ctx context.Context, levelStr string) {
+func SetLogLevel(levelStr string) {
 
 	newLevel := parseLogLevel(levelStr)
 	logLevelVar.Set(newLevel)

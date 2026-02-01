@@ -96,7 +96,7 @@ func (m *StateManager) performSessionStartup(ctx context.Context, shutdownMgr *s
 	}
 
 	logger.Debug(ctx, logger.APP, "controllers initialized OK")
-	logger.Debug(ctx, logger.APP, "connecting BLE...")
+	logger.Debug(ctx, logger.APP, "establishing connection to BLE peripheral...")
 
 	// Connect to the BLE peripheral
 	device, err := m.connectBLE(ctx, controllers)
@@ -108,7 +108,7 @@ func (m *StateManager) performSessionStartup(ctx context.Context, shutdownMgr *s
 
 	controllers.bleDevice = device
 
-	logger.Debug(ctx, logger.APP, "BLE connected OK")
+	logger.Debug(ctx, logger.APP, "BLE peripheral now connected")
 
 	m.mu.Lock()
 	m.controllers = controllers
@@ -174,7 +174,7 @@ func (m *StateManager) StopSession() error {
 	if wasPending {
 		logger.Debug(ctx, logger.APP, "stopped pending session startup")
 	} else {
-		logger.Debug(ctx, logger.APP, "session stopped")
+		logger.Debug(ctx, logger.APP, "active session stopped")
 	}
 
 	return nil

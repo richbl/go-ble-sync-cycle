@@ -199,6 +199,7 @@ func (m *Controller) BatteryService(ctx context.Context, device ServiceDiscovere
 			discoverServices(batteryServiceConfig, device, found, errChan)
 		},
 	)
+
 	if err != nil {
 		return nil, err
 	}

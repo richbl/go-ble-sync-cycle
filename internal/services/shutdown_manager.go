@@ -153,9 +153,17 @@ func (sm *ShutdownManager) Wait() {
 
 }
 
+// drawLine outputs a line to the console
+func drawLine(ctx context.Context) {
+	logger.Info(ctx, logger.APP, "---------------------------------------------------")
+}
+
 // WaveHello outputs a welcome message
 func WaveHello(ctx context.Context) {
+	drawLine(ctx)
 	logger.Info(ctx, logger.APP, config.GetFullVersion()+" starting...")
+	drawLine(ctx)
+
 }
 
 // WaveGoodbye outputs a goodbye message and exits the program
@@ -165,9 +173,11 @@ func WaveGoodbye(ctx context.Context) {
 	// shutdown message is visible regardless of application mode (CLI or GUI)
 	logger.SetOutputToStdout()
 	logger.ClearCLILine()
-	logger.SetLogLevel(ctx, "debug")
+	logger.SetLogLevel("debug")
 
+	drawLine(ctx)
 	logger.Info(ctx, logger.APP, config.GetFullVersion()+" shutdown complete. Goodbye")
+	drawLine(ctx)
 
 	os.Exit(0)
 
