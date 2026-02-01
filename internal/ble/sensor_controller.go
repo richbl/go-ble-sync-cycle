@@ -142,7 +142,7 @@ func (m *Controller) ConnectToBLEPeripheral(ctx context.Context, device bluetoot
 		return bluetooth.Device{}, err
 	}
 
-	logger.Info(ctx, logger.BLE, "BLE peripheral device connected")
+	logger.Info(ctx, logger.BLE, "BLE peripheral connected")
 
 	return result, nil
 }
@@ -181,13 +181,14 @@ func performBLEAction[T any](ctx context.Context, m *Controller, params actionPa
 		return zero, err
 
 	case <-scanCtx.Done():
+
 		var zero T
 		err := handleActionTimeout(scanCtx, m, params.stopAction)
 		logger.Debug(ctx, logger.BLE, "waiting for BLE peripheral disconnect...")
 
 		<-done // Wait for the action to complete
 
-		logger.Debug(ctx, logger.BLE, "BLE peripheral device disconnected")
+		logger.Debug(ctx, logger.BLE, "BLE peripheral disconnected")
 
 		return zero, err
 	}
@@ -252,11 +253,6 @@ func (m *Controller) connectAction(device bluetooth.ScanResult, found chan<- blu
 // startScanning starts the BLE peripheral scan and handles device discovery
 func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.ScanResult) error {
 
-	// Check if already canceled before starting scanning operation
-	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("session stop requested before BLE scan: %w", err)
-	}
-
 	AdapterMu.Lock()
 	defer AdapterMu.Unlock()
 
@@ -264,13 +260,6 @@ func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.S
 	var foundOnce atomic.Bool
 
 	err := m.blePeripheralDetails.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
-
-		// Check if context canceled before continuing scanning operation
-		if ctx.Err() != nil {
-			_ = adapter.StopScan()
-
-			return
-		}
 
 		// Address comparison
 		if result.Address.String() == m.blePeripheralDetails.bleConfig.SensorBDAddr {
@@ -281,7 +270,7 @@ func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.S
 
 				select {
 				case found <- result:
-					logger.Debug(ctx, logger.BLE, "scan result sent to controller")
+					logger.Debug(ctx, logger.BLE, "scan completed")
 				default:
 					logger.Warn(ctx, logger.BLE, "controller object no longer listening; scan results ignored")
 				}
