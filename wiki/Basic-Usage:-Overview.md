@@ -1,8 +1,14 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 
-![bsc_example](https://github.com/user-attachments/assets/0eb908da-6d22-4e8a-a9e8-5702a01f3fe0)
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/wa_mountain_trail_hd.png">
+</p>
+<!-- markdownlint-enable MD033 -->
 
 At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such as a computer), a BLE peripheral device (a BLE cycling sensor) and a media player (mpv or VLC), and performs the following:
 
@@ -24,3 +30,55 @@ At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such 
 ### 4. Application Shutdown
 
 1. The application shuts down on user interrupt, application exit, or at the end of video playback. The shutdown process coordinates with the BLE central device, the BLE peripheral device, and the media player to ensure a smooth and clean shutdown.
+
+## A More Technical View of the Application Workflow
+
+For those with an interest in how the various controllers and services work collaboratively in **BLE Sync Cycle**, here's a sequence diagram for the "happy path" use case, where a user selects and loads a session, starts a session, and "cycles" the session until completion.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant SM as SessionManager
+    participant SD as ShutdownManager
+    participant BLE as BLEController
+    participant VID as VideoController
+
+    User->>UI: Click Start Session
+    UI->>SM: StartSession()
+    
+    rect rgb(240, 248, 255)
+    note right of SM: Initialization Phase
+    SM->>SM: Set State = Connecting
+    SM->>SD: NewShutdownManager()
+    SM->>SM: InitializeControllers()
+    SM->>BLE: NewBLEController()
+    SM->>VID: NewPlaybackController()
+    end
+
+    rect rgb(255, 248, 240)
+    note right of SM: Connection Phase
+    SM->>SM: Set State = Connected
+    SM->>BLE: ScanForBLEPeripheral()
+    activate BLE
+    BLE-->>SM: ScanResult (Found)
+    deactivate BLE
+    
+    SM->>BLE: ConnectToBLEPeripheral()
+    activate BLE
+    BLE-->>SM: Device Connected
+    deactivate BLE
+    
+    SM->>BLE: DiscoverServices (Battery/CSC)
+    end
+
+    rect rgb(240, 255, 240)
+    note right of SM: Runtime Phase
+    SM->>SM: Set State = Running
+    SM->>SD: Run(BLEUpdates)
+    SM->>SD: Run(StartPlayback)
+    end
+    
+    SM-->>UI: Return nil (Success)
+    UI->>UI: Start Metrics Loop
+```
