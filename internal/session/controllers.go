@@ -372,7 +372,7 @@ func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager
 	isCurrent := (m.shutdownMgr == shutdownMgr)
 
 	if isCurrent {
-		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("resetting state for current shutdown manager (id:%04d)", shutdownMgr.InstanceID))
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("resetting state for current ShutdownManager (id:%04d)", shutdownMgr.InstanceID))
 		m.PendingStart = false
 		m.state = StateLoaded
 		m.controllers = nil
@@ -387,7 +387,7 @@ func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager
 	}
 
 	if (*shutdownMgr.Context()).Err() == nil {
-		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutting down shutdown manager (id:%04d)", shutdownMgr.InstanceID))
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutting down ShutdownManager (id:%04d)", shutdownMgr.InstanceID))
 		shutdownMgr.Shutdown()
 	}
 

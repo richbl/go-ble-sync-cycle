@@ -321,8 +321,9 @@ func setupAllSignals(sc *SessionController) {
 func StartGUI() {
 
 	// Create a global ShutdownManager for GUI mode to handle signals (CTRL+C)
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "creating GUI ShutdownManager for signal handling")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "creating ShutdownManager service...")
 	shutdownMgr := services.NewShutdownManager(30 * time.Second)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "ShutdownManager service created")
 
 	// Initialize the application
 	app := gtk.NewApplication(ApplicationID, gio.ApplicationFlagsNone)
@@ -334,13 +335,13 @@ func StartGUI() {
 	// Set up signal handling for CTRL+C that integrates with GTK event loop
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "starting ShutdownManager signal handler...")
 	shutdownMgr.Start()
-	logger.Debug(logger.BackgroundCtx, logger.GUI, "ShutdownManager signal handler started")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "ShutdownManager signal handler service started")
 
 	// Monitor shutdown signal in a goroutine and trigger GTK quit when signaled
 	go func() {
 		ctx := *shutdownMgr.Context()
 		<-ctx.Done()
-		logger.Info(logger.BackgroundCtx, logger.GUI, "shutdown signal received, triggering GTK application quit")
+		logger.Info(logger.BackgroundCtx, logger.GUI, "shutdown signal received: shutting down GTK application...")
 
 		safeUpdateUI(func() {
 			app.Quit()

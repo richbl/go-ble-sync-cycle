@@ -39,11 +39,11 @@ var shutdownInstanceCounter atomic.Int64
 func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 
 	instanceID := shutdownInstanceCounter.Add(1)
-	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("creating shutdown manager object (id:%04d)...", instanceID))
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("creating ShutdownManager object (id:%04d)...", instanceID))
 
 	// Create a context with a timeout
 	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
-	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("created shutdown manager object (id:%04d)", instanceID))
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("created ShutdownManager object (id:%04d)", instanceID))
 
 	return &ShutdownManager{
 		context: smContext{
@@ -101,7 +101,7 @@ func (sm *ShutdownManager) Start() {
 // Shutdown shuts down the shutdown manager
 func (sm *ShutdownManager) Shutdown() {
 
-	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutting down shutdown manager object (id:%04d)...", sm.InstanceID))
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutting down ShutdownManager object (id:%04d)...", sm.InstanceID))
 
 	sm.context.cancel()
 	done := make(chan struct{})
@@ -114,10 +114,10 @@ func (sm *ShutdownManager) Shutdown() {
 	select {
 
 	case <-done:
-		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager (id:%04d) services stopped", sm.InstanceID))
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("ShutdownManager (id:%04d) services stopped", sm.InstanceID))
 
 	case <-time.After(sm.timeout):
-		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager (id:%04d) shutdown timed out", sm.InstanceID))
+		logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("ShutdownManager (id:%04d) shutdown timed out", sm.InstanceID))
 
 	}
 
@@ -126,7 +126,7 @@ func (sm *ShutdownManager) Shutdown() {
 		sm.cleanup[i]()
 	}
 
-	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("shutdown manager object (id:%04d) shutdown complete", sm.InstanceID))
+	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("ShutdownManager object (id:%04d) shutdown complete", sm.InstanceID))
 
 }
 
