@@ -1,7 +1,9 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
-
+<!-- markdownlint-enable MD033,MD041 -->
 ### The BLE Sync Cycle Application
 
 - <u>What is **BLE Sync Cycle**?</u>
@@ -30,11 +32,13 @@
 
   **This is normal**.
   
-  It takes time for a BLE peripheral to first advertise its services and characteristics, and then establish a connection with a central BLE device. The easiest solution is to just rerun **BLE Sync Cycle**, as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
+  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 - <u>What videos can be used in **BLE Sync Cycle**?</u>
 
   **The short answer is: any video can be used**. As long as your media player is capable of playing the video file, you can use it with **BLE Sync Cycle**.
+
+  Regarding video file formats, the only known file format that will not work with **BLE Sync Cycle** are older `mpg`/`mpeg` formats (media players will often report an invalid file format error, yet still sometimes play... odd).
 
   The long answer is that you will want to look for videos that are first-person cycling, driving, or even running videos. Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas.
 

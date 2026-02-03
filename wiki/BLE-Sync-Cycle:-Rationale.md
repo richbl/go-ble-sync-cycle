@@ -1,6 +1,9 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
+<!-- markdownlint-enable MD033,MD041 -->
 
 This project was developed to address a specific need:
 
@@ -20,5 +23,5 @@ My needs are different:
 Since I already use an analog bicycle trainer while riding indoors, it made sense for me to find a way to pair Bluetooth cycling sensors with a local computer which could then drive some kind of interesting video feedback while cycling. This project was created to fit that need.
 
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f"><img src="[https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f](https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trainer_1_hd.png">
 </p>

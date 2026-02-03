@@ -1,6 +1,9 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
+<!-- markdownlint-enable MD033,MD041 -->
 
 * Real-time synchronization of cycling speed and video playback
 
@@ -40,10 +43,12 @@
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><img src="[https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7](https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_2x2_part1.png">
 </p>
 
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><img src="[https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0](https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_2x2_part2.png">
 </p>
+<!-- markdownlint-enable MD033 -->

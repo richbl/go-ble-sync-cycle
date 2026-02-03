@@ -1,10 +1,14 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
-
+<!-- markdownlint-enable MD033,MD041 -->
 ### GTK4/Adwaita Integration
 
-In order for the application to run with the option for a graphical user interface (GUI), two Go-based GTK4/Adwaita package dependencies are required. While these packages will get installed automatically during project setup, **they require a one-time C-based compilation, which can take ~15-20 minutes to complete**. Please be patient.
+In order for the application to run with the option for a graphical user interface (GUI), two Go-based GTK4/Adwaita package dependencies are required.
+
+While these packages will get installed automatically during project setup, **they require a one-time C-based local compilation, which can take ~15-20 minutes to complete. Please be patient.**
 
 > For the curious, the package used by the Go language for managing C-based sources--such as those used in the GTK4 projects above--is called [`cgo`](https://pkg.go.dev/cmd/cgo).
 

@@ -1,7 +1,9 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
-
+<!-- markdownlint-enable MD033,MD041 -->
 The **BLE Sync Cycle** project currently only offers the option for the local compilation/build of the application. While future releases may provide pre-built binaries (or a flatpak release), the following software requirements are needed:
 
 ### A Go Environment
@@ -17,6 +19,8 @@ The **BLE Sync Cycle** project currently only offers the option for the local co
   OR
 
 - The open source, cross-platform [VLC media player](https://www.videolan.org/vlc), installed (e.g., `sudo apt-get install vlc`) and operational
+
+> It's highly recommended to use the [mpv media player](https://mpv.io/) whenever possible, as the [VLC media player](https://www.videolan.org/vlc) can cause application instability if a user closes the VLC playback window while a **BLE Sync Cycle** session is running. This is a known issue.
 
 ### A First-Person View Cycling Video
 

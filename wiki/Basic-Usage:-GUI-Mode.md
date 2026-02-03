@@ -1,7 +1,9 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62"><img src="[https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62](https://github.com/user-attachments/assets/12027074-e126-48d1-b9e5-25850e39dd62)" width=300></picture>
+<img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
-
+<!-- markdownlint-enable MD033,MD041 -->
 Running **BLE Sync Cycle** in GUI mode is a simple process. To start **BLE Sync Cycle**, simply double-click the **BLE Sync Cycle** icon on your desktop.
 
 Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows idiomatic design principles from the [GNOME Human Interface Guideline](https://developer.gnome.org/hig/), application behavior should be familiar, easy to use, and consistent with other GNOME applications.
@@ -14,9 +16,11 @@ In it's most simplest form, a session is simply a file containing configuration 
 
 From this page, you can edit a session via the Edit Session button, or load a session via the Load Session button.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b"><img src="[https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b](https://github.com/user-attachments/assets/f8fb7730-c1eb-4a84-ad2f-82749b9be43b)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_list.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 > Note that session files are stored in the `~/.config/com.github.richbl.ble-sync-cycle` directory. Each session file ends in `.toml`. **BLE Sync Cycle** will look here for session files and then display them on this page if they're valid BSC session files.
 
@@ -40,9 +44,25 @@ When a session is started, it must first connect to the configured BLE periphera
 
 Also note that the battery level of the BLE sensor will be displayed in the **BLE Sensor Connection** section.
 
+Note the sequence of images below and how the **BLE Sensor Connection** status changes as the connection process moves through various states.
+
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90"><img src="[https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90](https://github.com/user-attachments/assets/a489ed37-1080-4c59-ac1d-c4ae834baa90)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_no_connect.png">
 </p>
+<!-- markdownlint-enable MD033 -->
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connecting.png">
+</p>
+<!-- markdownlint-enable MD033 -->
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connected.png">
+</p>
+<!-- markdownlint-enable MD033 -->
 
 #### Cycling in a BSC Session
 
@@ -50,9 +70,11 @@ Once a Bluetooth connection is established (the Bluetooth symbol turns green), v
 
 The cycling session will continue as long as there's time remaining in the video playback, until the user stops pedaling (pausing video playback), or the session is stopped by clicking the **Stop Session** button.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f"><img src="[https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f](https://github.com/user-attachments/assets/76d400f9-9fc7-4554-8cd0-188cb4c4949f)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_cycling.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 ### The BSC Session Log Page
 
@@ -60,9 +82,11 @@ While **BLE Sync Cycle** is running, the **BSC Session Log** page is used to vie
 
 The **Logging Level** section displays the current logging level, which can be changed for each individual BSC session via the **BSC Session Editor** page.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff"><img src="[https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff](https://github.com/user-attachments/assets/3bead651-3790-461c-b5e9-241059c083ff)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_log.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 ### The BSC Session Editor Page
 
@@ -92,9 +116,11 @@ The **BSC Session Editor** page is used to manage BSC sessions. From this page, 
 
 - The **Speed Smoothing** field specifies the number of recent speed readings to generate a stable moving average. This value is between 1 and 25 readings. The default value is 5
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105"><img src="[https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105](https://github.com/user-attachments/assets/21772806-0adb-476c-bd84-a4fe91778105)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_A.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 #### The Video Settings Section
 
@@ -112,9 +138,11 @@ The **Video Settings** section displays the video playback settings for the medi
 
 - The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44"><img src="[https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44](https://github.com/user-attachments/assets/58b7b0e4-0b15-4406-86ab-b6b67456fd44)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_B.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 #### The On-Screen Display (OSD) Section
 
@@ -128,9 +156,11 @@ The **On-Screen Display (OSD)** section displays the on-screen display (OSD) set
 
 - The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD)
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec"><img src="[https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec](https://github.com/user-attachments/assets/c099d740-0f73-4697-bdbd-6e2dc13521ec)" width=600></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_C.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 ### Saving BSC Sessions
 
