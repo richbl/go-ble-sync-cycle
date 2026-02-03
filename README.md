@@ -8,13 +8,19 @@
 
 **BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with a more immersive and engaging indoor cycling experience by matching first-person video playback speed with their actual cycling pace.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a15a73e6-4920-4866-b26e-f388a58656e4"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a15a73e6-4920-4866-b26e-f388a58656e4"><img src="[https://github.com/user-attachments/assets/a15a73e6-4920-4866-b26e-f388a58656e4](https://github.com/user-attachments/assets/a15a73e6-4920-4866-b26e-f388a58656e4)" width=850></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trainer_0_hd.png">
 </p>
 
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a95d3eb7-7e6f-42a5-a79d-de2eb71f7fbe"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a95d3eb7-7e6f-42a5-a79d-de2eb71f7fbe"><img src="[https://github.com/user-attachments/assets/a95d3eb7-7e6f-42a5-a79d-de2eb71f7fbe](https://github.com/user-attachments/assets/a95d3eb7-7e6f-42a5-a79d-de2eb71f7fbe)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trail_gui_hd.png">
 </p>
+
+<p align="center">
+  <a href="https://youtu.be/oZqs__8KdnI"><img width="850" alt="Screenshot showing YouTube thumbnail" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/bsc_video_thumbnail.png"></a>
+</p>
+<!-- markdownlint-enable MD033 -->
 
 ## Features
 
@@ -56,13 +62,15 @@
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7"><img src="[https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7](https://github.com/user-attachments/assets/584664f3-ffb2-4461-90e3-c0f7451fd9d7)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_2x2_part1.png">
 </p>
 
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0"><img src="[https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0](https://github.com/user-attachments/assets/b694fd91-8a39-46eb-bc00-a49ae17eccc0)" width=850></picture>
+<img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_2x2_part2.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 ## Rationale
 
@@ -83,9 +91,11 @@ My needs are different:
 
 Since I already use an analog bicycle trainer while riding indoors, it made sense for me to find a way to pair Bluetooth cycling sensors with a local computer which could then drive some kind of interesting video feedback while cycling. This project was created to fit that need.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f"><source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f"><img src="[https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f](https://github.com/user-attachments/assets/a06c6513-ac10-4bd0-8171-42d50b9c976f)" width=850></picture>
+<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trainer_1_hd.png">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 ## Would You Like to Know More?
 
