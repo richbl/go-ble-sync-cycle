@@ -341,7 +341,7 @@ func (m *StateManager) storeShutdownMgr(s *services.ShutdownManager) {
 
 	m.mu.Lock()
 	m.shutdownMgr = s
-	logger.Debug(logger.BackgroundCtx, logger.APP, "shutdown manager object state stored")
+	logger.Debug(logger.BackgroundCtx, logger.APP, "ShutdownManager object state stored")
 	m.mu.Unlock()
 
 }
