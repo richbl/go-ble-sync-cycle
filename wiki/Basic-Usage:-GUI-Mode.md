@@ -18,7 +18,7 @@ From this page, you can edit a session via the Edit Session button, or load a se
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_list.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_list.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -48,19 +48,19 @@ Note the sequence of images below and how the **BLE Sensor Connection** status c
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_no_connect.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_no_connect.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connecting.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connecting.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connected.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_connected.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -72,7 +72,7 @@ The cycling session will continue as long as there's time remaining in the video
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_cycling.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_status_cycling.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -84,7 +84,7 @@ The **Logging Level** section displays the current logging level, which can be c
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_log.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_log.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -118,7 +118,7 @@ The **BSC Session Editor** page is used to manage BSC sessions. From this page, 
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_A.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_A.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -140,7 +140,7 @@ The **Video Settings** section displays the video playback settings for the medi
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_B.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_B.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -158,7 +158,7 @@ The **On-Screen Display (OSD)** section displays the on-screen display (OSD) set
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-<img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_C.png">
+<img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_C.png">
 </p>
 <!-- markdownlint-enable MD033 -->
 
