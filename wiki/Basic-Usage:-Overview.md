@@ -36,7 +36,12 @@ At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such 
 For those with an interest in how the various controllers and services work collaboratively in **BLE Sync Cycle**, here's a sequence diagram for the "happy path" use case, where a user selects and loads a session, starts a session, and "cycles" the session until completion.
 
 ```mermaid
+---
+config:
+  theme: 'forest'
+---
 sequenceDiagram
+    rect rgb(230, 230, 230)
     participant User
     participant UI
     participant SM as SessionManager
@@ -81,4 +86,5 @@ sequenceDiagram
     
     SM-->>UI: Return nil (Success)
     UI->>UI: Start Metrics Loop
+    end
 ```
