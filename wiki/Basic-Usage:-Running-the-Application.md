@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 **BLE Sync Cycle** can be run in two application modes: GUI or CLI.
 
 ### Running **BLE Sync Cycle** in GUI Mode

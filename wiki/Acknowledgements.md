@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 **BLE Sync Cycle** was inspired by indoor cycling training needs, the amazing first-person view cycling videos from around the world found on YouTube and elsewhere, and the desire to bring these two elements together.
 
 Some special thanks are in order:

@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 Running **BLE Sync Cycle** in GUI mode is a simple process. To start **BLE Sync Cycle**, simply double-click the **BLE Sync Cycle** icon on your desktop.
 
 Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows idiomatic design principles from the [GNOME Human Interface Guideline](https://developer.gnome.org/hig/), application behavior should be familiar, easy to use, and consistent with other GNOME applications.

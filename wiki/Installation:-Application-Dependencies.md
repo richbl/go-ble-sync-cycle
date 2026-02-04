@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 In addition to having a standard Go environment installed and operational,the following additional libraries are required in order to successfully compile/build the **BLE Sync Cycle** application:
 
 ### The GObject Introspection Package
