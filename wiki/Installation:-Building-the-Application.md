@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 ### GTK4/Adwaita Integration
 
 In order for the application to run with the option for a graphical user interface (GUI), two Go-based GTK4/Adwaita package dependencies are required.

@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 Once the **BLE Sync Cycle** application binary has been built, it's ready to be installed.
 
 For running **BLE Sync Cycle** in CLI mode, there is no additional work to be done: you can run the application locally from the command line with various configuration flags (see [Basic Usage: Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-CLI-Mode)).

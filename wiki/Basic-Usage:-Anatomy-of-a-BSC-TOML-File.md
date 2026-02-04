@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 The **BLE Sync Cycle** application is configured using an external configuration file named `config.toml`. A copy of that file--referred to as a "BSC TOML file"--with default values is provided in the `internal/config` directory of the project.
 
 In general, most of the default settings found in this BSC TOML file can be left unchanged. However, here are the fields that will definitely need to be updated:

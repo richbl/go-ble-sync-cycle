@@ -4,6 +4,7 @@
 <img width="300" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
+
 The **BLE Sync Cycle** project currently only offers the option for the local compilation/build of the application. While future releases may provide pre-built binaries (or a flatpak release), the following software requirements are needed:
 
 ### A Go Environment
