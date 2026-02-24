@@ -43,7 +43,7 @@ const (
 	speedDivisor = 10.0
 )
 
-// speedUnitConversion maps units of speed (mph, km/h) to their multiplier for consistent playback speed
+// speedUnitConversion maps units of speed to their multiplier for consistent playback speed
 var speedUnitConversion = map[string]float64{
 	config.SpeedUnitsKMH: 1.60934,
 	config.SpeedUnitsMPH: 1.0,
@@ -126,7 +126,7 @@ func (p *PlaybackController) StartPlayback(ctx context.Context, speedController 
 	return nil
 }
 
-// TimeRemaining is a thread-safe wrapper to get the video time remaining
+// TimeRemaining returns the time remaining in the video
 func (p *PlaybackController) TimeRemaining() (string, error) {
 
 	seconds, err := p.player.timeRemaining()
@@ -147,30 +147,70 @@ func (p *PlaybackController) PlaybackSpeed() float64 {
 	return p.speedState.current * p.speedUnitMultiplier
 }
 
-// configurePlayback sets up the player window based on configuration
+// configurePlayback configures the media player for playback based on the video configuration
 func (p *PlaybackController) configurePlayback() error {
 
-	// mpv requires playback options to be set before the file is loaded
 	isMPV := p.videoConfig.MediaPlayer == config.MediaPlayerMPV
-	if isMPV {
-		if err := p.setPlaybackOptions(); err != nil {
-			return err
-		}
+
+	// Configure playback options before loadFile() for mpv
+	if err := p.configurePreLoad(isMPV); err != nil {
+		return err
 	}
 
-	// Load the video file
+	// loadFile() blocks until MediaPlayerVout confirms vout is ready
 	if err := p.player.loadFile(p.videoConfig.FilePath); err != nil {
 		return fmt.Errorf("%s: %s: %w", errFailedToLoadVideo.Error(), p.videoConfig.FilePath, err)
 	}
 
-	// vlc requires playback options to be set after the file is loaded
+	// VLC requires playback options to be set after the file is loaded
 	if !isMPV {
-		if err := p.setPlaybackOptions(); err != nil {
+
+		// seek() blocks on MediaPlayerSeekableChanged — ensures demuxer is ready before SetMediaTime()
+		// is called, so MediaTime() tracks correctly
+		if err := p.player.seek(p.videoConfig.SeekToPosition); err != nil {
 			return err
 		}
+
 	}
 
-	// Set up player events
+	// Configure common playback options after loadFile() for both players since some options are
+	// load-time sensitive (e.g., OSD requires vout to be ready)
+	if err := p.configureCommon(); err != nil {
+		return err
+	}
+
+	if !isMPV {
+
+		// Pause after seek and OSD are configured on a live, playing stream
+		if err := p.player.setPause(true); err != nil {
+			return fmt.Errorf("failed to set initial VLC pause state: %w", err)
+		}
+
+	}
+
+	// Precalculate playback speed multiplier based on speed units
+	p.speedUnitMultiplier = p.videoConfig.SpeedMultiplier / (speedUnitConversion[p.speedConfig.SpeedUnits] * speedDivisor)
+
+	return nil
+}
+
+// configurePreLoad handles configuration steps required before loading the video file
+func (p *PlaybackController) configurePreLoad(isMPV bool) error {
+
+	if isMPV {
+		// mpv requires playback options set before loadFile()
+		return p.setPlaybackOptions()
+	}
+
+	// VLC: stage window size before loadFile() so applyWindowSize() can apply it pre-Play(),
+	// sizing the window at vout creation time
+	return p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor)
+}
+
+// configureCommon handles configuration steps common to media players after loading
+func (p *PlaybackController) configureCommon() error {
+
+	// Set up player end-of-file events
 	if err := p.player.setupEvents(); err != nil {
 		return fmt.Errorf(errFormat, "failed to setup player events", err)
 	}
@@ -180,20 +220,16 @@ func (p *PlaybackController) configurePlayback() error {
 		return err
 	}
 
-	// Configure OSD display
+	// Configure OSD while player is still playing — vout confirmed ready via MediaPlayerVout
+	// so marquee filter is fully attached for both file sizes
 	if p.osdConfig.showOSD {
-		if err := p.player.setOSD(p.osdConfig); err != nil {
-			return err
-		}
+		return p.player.setOSD(p.osdConfig)
 	}
-
-	// Precalculate playback speed multiplier based on speed units
-	p.speedUnitMultiplier = p.videoConfig.SpeedMultiplier / (speedUnitConversion[p.speedConfig.SpeedUnits] * speedDivisor)
 
 	return nil
 }
 
-// setPlaybackOptions sets load-time sensitive playback options for the media players
+// setPlaybackOptions sets load-time sensitive playback options for mpv
 func (p *PlaybackController) setPlaybackOptions() error {
 
 	// Set playback window size
@@ -235,7 +271,7 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 		case <-ctx.Done():
 			logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
-			return nil // No need to show this context cancellation error
+			return nil
 		}
 	}
 
@@ -244,7 +280,7 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 // handlePlayerEvents handles callback events from the media player
 func (p *PlaybackController) handlePlayerEvents() error {
 
-	event := p.player.waitEvent(0) // Use a non-blocking wait
+	event := p.player.waitEvent(0)
 	if event != nil && event.id == eventEndFile {
 		return fmt.Errorf("%w", ErrVideoComplete)
 	}

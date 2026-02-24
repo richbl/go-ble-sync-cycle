@@ -1,7 +1,6 @@
 package video
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -19,6 +18,9 @@ var (
 	errPlayerNotInitialized      = errors.New("media player not initialized")
 	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")
 	errInvalidVideoDimensions    = errors.New("video dimensions are invalid")
+	errNoVideoTrack              = errors.New("media file does not contain a video track")
+	errFailedToCreatePlayer      = errors.New("failed to instantiate media player")
+	errStreamTimeout             = errors.New("timeout waiting for video stream")
 	errPlaybackEndedUnexpectedly = errors.New("playback ended unexpectedly")
 	errFailedToLoadVideo         = errors.New("failed to load video")
 	errUnableToSeek              = errors.New("failed to seek to specified position in media player")
@@ -29,6 +31,13 @@ var (
 	errFailedToAcquireMonitor = errors.New("failed to acquire primary monitor (GLFW)")
 	errFailedToGetVideoMode   = errors.New("failed to get video mode (GLFW)")
 )
+
+// videoValidationInfo holds video properties discovered when validating a media file
+type videoValidationInfo struct {
+	width    int
+	height   int
+	duration float64
+}
 
 const (
 	errFormat        = "%v: %w"
@@ -97,11 +106,11 @@ func wrapError(context string, err error) error {
 
 // screenResolution returns the screen resolution of the primary monitor (needed by VLC for video
 // playback scaling)
-func screenResolution(ctx context.Context) (int, int, error) {
+func screenResolution() (int, int, error) {
 
 	// Initialize framework
 	if err := glfw.Init(); err != nil {
-		logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
 
 		return 0, 0, errFailedToInitializeGLFW
 	}
@@ -111,7 +120,7 @@ func screenResolution(ctx context.Context) (int, int, error) {
 	// Get the primary monitor
 	monitor := glfw.GetPrimaryMonitor()
 	if monitor == nil {
-		logger.Warn(ctx, logger.VIDEO, errFailedToAcquireMonitor)
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToAcquireMonitor)
 
 		return 0, 0, errFailedToAcquireMonitor
 	}
@@ -119,7 +128,7 @@ func screenResolution(ctx context.Context) (int, int, error) {
 	// Get the current video dimensions (width, height)
 	mode := monitor.GetVideoMode()
 	if mode == nil {
-		logger.Warn(ctx, logger.VIDEO, errFailedToGetVideoMode)
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToGetVideoMode)
 
 		return 0, 0, errFailedToGetVideoMode
 	}
@@ -127,8 +136,7 @@ func screenResolution(ctx context.Context) (int, int, error) {
 	return mode.Width, mode.Height, nil
 }
 
-// execGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive,
-// only returning an error
+// execGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive
 func execGuarded(mu *sync.RWMutex, isNil func() bool, action func() error) error {
 
 	mu.RLock()
