@@ -231,6 +231,11 @@ func (sc *SessionController) openVideoFilePicker() {
 	filter.AddPattern("*.flv")
 	filter.AddPattern("*.webm")
 	filter.AddPattern("*.m4v")
+	filter.AddPattern("*.mpeg")
+	filter.AddPattern("*.ogg")
+
+	// Limited support by media players, so not permitted
+	// filter.AddPattern("*.mpg")
 
 	filters := gio.NewListStore(filter.Type())
 	filters.Append(filter.Object)
