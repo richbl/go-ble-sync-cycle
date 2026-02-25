@@ -5,20 +5,20 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-The **BLE Sync Cycle** application is configured using an external configuration file named `config.toml`. A copy of that file--referred to as a "BSC TOML file"--with default values is provided in the `internal/config` directory of the project.
+The **BLE Sync Cycle** application is configured using an external configuration file named `config.toml`. This configuration file really represents a "cycling trail experience" for your uniquely-configured trainer/bicycle. A copy of that file--referred to as a "BSC Session file"--filled with default values is provided in the `internal/config` directory of the project.
 
 In general, most of the default settings found in this BSC TOML file can be left unchanged. However, here are the fields that will definitely need to be updated:
 
 - `session_title`: A short description of the current cycling session (0-200 characters)
 - `sensor_bd_addr`: The address of the BLE peripheral device (e.g., sensor) to connect with and monitor for speed data
-- `wheel_circumference_mm`: The wheel circumference of the bicycle (50-3000 millimeters)
+- `wheel_circumference_mm`: The wheel circumference of the trainer/bicycle (50-3000 millimeters)
 - `file_path`: The path to the video file to be played back
 
 The default `config.toml` file is shown below:
 
 ```toml
 # BLE Sync Cycle Configuration
-# v0.50.0
+# v0.51.0
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters)
@@ -35,7 +35,7 @@ The default `config.toml` file is shown below:
   smoothing_window = 5          # Number of recent speed readings to generate a stable moving average (1-25)
 
 [video]
-  media_player = "mpv"           # The video playback back-end to use ("mpv" or "vlc")
+  media_player = "mpv"           # The video playback back-end to use ("mpv")
   file_path = "cycling_test.mp4" # File path to the video file for playback
   seek_to_position = "00:00"     # Starting playback position in the video ("MM:SS")
   window_scale_factor = 1.0      # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
@@ -68,7 +68,7 @@ The `[ble]` section configures your computer (referred to as the BLE central con
 - `sensor_bd_addr`: The address of the BLE peripheral device (e.g., sensor) to connect with and monitor for speed data
 - `scan_timeout_secs`: The number of seconds to wait for a BLE peripheral response before generating an error message. Some BLE devices can take a while to respond (called "advertising"), so adjust this value accordingly. A value of 30 seconds is a good starting point.
 
-> To find the address (BD_ADDR) of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu (or any other Linux distribution), you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device BD_ADDRs are typically in the form of "11:22:33:44:55:66."
+> To find the address (BD_ADDR) of your BLE peripheral device, you'll need to connect to it from your computer (or any device with Bluetooth connectivity). From Ubuntu, for example, you can use [the `bluetoothctl` command](https://www.mankier.com/1/bluetoothctl#). BLE peripheral device BD_ADDRs are in the form of "11:22:33:44:55:66."
 
 ### The Speed Section
 

@@ -33,14 +33,13 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
 
 * Support for compliant BLE Cycling Speed and Cadence (CSC) sensors (in speed mode)
 
-* Integrates with [mpv](https://mpv.io) and [VLC](https://www.videolan.org) media players
+* Integrates with the [mpv](https://mpv.io) media player
 
 * Highly configurable TOML-based configuration files for:
     * BLE sensor address (BD\_ADDR) and scan timeout
     * Wheel circumference (for accurate speed)
     * Speed units (mph or km/h)
     * Speed smoothing for natural playback
-    * Choice of media player (mpv or VLC)
     * Video file selection
     * Seek to a specific start time in the video
     * Display options:

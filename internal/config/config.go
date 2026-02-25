@@ -50,7 +50,6 @@ const (
 	SpeedUnitsMPH = "mph"
 
 	MediaPlayerMPV = "mpv"
-	MediaPlayerVLC = "vlc"
 
 	errTypeFormat = "%w: %T"
 	errFormat     = "%v: %w"

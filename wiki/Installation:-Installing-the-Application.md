@@ -58,4 +58,4 @@ In addition, the creation of a local folder is needed for storing/managing BSC T
     mkdir -p ~/.config/com.github.richbl.ble-sync-cycle
     ```
 
-    > This folder is important, as its the location where **BLE Sync Cycle** looks for application configuration files (called BSC TOML files).
+    > This folder is important, as its the location where **BLE Sync Cycle** looks for application configuration files (called BSC Session files).

@@ -64,9 +64,6 @@ func NewPlaybackController(ctx context.Context, videoConfig config.VideoConfig, 
 	case config.MediaPlayerMPV:
 		player, err = newMpvPlayer(ctx)
 
-	case config.MediaPlayerVLC:
-		player, err = newVLCPlayer(ctx)
-
 	default:
 		return nil, errUnsupportedVideoPlayer
 	}
@@ -150,10 +147,8 @@ func (p *PlaybackController) PlaybackSpeed() float64 {
 // configurePlayback configures the media player for playback based on the video configuration
 func (p *PlaybackController) configurePlayback() error {
 
-	isMPV := p.videoConfig.MediaPlayer == config.MediaPlayerMPV
-
 	// Configure playback options before loadFile() for mpv
-	if err := p.configurePreLoad(isMPV); err != nil {
+	if err := p.configurePreLoad(); err != nil {
 		return err
 	}
 
@@ -162,30 +157,10 @@ func (p *PlaybackController) configurePlayback() error {
 		return fmt.Errorf("%s: %s: %w", errFailedToLoadVideo.Error(), p.videoConfig.FilePath, err)
 	}
 
-	// VLC requires playback options to be set after the file is loaded
-	if !isMPV {
-
-		// seek() blocks on MediaPlayerSeekableChanged — ensures demuxer is ready before SetMediaTime()
-		// is called, so MediaTime() tracks correctly
-		if err := p.player.seek(p.videoConfig.SeekToPosition); err != nil {
-			return err
-		}
-
-	}
-
-	// Configure common playback options after loadFile() for both players since some options are
+	// Configure common playback options after loadFile() for media player since some options are
 	// load-time sensitive (e.g., OSD requires vout to be ready)
 	if err := p.configureCommon(); err != nil {
 		return err
-	}
-
-	if !isMPV {
-
-		// Pause after seek and OSD are configured on a live, playing stream
-		if err := p.player.setPause(true); err != nil {
-			return fmt.Errorf("failed to set initial VLC pause state: %w", err)
-		}
-
 	}
 
 	// Precalculate playback speed multiplier based on speed units
@@ -195,16 +170,11 @@ func (p *PlaybackController) configurePlayback() error {
 }
 
 // configurePreLoad handles configuration steps required before loading the video file
-func (p *PlaybackController) configurePreLoad(isMPV bool) error {
+func (p *PlaybackController) configurePreLoad() error {
 
-	if isMPV {
-		// mpv requires playback options set before loadFile()
-		return p.setPlaybackOptions()
-	}
+	// mpv requires playback options set before loadFile()
+	return p.setPlaybackOptions()
 
-	// VLC: stage window size before loadFile() so applyWindowSize() can apply it pre-Play(),
-	// sizing the window at vout creation time
-	return p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor)
 }
 
 // configureCommon handles configuration steps common to media players after loading

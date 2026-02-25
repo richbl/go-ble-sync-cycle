@@ -11,7 +11,7 @@
 </p>
 <!-- markdownlint-enable MD033 -->
 
-At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such as a computer), a BLE peripheral device (a BLE cycling sensor) and a media player (mpv or VLC), and performs the following:
+At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such as a computer), a BLE peripheral device (a BLE cycling sensor) and a media player (mpv), and performs the following:
 
 ### 1. Discovery and Connection
 

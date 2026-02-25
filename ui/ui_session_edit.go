@@ -17,7 +17,7 @@ import (
 var (
 	logLevels    = []string{"debug", "info", "warn", "error"}
 	speedUnits   = []string{"mph", "km/h"}
-	mediaPlayers = []string{"mpv", "vlc"}
+	mediaPlayers = []string{"mpv"}
 )
 
 // setupSessionEditSignals wires up event listeners for the Edit tab and its controls
@@ -234,7 +234,7 @@ func (sc *SessionController) openVideoFilePicker() {
 	filter.AddPattern("*.mpeg")
 	filter.AddPattern("*.ogg")
 
-	// Limited support by media players, so not permitted
+	// Limited support by media players, so not permitted:
 	// filter.AddPattern("*.mpg")
 
 	filters := gio.NewListStore(filter.Type())

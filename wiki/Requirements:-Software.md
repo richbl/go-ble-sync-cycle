@@ -11,17 +11,13 @@ The **BLE Sync Cycle** project currently only offers the option for the local co
 
 - In order to compile the executable for this project, an operational [Go language](https://go.dev/) environment is required (with several additional libraries installed: see [Installation:-Application-Dependencies](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation:-Application-Dependencies) for details).
 
-> Once the **BLE Sync Cycle** application is compiled into an executable, it can be run without further dependencies on Go
+  > Once the **BLE Sync Cycle** application is compiled into an executable, it can be run without further dependencies on Go
 
-### A Media Player
+### The mpv Media Player Library
 
-- The open source, cross-platform [mpv media player](https://mpv.io/), installed (e.g., `sudo apt-get install mpv`) and operational
+- The open source, cross-platform [mpv media player](https://mpv.io/) library, installed (e.g., `sudo apt-get install libmpv2`)
 
-  OR
-
-- The open source, cross-platform [VLC media player](https://www.videolan.org/vlc), installed (e.g., `sudo apt-get install vlc`) and operational
-
-> It's highly recommended to use the [mpv media player](https://mpv.io/) whenever possible, as the [VLC media player](https://www.videolan.org/vlc) can cause application instability if a user closes the VLC playback window while a **BLE Sync Cycle** session is running. This is a known issue.
+  > Note that the [mpv](https://mpv.io/) media player itself does not need to be installed (just the mpv library)
 
 ### A First-Person View Cycling Video
 

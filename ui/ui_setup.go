@@ -24,10 +24,10 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 
 		// Create a new About dialog
 		aboutDialog := adw.NewAboutDialog()
-		aboutDialog.SetApplicationIcon("bsc_logo")
+		aboutDialog.SetApplicationIcon("com.github.richbl.ble-sync-cycle")
 		aboutDialog.SetApplicationName("BLE Sync Cycle")
-		aboutDialog.SetVersion("v" + config.GetVersion())
-		aboutDialog.SetCopyright("Copyright © 2025 Rich Bloch")
+		aboutDialog.SetVersion(config.GetVersion())
+		aboutDialog.SetCopyright("Copyright © 2025-2026 Rich Bloch")
 		aboutDialog.SetDevelopers([]string{"Rich Bloch"})
 		aboutDialog.SetIssueURL("https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md")
 		aboutDialog.SetLicenseType(gtk.LicenseMITX11)

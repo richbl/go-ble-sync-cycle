@@ -36,7 +36,6 @@ func (vc *VideoConfig) validate() error {
 
 	validPlayer := map[string]bool{
 		MediaPlayerMPV: true,
-		MediaPlayerVLC: true,
 	}
 
 	if !validPlayer[vc.MediaPlayer] {

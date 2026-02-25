@@ -124,7 +124,6 @@ func testPlayerConfiguration(t *testing.T, factory playerFactory, playerName str
 	t.Run("setKeepOpen", func(t *testing.T) {
 		err := player.setKeepOpen(true)
 
-		// VLC returns nil (no-op), MPV should also return nil on success
 		if err != nil {
 			t.Errorf("setKeepOpen(true) error = %v", err)
 		}
