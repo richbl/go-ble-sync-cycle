@@ -9,7 +9,7 @@
 
 - <u>What is **BLE Sync Cycle**?</u>
 
-  In its simplest form, **BLE Sync Cycle makes video playback run faster when you pedal your bike faster, and slows down video playback when you pedal slower**. And, when you stop your bike, video playback pauses.  
+  In its simplest form, **BLE Sync Cycle makes video playback run faster when you pedal your bike faster, and slows down video playback when your pedaling slows**. And, when you stop your bike, video playback pauses.  
 
 - <u>How do I use **BLE Sync Cycle**?</u>
 
@@ -39,11 +39,24 @@
 
   **The short answer is: any video can be used**. As long as your media player is capable of playing the video file, you can use it with **BLE Sync Cycle**.
 
-  Regarding video file formats, the only known file format that will not work with **BLE Sync Cycle** are older `mpg`/`mpeg` formats (media players will often report an invalid file format error, yet still sometimes play... odd).
+  Regarding video file formats, the following formats are supported by **BLE Sync Cycle**:
 
-  The long answer is that you will want to look for videos that are first-person cycling, driving, or even running videos. Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas.
+    - mp4
+    - mkv
+    - avi
+    - mov
+    - wmv
+    - flv
+    - webm
+    - m4v
+    - mpeg
+    - ogg
+  
+  the only known file format that will not work with **BLE Sync Cycle** is the older `mpg` format: media players will often report an invalid file format error and/or various configuration features will simply fail silently. As a result, **BLE Sync Cycle** does not permit the use of `mpg` files for playback. If you have an existing `mpg` video file, it's highly recommended to convert it to a newer video format.
 
-  >Hint: the next time you're planning a great outdoor cycling ride, strap on a camera and record some first-person cycling videos, and share them with this community!
+  The longer answer is that you will want to look for videos that are first-person cycling, driving, or even running videos. Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas.
+
+  >Hint: the next time you're planning a great outdoor cycling ride, strap on a camera and record some first-person cycling videos, and share them with this BSC Virtual Cycling community!
 
 ### Bluetooth Protocols
 

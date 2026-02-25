@@ -23,35 +23,20 @@ In addition to having a standard Go environment installed and operational,the fo
   sudo apt install libgtk-4-dev
   ```
 
-#### The Adwaita (libadwaita) Development Library
+### The Adwaita (libadwaita) Development Library
 
-- As part of the GTK4 design library, [Adwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) is an extension used to meet the guidance of the [Gnome Human Interface Guidelines (HIG)](https://developer.gnome.org/hig/). To install this library:
+- As part of the GTK4 development library, [Adwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) is an extension used to meet the guidance of the [Gnome Human Interface Guidelines (HIG)](https://developer.gnome.org/hig/). To install this library:
 
   ```console
   sudo apt install libadwaita-1-dev
   ```
 
-### Media Player Libraries
+### The mpv Media Player Library
 
-**BLE Sync Cycle** relies on either of two external media player libraries for video playback:
+- **BLE Sync Cycle** relies on the [mpv](https://mpv.io/) media player library for video playback. To install this library:
 
-- The [mpv](https://mpv.io/) media player
-- The [VLC](https://www.videolan.org/vlc) media player
+    ```console
+    sudo apt-get install libmpv2
+    ```
 
-One or both players can be used, but the following software libraries must also be installed for each player (in addition to the players themselves):
-
-- For mpv:
-
-  1. Install the `libmpv2` library:
-
-      ```console
-      sudo apt-get install libmpv2
-      ```
-
-- For VLC:
-
-  1. Install the `libvlc-dev` library:
-
-      ```console
-      sudo apt-get install libvlc-dev
-      ```
+> Note that the [mpv](https://mpv.io/) media player itself does not need to be installed (just the mpv library)

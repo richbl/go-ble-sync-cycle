@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-
-	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // Error definitions
@@ -25,11 +22,6 @@ var (
 	errFailedToLoadVideo         = errors.New("failed to load video")
 	errUnableToSeek              = errors.New("failed to seek to specified position in media player")
 	ErrVideoComplete             = errors.New("video playback completed")
-
-	// GLFW-specific errors
-	errFailedToInitializeGLFW = errors.New("failed to initialize GLFW")
-	errFailedToAcquireMonitor = errors.New("failed to acquire primary monitor (GLFW)")
-	errFailedToGetVideoMode   = errors.New("failed to get video mode (GLFW)")
 )
 
 // videoValidationInfo holds video properties discovered when validating a media file
@@ -102,38 +94,6 @@ func wrapError(context string, err error) error {
 	}
 
 	return fmt.Errorf(errFormat, context, err)
-}
-
-// screenResolution returns the screen resolution of the primary monitor (needed by VLC for video
-// playback scaling)
-func screenResolution() (int, int, error) {
-
-	// Initialize framework
-	if err := glfw.Init(); err != nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("%v: %v", errFailedToInitializeGLFW, err))
-
-		return 0, 0, errFailedToInitializeGLFW
-	}
-
-	defer glfw.Terminate()
-
-	// Get the primary monitor
-	monitor := glfw.GetPrimaryMonitor()
-	if monitor == nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToAcquireMonitor)
-
-		return 0, 0, errFailedToAcquireMonitor
-	}
-
-	// Get the current video dimensions (width, height)
-	mode := monitor.GetVideoMode()
-	if mode == nil {
-		logger.Warn(logger.BackgroundCtx, logger.VIDEO, errFailedToGetVideoMode)
-
-		return 0, 0, errFailedToGetVideoMode
-	}
-
-	return mode.Width, mode.Height, nil
 }
 
 // execGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive

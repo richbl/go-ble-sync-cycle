@@ -29,7 +29,7 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
   smoothing_window = {{.Speed.SmoothingWindow}}{{pad (printf "smoothing_window = %d" .Speed.SmoothingWindow)}}# Number of recent speed readings to generate a stable moving average (1-25)
 
 [video]
-  media_player = "{{.Video.MediaPlayer}}"{{pad (printf "media_player = \"%s\"" .Video.MediaPlayer)}}# The video playback back-end to use ("mpv" or "vlc")
+  media_player = "{{.Video.MediaPlayer}}"{{pad (printf "media_player = \"%s\"" .Video.MediaPlayer)}}# The video playback back-end to use ("mpv")
   file_path = "{{.Video.FilePath}}"{{pad (printf "file_path = \"%s\"" .Video.FilePath)}}# File path to the video file for playback
   seek_to_position = "{{.Video.SeekToPosition}}"{{pad (printf "seek_to_position = \"%s\"" .Video.SeekToPosition)}}# Starting playback position in the video ("MM:SS")
   window_scale_factor = {{printf "%.1f" .Video.WindowScaleFactor}}{{pad (printf "window_scale_factor = %.1f" .Video.WindowScaleFactor)}}# Scales the size of the video window (0.1-1.0, where 1.0 = full screen)

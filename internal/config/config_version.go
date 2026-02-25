@@ -3,7 +3,7 @@ package config
 // Application name and version information
 const (
 	appName    = "BLE Sync Cycle"
-	appVersion = "0.50.0"
+	appVersion = "v0.51.0"
 )
 
 // GetVersion returns the current application version
@@ -18,5 +18,5 @@ func GetAppName() string {
 
 // GetFullVersion returns the app name and version combined
 func GetFullVersion() string {
-	return appName + " v" + appVersion
+	return appName + " " + appVersion
 }

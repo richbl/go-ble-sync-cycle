@@ -9,15 +9,14 @@
 
 * Support for compliant BLE Cycling Speed and Cadence (CSC) sensors (in speed mode)
 
-* Integrates with [mpv](https://mpv.io) and [VLC](https://www.videolan.org) media players
+* Integrates with the [mpv](https://mpv.io) media player
 
 * Highly configurable TOML-based configuration files for:
     * BLE sensor address (BD\_ADDR) and scan timeout
     * Wheel circumference (for accurate speed)
     * Speed units (mph or km/h)
     * Speed smoothing for natural playback
-    * Choice of media player (mpv or VLC)
-    * Video file selection
+    * Video file selection with support for multiple file formats (mp4, mkv, etc.)
     * Seek to a specific start time in the video
     * Display options:
         * On-screen display (OSD) for speed and time remaining
@@ -39,7 +38,7 @@
 
 * Configurable logging levels (debug, info, warn, error)
 
-* On every application startup, the battery level of the BLE sensor is checked and displayed
+* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for their training session
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 

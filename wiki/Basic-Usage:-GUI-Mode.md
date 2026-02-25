@@ -127,7 +127,7 @@ The **BSC Session Editor** page is used to manage BSC sessions. From this page, 
 
 The **Video Settings** section displays the video playback settings for the media player used in a BSC session.
 
-- The **Media Player** field specifies the media player to be used for the BSC session. The options are "VLC" and "mpv"
+- The **Media Player** field specifies the media player to be used for the BSC session. The option is currently "mpv"
 
 - The **Video File** field specifies the video file to be played during the BSC session. This field opens a file browser dialog to allow you to select a video file
 

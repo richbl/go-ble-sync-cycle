@@ -29,7 +29,7 @@ Note that the output below was generated when `logging_level` is set to `debug` 
 
 ```console
 14:40:40 [INF] [APP] ---------------------------------------------------
-14:40:40 [INF] [APP] BLE Sync Cycle v0.50.0 starting...
+14:40:40 [INF] [APP] BLE Sync Cycle v0.51.0 starting...
 14:40:40 [INF] [APP] ---------------------------------------------------
 14:40:40 [DBG] [APP] running in CLI mode
 14:40:40 [DBG] [APP] session startup sequence starting...
@@ -195,6 +195,6 @@ Finally, let's watch when the user stops the **BLE Sync Cycle** application...
 14:45:08 [DBG] [APP] ShutdownManager object (id:0001) shutdown complete
 14:45:08 [DBG] [APP] ShutdownManager object (id:0001) shutdown complete
 14:45:08 [INF] [APP] ---------------------------------------------------
-14:45:08 [INF] [APP] BLE Sync Cycle v0.50.0 shutdown complete. Goodbye
+14:45:08 [INF] [APP] BLE Sync Cycle v0.51.0 shutdown complete. Goodbye
 14:45:08 [INF] [APP] ---------------------------------------------------
 ```

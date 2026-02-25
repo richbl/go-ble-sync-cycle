@@ -1,7 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.96.1 -->
 <interface>
-  <!-- interface-name bsc_gui2.ui -->
   <requires lib="gio" version="2.0" />
   <requires lib="gtk" version="4.18" />
   <requires lib="libadwaita" version="1.7" />
@@ -164,8 +162,10 @@
                                 <property name="halign">center</property>
                                 <property name="orientation">horizontal</property>
                                 <property name="spacing">6</property>
+
                                 <child>
                                   <object class="GtkImage" id="page2_logo_image">
+                                    <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                     <property name="pixel-size">48</property>
                                   </object>
                                 </child>
@@ -421,9 +421,8 @@
                                 <property name="spacing">6</property>
                                 <child>
                                   <object class="GtkImage" id="page4_logo_image">
-                                    <property name="icon-size">inherit</property>
+                                    <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
                                     <property name="pixel-size">48</property>
-                                    <property name="visible">True</property>
                                   </object>
                                 </child>
                                 <child>
@@ -584,13 +583,12 @@
                                   <object class="GtkStringList" id="media_player_list">
                                     <items>
                                       <item translatable="yes">mpv</item>
-                                      <item translatable="yes">VLC</item>
                                     </items>
                                   </object>
                                 </property>
                                 <property name="selected">0</property>
                                 <property name="title">Media Player</property>
-                                <property name="tooltip-text">The video playback back-end to use ("mpv" or "vlc")</property>
+                                <property name="tooltip-text">The video playback back-end to use ("mpv")</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>

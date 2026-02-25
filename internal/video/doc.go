@@ -1,4 +1,4 @@
-// Package video provides video playback control with support for MPV and VLC media players
+// Package video provides video playback control with support for the mpv media player
 //
 // It manages playback speed synchronization with external speed controllers and provides on-screen
 // display (OSD) capabilities
