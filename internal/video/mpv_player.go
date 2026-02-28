@@ -53,7 +53,7 @@ func newMpvPlayer(ctx context.Context) (*mpvPlayer, error) {
 }
 
 // validateVideoFile validates the video file using a tmp/headless MPV instance
-func (m *mpvPlayer) validateVideoFile(videoPath string, position string) error {
+func (m *mpvPlayer) validateVideoFile(videoPath, position string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 

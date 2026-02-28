@@ -71,7 +71,7 @@ type osdConfig struct {
 type mediaPlayer interface {
 
 	// Playback methods
-	validateVideoFile(videoPath string, position string) error
+	validateVideoFile(videoPath, position string) error
 	loadFile(path string) error
 	setSpeed(speed float64) error
 	setPause(paused bool) error
