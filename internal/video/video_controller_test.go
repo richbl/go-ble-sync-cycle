@@ -14,23 +14,24 @@ import (
 
 // mockMediaPlayer is a mock implementation of the mediaPlayer interface for testing
 type mockMediaPlayer struct {
-	mu               sync.Mutex
-	calls            map[string]int
-	lastShowText     string
-	lastSpeed        float64
-	lastPauseState   bool
-	loadFileErr      error
-	setupEventsErr   error
-	setFullscreenErr error
-	setKeepOpenErr   error
-	SetOSDErr        error
-	seekErr          error
-	setSpeedErr      error
-	setPauseErr      error
-	showTextErr      error
-	remainingTime    int64
-	remainingTimeErr error
-	eventChan        chan *playerEvent
+	mu                   sync.Mutex
+	calls                map[string]int
+	lastShowText         string
+	lastSpeed            float64
+	lastPauseState       bool
+	validateVideoFileErr error
+	loadFileErr          error
+	setupEventsErr       error
+	setFullscreenErr     error
+	setKeepOpenErr       error
+	SetOSDErr            error
+	seekErr              error
+	setSpeedErr          error
+	setPauseErr          error
+	showTextErr          error
+	remainingTime        int64
+	remainingTimeErr     error
+	eventChan            chan *playerEvent
 }
 
 // updateSpeedTestCase defines a test case for updateSpeedFromController
@@ -122,6 +123,14 @@ func (m *mockMediaPlayer) callCount(name string) int {
 // waitEvent waits for a player event or times out
 func (m *mockMediaPlayer) terminatePlayer() {
 	m.recordCall("terminatePlayer")
+}
+
+// validateVideoFile validates the video file format
+func (m *mockMediaPlayer) validateVideoFile(_ string, _ string) error {
+
+	m.recordCall("validateVideoFile")
+
+	return m.validateVideoFileErr
 }
 
 // loadFile loads a video file into the mock media player

@@ -148,11 +148,16 @@ func (p *PlaybackController) PlaybackSpeed() float64 {
 func (p *PlaybackController) configurePlayback() error {
 
 	// Configure playback options before loadFile() for mpv
-	if err := p.configurePreLoad(); err != nil {
+	if err := p.setPlaybackOptions(); err != nil {
 		return err
 	}
 
-	// loadFile() blocks until MediaPlayerVout confirms vout is ready
+	// Validate video file format using a tmp/headless MPV instance
+	if err := p.player.validateVideoFile(p.videoConfig.FilePath, p.videoConfig.SeekToPosition); err != nil {
+		return fmt.Errorf("%s: %s: %w", errFailedToValidateVideo.Error(), p.videoConfig.FilePath, err)
+	}
+
+	// Since the video file has now been validated, load the video file into the media player
 	if err := p.player.loadFile(p.videoConfig.FilePath); err != nil {
 		return fmt.Errorf("%s: %s: %w", errFailedToLoadVideo.Error(), p.videoConfig.FilePath, err)
 	}
@@ -169,14 +174,6 @@ func (p *PlaybackController) configurePlayback() error {
 	return nil
 }
 
-// configurePreLoad handles configuration steps required before loading the video file
-func (p *PlaybackController) configurePreLoad() error {
-
-	// mpv requires playback options set before loadFile()
-	return p.setPlaybackOptions()
-
-}
-
 // configureCommon handles configuration steps common to media players after loading
 func (p *PlaybackController) configureCommon() error {
 
@@ -190,8 +187,7 @@ func (p *PlaybackController) configureCommon() error {
 		return err
 	}
 
-	// Configure OSD while player is still playing — vout confirmed ready via MediaPlayerVout
-	// so marquee filter is fully attached for both file sizes
+	// Configure OSD if enabled (must be done after loadFile() for mpv since vout needs to be initialized)
 	if p.osdConfig.showOSD {
 		return p.player.setOSD(p.osdConfig)
 	}

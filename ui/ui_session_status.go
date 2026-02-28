@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	errFormat     = "%v: %w"
-	StatusUnknown = "unknown"
+	errFormat              = "%v: %w"
+	StatusUnknown          = "unknown"
+	errSeekExceedsDuration = "The configured start/seek time exceeds the video playback duration.\n\nPlease edit the BSC session file and try again."
 )
 
 // setupSessionStatusSignals wires up event listeners for the session status tab (Page 2)
@@ -112,12 +113,17 @@ func (sc *SessionController) handleStartError(err error) {
 
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session start failed: %v", err))
 
-		// Check for scanning timeout special case, and show appropriate message
-		if errors.Is(err, ble.ErrScanTimeout) {
+		// Check for specific error cases and show appropriate messages
+		switch {
+		case errors.Is(err, ble.ErrScanTimeout):
 			sessionConnectTimeout := sc.SessionManager.ActiveConfig().BLE.ScanTimeoutSecs
 			displayAlertDialog(sc.UI.Window, "BSC Session Start Timeout", fmt.Sprintf("Failed to start the BSC Session due to a BLE device timeout (%ds).\n\nPlease restart the BSC Session.", sessionConnectTimeout))
-		} else {
-			displayAlertDialog(sc.UI.Window, "Start Session Failed", "Failed to start the BSC Session.\n\nPlease review the BSC Session Log for details.")
+
+		case errors.Is(err, video.ErrSeekExceedsDuration):
+			displayAlertDialog(sc.UI.Window, "BSC Session Video Error", errSeekExceedsDuration)
+
+		default:
+			displayAlertDialog(sc.UI.Window, "Start Session Error", "Failed to start the BSC Session.\n\nPlease review the BSC Session Log for details.")
 		}
 
 	})
@@ -168,6 +174,7 @@ func (sc *SessionController) startSessionGUI() {
 
 	// Start the session
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services starting...")
+
 	err := sc.SessionManager.StartSession()
 	if err != nil {
 		sc.handleStartError(err)
@@ -286,13 +293,20 @@ func (sc *SessionController) startMetricsLoop() {
 		// Check for async failure (e.g., invalid video file)
 		if state == session.StateError {
 
+			errMsg := sc.SessionManager.ErrorMessage()
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session error")
+			logger.Error(logger.BackgroundCtx, logger.GUI, "session error: "+errMsg)
 
-			// Differentiate between a crash (invalid file) and EOF (video complete) based on error message
-			if strings.Contains(sc.SessionManager.ErrorMessage(), video.ErrVideoComplete.Error()) {
+			// Present clean, friendly UI alerts based on the specific error
+			switch {
+			case strings.Contains(errMsg, video.ErrVideoComplete.Error()):
 				displayAlertDialog(sc.UI.Window, "The BSC Session has Ended", "The video playback has finished.\n\nSession stopped.")
-			} else {
-				displayAlertDialog(sc.UI.Window, "BSC Session Load Failed", "Invalid video file format. Edit the session file and try again.\n\nPlease review the BSC Session Log for details.")
+
+			case strings.Contains(errMsg, video.ErrSeekExceedsDuration.Error()):
+				displayAlertDialog(sc.UI.Window, "BSC Session Load Error", errSeekExceedsDuration)
+
+			default:
+				displayAlertDialog(sc.UI.Window, "BSC Session Error", "An unexpected session error has occurred.\n\nPlease review the BSC Session Log for details.")
 			}
 
 			// Reset UI and application state

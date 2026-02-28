@@ -80,7 +80,7 @@ Note that the output below was generated when `logging_level` is set to `debug` 
 14:40:41 [DBG] [VID] attempting to load file: /home/richbl/Downloads/test_videos/BSC_placeholder_video_14s.mp4
 14:40:41 [DBG] [VID] command succeeded, now validating file...
 14:40:41 [DBG] [VID] starting mpv video file validation loop
-14:40:41 [DBG] [VID] media file successfully loaded: validating dimensions
+14:40:41 [DBG] [VID] video file successfully loaded: validating dimensions
 14:40:41 [DBG] [VID] checkVideoDimensions: starting dimension check
 14:40:41 [DBG] [VID] validation successful, draining remaining events
 14:40:41 [INF] [VID] video file validation succeeded
@@ -188,7 +188,7 @@ Finally, let's watch when the user stops the **BLE Sync Cycle** application...
 14:45:08 [DBG] [BLE] interrupt detected, stopping the monitoring for BLE sensor notifications...
 14:45:08 [DBG] [APP] shutting down ShutdownManager object (id:0001)...
 14:45:08 [DBG] [VID] call to terminate mpv completed successfully
-14:45:08 [DBG] [VID] destroyed MPV handle: C resources released
+14:45:08 [DBG] [VID] destroyed MPV handle
 14:45:08 [DBG] [VID] destroyed video controller object (id:0001)
 14:45:08 [DBG] [APP] ShutdownManager (id:0001) services stopped
 14:45:08 [DBG] [APP] ShutdownManager (id:0001) services stopped
