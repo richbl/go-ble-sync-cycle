@@ -3,6 +3,8 @@ package video
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -15,20 +17,23 @@ var (
 	errPlayerNotInitialized      = errors.New("media player not initialized")
 	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")
 	errInvalidVideoDimensions    = errors.New("video dimensions are invalid")
-	errNoVideoTrack              = errors.New("media file does not contain a video track")
+	errNoVideoTrack              = errors.New("video file does not contain a video track")
 	errFailedToCreatePlayer      = errors.New("failed to instantiate media player")
 	errStreamTimeout             = errors.New("timeout waiting for video stream")
 	errPlaybackEndedUnexpectedly = errors.New("playback ended unexpectedly")
+	errFailedToValidateVideo     = errors.New("failed to validate video file")
 	errFailedToLoadVideo         = errors.New("failed to load video")
 	errUnableToSeek              = errors.New("failed to seek to specified position in media player")
-	ErrVideoComplete             = errors.New("video playback completed")
+	ErrSeekExceedsDuration       = errors.New("seek position exceeds video file duration")
+
+	//
+	ErrVideoComplete = errors.New("video playback completed")
 )
 
 // videoValidationInfo holds video properties discovered when validating a media file
 type videoValidationInfo struct {
-	width    int
-	height   int
-	duration float64
+	width  int
+	height int
 }
 
 const (
@@ -66,6 +71,7 @@ type osdConfig struct {
 type mediaPlayer interface {
 
 	// Playback methods
+	validateVideoFile(videoPath string, position string) error
 	loadFile(path string) error
 	setSpeed(speed float64) error
 	setPause(paused bool) error
@@ -124,4 +130,56 @@ func queryGuarded[T any](mu *sync.RWMutex, isNil func() bool, action func() (T, 
 	}
 
 	return action()
+}
+
+// parseTimePosition parses a time string in "MM:SS" or "SS" format and converts to milliseconds
+func parseTimePosition(position string) (int, error) {
+
+	position = strings.TrimSpace(position)
+	var totalSeconds int64
+	var err error
+
+	if strings.Contains(position, ":") {
+		totalSeconds, err = parseMMSS(position)
+	} else {
+		totalSeconds, err = parseSS(position)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(totalSeconds * 1000), nil
+}
+
+// parseMMSS parses "MM:SS" time format and returns total seconds
+func parseMMSS(position string) (int64, error) {
+
+	parts := strings.Split(position, ":")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+	}
+
+	minutes, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil || minutes < 0 {
+		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+	}
+
+	seconds, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil || seconds < 0 || seconds > 59 {
+		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+	}
+
+	return (minutes * 60) + seconds, nil
+}
+
+// parseSS parses "SS" time format and returns total seconds
+func parseSS(position string) (int64, error) {
+
+	totalSeconds, err := strconv.ParseInt(position, 10, 64)
+	if err != nil || totalSeconds < 0 {
+		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+	}
+
+	return totalSeconds, nil
 }

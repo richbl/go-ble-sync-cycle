@@ -52,6 +52,71 @@ func newMpvPlayer(ctx context.Context) (*mpvPlayer, error) {
 	return m, nil
 }
 
+// validateVideoFile validates the video file using a tmp/headless MPV instance
+func (m *mpvPlayer) validateVideoFile(videoPath string, position string) error {
+
+	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
+
+		tempMpv := mpv.New()
+		if tempMpv == nil {
+			return errFailedToCreatePlayer
+		}
+
+		defer tempMpv.TerminateDestroy()
+
+		// Configure for tmp/headless operation
+		if err := m.configureHeadless(tempMpv); err != nil {
+			return err
+		}
+
+		// Load file
+		if err := tempMpv.Command([]string{"loadfile", videoPath}); err != nil {
+			return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
+		}
+
+		// Poll for active stream and then extract validation info
+		info, err := m.pollForActiveStream(tempMpv)
+		if err != nil {
+			return err
+		}
+
+		if err := m.validateSeekPosition(tempMpv, position); err != nil {
+			return err
+		}
+
+		// Validate the extracted information
+		if info.width == 0 || info.height == 0 {
+			return errInvalidVideoDimensions
+		}
+
+		return nil
+
+	})
+}
+
+// validateSeekPosition checks if the requested seek position is within the video duration
+func (m *mpvPlayer) validateSeekPosition(p *mpv.Mpv, position string) error {
+
+	// Get playback duration in milliseconds
+	var duration int64
+	val, _ := p.GetProperty("duration", mpv.FormatInt64)
+	if dur, ok := val.(int64); ok {
+		duration = dur * 1000
+	}
+
+	// Get requested seek position in milliseconds
+	seekPosition, err := parseTimePosition(position)
+	if err != nil {
+		return fmt.Errorf(errFormat, "unable to parse specified seek time", err)
+	}
+
+	if int64(seekPosition) > duration {
+		return fmt.Errorf("start/seek time (%ds) exceeds the video playback duration (%ds): %w", seekPosition/1000, duration/1000, ErrSeekExceedsDuration)
+	}
+
+	return nil
+}
+
 // loadFile loads a video file into the mpv player
 func (m *mpvPlayer) loadFile(path string) error {
 
@@ -59,16 +124,6 @@ func (m *mpvPlayer) loadFile(path string) error {
 
 		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
 
-		// Validate video file format with tmp (headless) mpv instance
-		if err := m.validateVideoFile(path); err != nil {
-			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("video file validation failed: %v", err))
-
-			return err
-		}
-
-		logger.Info(logger.BackgroundCtx, logger.VIDEO, "video file validation succeeded")
-
-		// With file validated, load into full mpv player
 		if err := m.player.Command([]string{"loadfile", path}); err != nil {
 			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
 
@@ -82,46 +137,6 @@ func (m *mpvPlayer) loadFile(path string) error {
 
 		return nil
 	})
-}
-
-// validateVideoFile validates the video file using a tmp/headless MPV instance
-func (m *mpvPlayer) validateVideoFile(videoPath string) error {
-
-	tempMpv := mpv.New()
-	if tempMpv == nil {
-		return errFailedToCreatePlayer
-	}
-
-	defer tempMpv.TerminateDestroy()
-
-	// Configure for tmp/headless operation
-	if err := m.configureHeadless(tempMpv); err != nil {
-		return err
-	}
-
-	// Load file
-	if err := tempMpv.Command([]string{"loadfile", videoPath}); err != nil {
-		return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
-	}
-
-	// Poll for active stream and then extract validation info
-	info, err := m.pollForActiveStream(tempMpv)
-	if err != nil {
-		return err
-	}
-
-	// Get playback duration
-	val, _ := tempMpv.GetProperty("duration", mpv.FormatDouble)
-	if dur, ok := val.(float64); ok {
-		info.duration = float64(dur)
-	}
-
-	// Validate the extracted information
-	if info.width == 0 || info.height == 0 {
-		return errInvalidVideoDimensions
-	}
-
-	return nil
 }
 
 // configureHeadless configures an mpv instance for tmp/headless operation
@@ -143,7 +158,7 @@ func (m *mpvPlayer) configureHeadless(p *mpv.Mpv) error {
 	}
 
 	if err := p.Initialize(); err != nil {
-		return fmt.Errorf("failed to initialize headless MPV: %w", err)
+		return fmt.Errorf("failed to initialize tmp/headless MPV: %w", err)
 	}
 
 	return nil
@@ -243,7 +258,7 @@ func (m *mpvPlayer) extractStreamInfo(p *mpv.Mpv) (*videoValidationInfo, bool) {
 // waitForFileLoaded waits for the file-loaded event in the mpv player
 func (m *mpvPlayer) waitForFileLoaded() error {
 
-	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "waiting for file to load into mpv player")
+	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "waiting for file to load into mpv player...")
 
 	const maxEvents = 20
 	eventCount := 0
@@ -259,7 +274,7 @@ func (m *mpvPlayer) waitForFileLoaded() error {
 
 		switch event.EventID {
 		case mpv.EventFileLoaded:
-			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "media file successfully loaded into mpv player")
+			logger.Debug(logger.BackgroundCtx, logger.VIDEO, "video file successfully loaded into mpv player")
 			m.drainEvents()
 
 			return nil
@@ -395,9 +410,11 @@ func (m *mpvPlayer) setOSD(options osdConfig) error {
 		if err := m.player.SetOption("osd-margin-x", mpv.FormatInt64, int64(options.marginX)); err != nil {
 			return fmt.Errorf(errFormat, "failed to set OSD X position", err)
 		}
+
 		if err := m.player.SetOption("osd-margin-y", mpv.FormatInt64, int64(options.marginY)); err != nil {
 			return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
 		}
+
 		if err := m.player.SetOption("osd-font-size", mpv.FormatInt64, int64(options.fontSize)); err != nil {
 			return fmt.Errorf(errFormat, "failed to set OSD font size", err)
 		}
@@ -485,7 +502,7 @@ func (m *mpvPlayer) terminatePlayer() {
 		}
 
 		m.player = nil
-		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "destroyed MPV handle: C resources released")
+		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "destroyed MPV handle")
 	}
 }
 
