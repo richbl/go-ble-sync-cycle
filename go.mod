@@ -7,7 +7,6 @@ require (
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20250703085337-e94555b846b6
 	github.com/diamondburned/gotk4/pkg v0.3.2-0.20250703063411-16654385f59a
 	github.com/gen2brain/go-mpv v0.2.3
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
 	github.com/stretchr/testify v1.11.1
 	tinygo.org/x/bluetooth v0.13.0
 )
@@ -19,7 +18,6 @@ require (
 )
 
 require (
-	github.com/adrg/libvlc-go/v3 v3.1.6
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect

@@ -18,13 +18,15 @@ type VideoConfig struct {
 
 // VideoOSDConfig defines on-screen display settings for video playback from the TOML config file
 type VideoOSDConfig struct {
-	FontSize             int  `toml:"font_size"`
-	MarginX              int  `toml:"margin_left"`
-	MarginY              int  `toml:"margin_top"`
-	DisplayCycleSpeed    bool `toml:"display_cycle_speed"`
-	DisplayPlaybackSpeed bool `toml:"display_playback_speed"`
-	DisplayTimeRemaining bool `toml:"display_time_remaining"`
-	ShowOSD              bool `toml:"-"`
+	FontSize             int    `toml:"font_size"`
+	MarginX              int    `toml:"margin_x"`
+	MarginY              int    `toml:"margin_y"`
+	AlignX               string `toml:"align_x"`
+	AlignY               string `toml:"align_y"`
+	DisplayCycleSpeed    bool   `toml:"display_cycle_speed"`
+	DisplayPlaybackSpeed bool   `toml:"display_playback_speed"`
+	DisplayTimeRemaining bool   `toml:"display_time_remaining"`
+	ShowOSD              bool   `toml:"-"`
 }
 
 // validate checks VideoConfig for valid settings
@@ -38,8 +40,28 @@ func (vc *VideoConfig) validate() error {
 		MediaPlayerMPV: true,
 	}
 
+	validAlignX := map[string]bool{
+		"left":   true,
+		"center": true,
+		"right":  true,
+	}
+
+	validAlignY := map[string]bool{
+		"top":    true,
+		"center": true,
+		"bottom": true,
+	}
+
 	if !validPlayer[vc.MediaPlayer] {
 		return fmt.Errorf(errFormatRev, errInvalidPlayer, vc.MediaPlayer)
+	}
+
+	if !validAlignX[vc.OnScreenDisplay.AlignX] {
+		return fmt.Errorf(errFormatRev, errInvalidAlignX, vc.OnScreenDisplay.AlignX)
+	}
+
+	if !validAlignY[vc.OnScreenDisplay.AlignY] {
+		return fmt.Errorf(errFormatRev, errInvalidAlignY, vc.OnScreenDisplay.AlignY)
 	}
 
 	if err := validateConfigFields(vc.configValidationRanges()); err != nil {
@@ -65,8 +87,8 @@ func (vc *VideoConfig) configValidationRanges() *[]validationRange {
 		{vc.UpdateIntervalSec, 0.1, 3.0, errInvalidInterval},
 		{vc.SpeedMultiplier, 0.1, 1.5, errSpeedMultiplier},
 		{vc.OnScreenDisplay.FontSize, 10, 200, errFontSize},
-		{vc.OnScreenDisplay.MarginX, 0, 100, errOSDMargin},
-		{vc.OnScreenDisplay.MarginY, 0, 100, errOSDMargin},
+		{vc.OnScreenDisplay.MarginX, 0, 300, errOSDMargin},
+		{vc.OnScreenDisplay.MarginY, 0, 600, errOSDMargin},
 	}
 
 }

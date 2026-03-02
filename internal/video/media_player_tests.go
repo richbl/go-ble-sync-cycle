@@ -131,7 +131,7 @@ func testPlayerConfiguration(t *testing.T, factory playerFactory, playerName str
 	})
 
 	t.Run("setOSD", func(t *testing.T) {
-		opts := osdConfig{fontSize: 50, marginX: 20, marginY: 20}
+		opts := osdConfig{fontSize: 50, marginX: 20, marginY: 20, alignX: "center", alignY: "bottom"}
 
 		if err := player.setOSD(opts); err != nil {
 			t.Errorf("setOSD() error = %v", err)

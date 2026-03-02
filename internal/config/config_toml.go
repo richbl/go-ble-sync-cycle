@@ -41,8 +41,10 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
   display_playback_speed = {{.Video.OnScreenDisplay.DisplayPlaybackSpeed}}{{pad (printf "display_playback_speed = %t" .Video.OnScreenDisplay.DisplayPlaybackSpeed)}}# Display the current video playback speed on the on-screen display (true/false)
   display_time_remaining = {{.Video.OnScreenDisplay.DisplayTimeRemaining}}{{pad (printf "display_time_remaining = %t" .Video.OnScreenDisplay.DisplayTimeRemaining)}}# Display the current video time remaining on the on-screen display (true/false)
   font_size = {{.Video.OnScreenDisplay.FontSize}}{{pad (printf "font_size = %d" .Video.OnScreenDisplay.FontSize)}}# Font size of the on-screen display (10-200 pixels)
-  margin_left = {{.Video.OnScreenDisplay.MarginX}}{{pad (printf "margin_left = %d" .Video.OnScreenDisplay.MarginX)}}# Offset of the OSD from the left of the media player window (0-100 pixels)
-  margin_top = {{.Video.OnScreenDisplay.MarginY}}{{pad (printf "margin_top = %d" .Video.OnScreenDisplay.MarginY)}}# Offset of the OSD from the top of the media player window (0-100 pixels)
+  align_x = "{{.Video.OnScreenDisplay.AlignX}}"{{pad (printf "align_x = \"%s\"" .Video.OnScreenDisplay.AlignX)}}# The horizontal position of the OSD ("left", "center", "right")
+  align_y = "{{.Video.OnScreenDisplay.AlignY}}"{{pad (printf "align_y = \"%s\"" .Video.OnScreenDisplay.AlignY)}}# The vertical position of the OSD ("top", "center", "bottom")  	
+  margin_x = {{.Video.OnScreenDisplay.MarginX}}{{pad (printf "margin_x = %d" .Video.OnScreenDisplay.MarginX)}}# Margin for the left/right edge of the media player window (0-300 pixels)
+  margin_y = {{.Video.OnScreenDisplay.MarginY}}{{pad (printf "margin_y = %d" .Video.OnScreenDisplay.MarginY)}}# Margin for the top/bottom edge of the media player window (0-600 pixels)
 `
 
 // tomlContent wraps Config with version info for TOML template creation

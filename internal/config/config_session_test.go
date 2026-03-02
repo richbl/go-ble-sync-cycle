@@ -119,8 +119,10 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
     display_playback_speed = true
     display_time_remaining = true
     font_size = 40
-    margin_left = 10
-    margin_top = 10
+		margin_x = 10
+		margin_y = 10
+		align_x = "left"
+		align_y = "top"
 `
 
 	createTestConfigFile(t, tempFile, configContent)
@@ -179,8 +181,10 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
     display_playback_speed = true
     display_time_remaining = true
     font_size = 40
-    margin_left = 10
-    margin_top = 10
+		margin_x = 10
+		margin_y = 10
+		align_x = "left"
+		align_y = "top"
 `
 
 	createTestConfigFile(t, tempFile, configContent)
@@ -236,8 +240,10 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
     display_playback_speed = true
     display_time_remaining = true
     font_size = 40
-    margin_left = 10
-    margin_top = 10
+		margin_x = 10
+		margin_y = 10
+		align_x = "left"
+		align_y = "top"
 `
 
 	createTestConfigFile(t, tempFile, configContent)

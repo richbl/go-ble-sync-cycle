@@ -240,6 +240,8 @@ func createDefaultConfig(videoPath string) *config.Config {
 				FontSize:             40,
 				MarginX:              20,
 				MarginY:              20,
+				AlignX:               "left",
+				AlignY:               "top",
 				ShowOSD:              true,
 			},
 		},

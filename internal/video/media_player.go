@@ -61,6 +61,8 @@ type osdConfig struct {
 	fontSize             int
 	marginX              int
 	marginY              int
+	alignX               string
+	alignY               string
 	showOSD              bool
 	displayCycleSpeed    bool
 	displayPlaybackSpeed bool

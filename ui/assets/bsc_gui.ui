@@ -722,19 +722,53 @@
                               </object>
                             </child>
                             <child>
+                              <object class="AdwComboRow" id="align_x_combo">
+                                <property name="model">
+                                  <object class="GtkStringList" id="align_x_list">
+                                    <items>
+                                      <item translatable="yes">left</item>
+                                      <item translatable="yes">center</item>
+                                      <item translatable="yes">right</item>
+                                    </items>
+                                  </object>
+                                </property>
+                                <property name="selected">0</property>
+                                <property name="title">Horizontal Position</property>
+                                <property name="tooltip-text">The horizontal position of the OSD ("left", "center", "right")</property>
+                                <property name="sensitive">False</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="AdwComboRow" id="align_y_combo">
+                                <property name="model">
+                                  <object class="GtkStringList" id="align_y_list">
+                                    <items>
+                                      <item translatable="yes">top</item>
+                                      <item translatable="yes">center</item>
+                                      <item translatable="yes">bottom</item>
+                                    </items>
+                                  </object>
+                                </property>
+                                <property name="selected">0</property>
+                                <property name="title">Vertical Position</property>
+                                <property name="tooltip-text">The vertical position of the OSD ("top", "center", "bottom")</property>
+                                <property name="sensitive">False</property>
+                              </object>
+                            </child>
+                            <child>
                               <object class="AdwSpinRow" id="pixel_offset_left_spin">
                                 <property name="adjustment">
                                   <object class="GtkAdjustment" id="pixel_offset_left_adjustment">
                                     <property name="lower">0</property>
                                     <property name="page-increment">10</property>
                                     <property name="step-increment">1</property>
-                                    <property name="upper">100</property>
+                                    <property name="upper">300</property>
                                     <property name="value">25</property>
                                   </object>
                                 </property>
                                 <property name="subtitle">pixels</property>
-                                <property name="title">Left Margin</property>
-                                <property name="tooltip-text" translatable="yes">Offset of the OSD from the left of the media player window (0-100 pixels)</property>
+                                <property name="title">Horizontal Margin</property>
+                                <property name="tooltip-text" translatable="yes">Margin for the left/right edge of the media player window (0-300 pixels)</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
@@ -745,13 +779,13 @@
                                     <property name="lower">0</property>
                                     <property name="page-increment">10</property>
                                     <property name="step-increment">1</property>
-                                    <property name="upper">100</property>
+                                    <property name="upper">600</property>
                                     <property name="value">25</property>
                                   </object>
                                 </property>
                                 <property name="subtitle">pixels</property>
-                                <property name="title">Top Margin</property>
-                                <property name="tooltip-text" translatable="yes">Offset of the OSD from the top of the media player window (0-100 pixels)</property>
+                                <property name="title">Vertical Margin</property>
+                                <property name="tooltip-text" translatable="yes">Margin for the top/bottom edge of the media player window (0-600 pixels)</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>

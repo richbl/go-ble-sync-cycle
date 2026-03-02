@@ -94,6 +94,8 @@ func newOSDConfig(displayConfig config.VideoOSDConfig) osdConfig {
 		displayTimeRemaining: displayConfig.DisplayTimeRemaining,
 		marginX:              displayConfig.MarginX,
 		marginY:              displayConfig.MarginY,
+		alignX:               displayConfig.AlignX,
+		alignY:               displayConfig.AlignY,
 	}
 }
 

@@ -18,6 +18,8 @@ var (
 	logLevels    = []string{"debug", "info", "warn", "error"}
 	speedUnits   = []string{"mph", "km/h"}
 	mediaPlayers = []string{"mpv"}
+	alignX       = []string{"left", "center", "right"}
+	alignY       = []string{"top", "center", "bottom"}
 )
 
 // setupSessionEditSignals wires up event listeners for the Edit tab and its controls
@@ -147,6 +149,8 @@ func (sc *SessionController) populateEditor() {
 	p4.FontSize.SetValue(float64(cfg.Video.OnScreenDisplay.FontSize))
 	p4.MarginLeft.SetValue(float64(cfg.Video.OnScreenDisplay.MarginX))
 	p4.MarginTop.SetValue(float64(cfg.Video.OnScreenDisplay.MarginY))
+	p4.AlignX.SetSelected(indexOf(cfg.Video.OnScreenDisplay.AlignX, alignX))
+	p4.AlignY.SetSelected(indexOf(cfg.Video.OnScreenDisplay.AlignY, alignY))
 
 	// Enable all widgets
 	toggleSensitive(p4, true)
@@ -208,6 +212,8 @@ func (sc *SessionController) harvestEditor() *config.Config {
 	cfg.Video.OnScreenDisplay.FontSize = int(p4.FontSize.Value())
 	cfg.Video.OnScreenDisplay.MarginX = int(p4.MarginLeft.Value())
 	cfg.Video.OnScreenDisplay.MarginY = int(p4.MarginTop.Value())
+	cfg.Video.OnScreenDisplay.AlignX = alignX[p4.AlignX.Selected()]
+	cfg.Video.OnScreenDisplay.AlignY = alignY[p4.AlignY.Selected()]
 
 	return cfg
 }
