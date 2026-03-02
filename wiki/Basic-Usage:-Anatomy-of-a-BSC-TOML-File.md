@@ -47,8 +47,10 @@ The default `config.toml` file is shown below:
     display_playback_speed = true # Display the current video playback speed on the on-screen display (true/false)
     display_time_remaining = true # Display the current video time remaining on the on-screen display (true/false)
     font_size = 40                # Font size of the on-screen display (10-200 pixels)
-    margin_left = 25              # Offset of the OSD from the left of the media player window (0-100 pixels)
-    margin_top = 25               # Offset of the OSD from the top of the media player window (0-100 pixels)
+    align_x = "left"              # The horizontal position of the OSD ("left", "center", "right")
+    align_y = "top"               # The vertical position of the OSD ("top", "center", "bottom")   
+    margin_x = 20                 # Margin for the left/right edge of the media player window (0-300 pixels)
+    margin_y = 20                 # Margin for the top/bottom edge of the media player window (0-600 pixels)
 ```
 
 An explanation of the various sections of the `config.toml` file is provided below:
@@ -100,5 +102,7 @@ The `[video.osd]` sub-section of the `[video]` section defines the configuration
 - `display_playback_speed`: A boolean value that indicates whether to display the video playback speed on the on-screen display (OSD)
 - `display_time_remaining`: A boolean value that indicates whether to display the time remaining (using the format HH:MM:SS) on the on-screen display (OSD)
 - `font_size`: Font size of the on-screen display (10-200 pixels)
-- `margin_left`: Offset of the OSD from the left of the media player window (0-100 pixels)
-- `margin_top`: Offset of the OSD from the top of the media player window (0-100 pixels)
+- `align_x`: The horizontal position of the OSD ("left", "center", "right")
+- `align_y`: The vertical position of the OSD ("top", "center", "bottom")
+- `margin_x`: Margin for the left/right edge of the media player window (0-300 pixels)
+- `margin_y`: Margin for the top/bottom edge of the media player window (0-600 pixels)

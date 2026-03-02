@@ -53,7 +53,7 @@ func newMpvPlayer(ctx context.Context) (*mpvPlayer, error) {
 }
 
 // validateVideoFile validates the video file using a tmp/headless MPV instance
-func (m *mpvPlayer) validateVideoFile(videoPath string, position string) error {
+func (m *mpvPlayer) validateVideoFile(videoPath, position string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 
@@ -407,16 +407,24 @@ func (m *mpvPlayer) setOSD(options osdConfig) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
 
+		if err := m.player.SetOption("osd-font-size", mpv.FormatInt64, int64(options.fontSize)); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD font size", err)
+		}
+
 		if err := m.player.SetOption("osd-margin-x", mpv.FormatInt64, int64(options.marginX)); err != nil {
-			return fmt.Errorf(errFormat, "failed to set OSD X position", err)
+			return fmt.Errorf(errFormat, "failed to set OSD horizontal margin", err)
 		}
 
 		if err := m.player.SetOption("osd-margin-y", mpv.FormatInt64, int64(options.marginY)); err != nil {
-			return fmt.Errorf(errFormat, "failed to set OSD Y position", err)
+			return fmt.Errorf(errFormat, "failed to set OSD vertical margin", err)
 		}
 
-		if err := m.player.SetOption("osd-font-size", mpv.FormatInt64, int64(options.fontSize)); err != nil {
-			return fmt.Errorf(errFormat, "failed to set OSD font size", err)
+		if err := m.player.SetOptionString("osd-align-x", options.alignX); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD horizontal position", err)
+		}
+
+		if err := m.player.SetOptionString("osd-align-y", options.alignY); err != nil {
+			return fmt.Errorf(errFormat, "failed to set OSD vertical position", err)
 		}
 
 		return nil

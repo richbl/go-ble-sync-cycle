@@ -61,6 +61,8 @@ type osdConfig struct {
 	fontSize             int
 	marginX              int
 	marginY              int
+	alignX               string
+	alignY               string
 	showOSD              bool
 	displayCycleSpeed    bool
 	displayPlaybackSpeed bool
@@ -71,7 +73,7 @@ type osdConfig struct {
 type mediaPlayer interface {
 
 	// Playback methods
-	validateVideoFile(videoPath string, position string) error
+	validateVideoFile(videoPath, position string) error
 	loadFile(path string) error
 	setSpeed(speed float64) error
 	setPause(paused bool) error

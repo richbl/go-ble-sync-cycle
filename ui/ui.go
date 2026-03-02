@@ -101,6 +101,8 @@ type PageSessionEditor struct {
 	FontSize            *adw.SpinRow
 	MarginLeft          *adw.SpinRow
 	MarginTop           *adw.SpinRow
+	AlignX              *adw.ComboRow
+	AlignY              *adw.ComboRow
 
 	// Save Actions
 	SaveRow      *adw.ActionRow
@@ -273,6 +275,8 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		FontSize:            objGTK[*adw.SpinRow](builder, "display_font_size_spin"),
 		MarginLeft:          objGTK[*adw.SpinRow](builder, "pixel_offset_left_spin"),
 		MarginTop:           objGTK[*adw.SpinRow](builder, "pixel_offset_top_spin"),
+		AlignX:              objGTK[*adw.ComboRow](builder, "align_x_combo"),
+		AlignY:              objGTK[*adw.ComboRow](builder, "align_y_combo"),
 		SaveRow:             objGTK[*adw.ActionRow](builder, "edit_save_row"),
 		SaveButton:          objGTK[*gtk.Button](builder, "save_button"),
 		SaveAsButton:        objGTK[*gtk.Button](builder, "save_as_button"),

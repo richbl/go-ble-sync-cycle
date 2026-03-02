@@ -126,7 +126,7 @@ func (m *mockMediaPlayer) terminatePlayer() {
 }
 
 // validateVideoFile validates the video file format
-func (m *mockMediaPlayer) validateVideoFile(_ string, _ string) error {
+func (m *mockMediaPlayer) validateVideoFile(_, _ string) error {
 
 	m.recordCall("validateVideoFile")
 

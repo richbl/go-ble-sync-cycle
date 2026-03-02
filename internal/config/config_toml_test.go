@@ -137,6 +137,8 @@ func createTestConfig() *Config {
 				FontSize:             20,
 				MarginX:              10,
 				MarginY:              10,
+				AlignX:               "left",
+				AlignY:               "top",
 			},
 		},
 	}
