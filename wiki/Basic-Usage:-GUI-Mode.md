@@ -155,7 +155,17 @@ The **On-Screen Display (OSD)** section displays the on-screen display (OSD) set
 
 - The **Show Time Remaining** field specifies whether to display the current video time remaining on the on-screen display (OSD). The default value is true
 
-- The remaining fields--**Font Size**, **Left Margin**, and **Top Margin**--are used to configure the font size, left margin, and top margin of the on-screen display (OSD)
+##### OSD Placement and Appearance
+
+- The **Font Size** field specifies the font size of the on-screen display (OSD). This value is between 10 and 200 pixels
+
+- The **Horizontal Position** field specifies the horizontal position of the on-screen display (OSD) on the screen ("left", "center", or "right")
+
+- The **Vertical Position** field specifies the vertical position of the on-screen display (OSD) on the screen ("top", "center", or "bottom")
+
+- The **Horizontal Margin** field specifies the left/right edge margin of the on-screen display (OSD) in pixels. This value is between 0 and 300 pixels
+
+- The **Vertical Margin** field specifies the top/bottom edge margin of the on-screen display (OSD) in pixels. This value is between 0 and 600 pixels
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
