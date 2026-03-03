@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/flags"
+	"github.com/richbl/go-ble-sync-cycle/internal/installer"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/services"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
@@ -28,6 +29,8 @@ func main() {
 	// Parse for command-line flags
 	parseCLIFlags()
 	checkForHelpFlag()
+	checkForInstallFlag()
+	checkForUninstallFlag()
 
 	// Check for application mode (CLI or GUI)
 	if !flags.IsCLIMode() {
@@ -88,12 +91,44 @@ func parseCLIFlags() {
 
 }
 
+// checkForInstallFlag checks for the installer flag passed on the command-line
+func checkForInstallFlag() {
+
+	if !flags.IsInstallFlag() {
+		return
+	}
+
+	if err := installer.Install(); err != nil {
+		logger.Fatal(logger.BackgroundCtx, logger.APP, fmt.Sprintf("installation failed: %v", err))
+	}
+
+	services.WaveGoodbye(logger.BackgroundCtx)
+
+}
+
+// checkForUninstallFlag checks for the uninstaller flag passed on the command-line
+func checkForUninstallFlag() {
+
+	if !flags.IsUninstallFlag() {
+		return
+	}
+
+	if err := installer.Uninstall(); err != nil {
+		logger.Fatal(logger.BackgroundCtx, logger.APP, fmt.Sprintf("uninstallation failed: %v", err))
+	}
+
+	services.WaveGoodbye(logger.BackgroundCtx)
+
+}
+
 // checkForHelpFlag checks for the help flag passed on the command-line
 func checkForHelpFlag() {
 
-	if flags.IsHelpFlag() {
-		flags.ShowHelp()
-		services.WaveGoodbye(logger.BackgroundCtx)
+	if !flags.IsHelpFlag() {
+		return
 	}
+
+	flags.ShowHelp()
+	services.WaveGoodbye(logger.BackgroundCtx)
 
 }
