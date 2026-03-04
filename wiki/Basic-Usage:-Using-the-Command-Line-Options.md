@@ -8,8 +8,6 @@
 When running in CLI mode, **BLE Sync Cycle** supports several command-line option flags to override various configuration settings. These flags are:
 
 ```console
------------------------------------------------------------------------------------
-
 Usage: ble-sync-cycle [flags]
 
 The following flags are available when running in console/CLI mode:
@@ -17,14 +15,13 @@ The following flags are available when running in console/CLI mode:
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
   -s, --seek         Seek to a specific time in the video ('MM:SS')
+  -i, --install      Install the BSC application to the local user environment
+  -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message
 
 The following flag is available when running in GUI mode:
 
   -l, --log-console  Enable logging to the console
-
------------------------------------------------------------------------------------
-
 ```
 
 ### Running **BLE Sync Cycle** in CLI Mode
@@ -80,7 +77,9 @@ To display the help message, you can use the `-h` (or `--help`) command line opt
 The output of that command is as follows:
 
 ```console
------------------------------------------------------------------------------------
+18:25:46 [INF] [APP] ---------------------------------------------------
+18:25:46 [INF] [APP] BLE Sync Cycle v0.51.0 starting...
+18:25:46 [INF] [APP] ---------------------------------------------------
 
 Usage: ble-sync-cycle [flags]
 
@@ -89,11 +88,15 @@ The following flags are available when running in console/CLI mode:
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
   -s, --seek         Seek to a specific time in the video ('MM:SS')
+  -i, --install      Install the BSC application to the local user environment
+  -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message
 
 The following flag is available when running in GUI mode:
 
   -l, --log-console  Enable logging to the console
 
------------------------------------------------------------------------------------
+18:25:46 [INF] [APP] ---------------------------------------------------
+18:25:46 [INF] [APP] BLE Sync Cycle v0.51.0 shutdown complete. Goodbye
+18:25:46 [INF] [APP] ---------------------------------------------------
 ```

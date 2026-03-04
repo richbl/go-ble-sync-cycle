@@ -187,7 +187,29 @@ func getBinHome(homeDir string) string {
 	return filepath.Join(homeDir, ".local", "bin")
 }
 
-// copyLocalFile copies a file from the local filesystem to the destination path
+// copyToFile copies data to a file with the specified permissions
+func copyToFile(r io.Reader, dst string, perm fs.FileMode) error {
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return fmt.Errorf("open destination %s: %w", dst, err)
+	}
+
+	if _, err := io.Copy(out, r); err != nil {
+		out.Close()
+
+		return fmt.Errorf("copy to %s: %w", dst, err)
+	}
+
+	// Close explicitly (not via defer) so write errors are not silently swallowed
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("close %s: %w", dst, err)
+	}
+
+	return nil
+}
+
+// copyLocalFile copies a file to a destination path with the specified permissions
 func copyLocalFile(src, dst string, perm fs.FileMode) error {
 
 	in, err := os.Open(src)
@@ -197,50 +219,20 @@ func copyLocalFile(src, dst string, perm fs.FileMode) error {
 
 	defer in.Close()
 
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
-	if err != nil {
-		return fmt.Errorf("open destination %s: %w", dst, err)
-	}
-
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-
-		return fmt.Errorf("copy to %s: %w", dst, err)
-	}
-
-	if err := out.Close(); err != nil {
-		return fmt.Errorf("close %s: %w", dst, err)
-	}
-
-	return nil
+	return copyToFile(in, dst, perm)
 }
 
-// copyEmbeddedFile copies a file from the embedded assets to the destination path
-func copyEmbeddedFile(embeddedName, dst string, perm fs.FileMode) error {
+// copyEmbeddedFile copies a file from the embedded assets to a destination path
+func copyEmbeddedFile(name, dst string, perm fs.FileMode) error {
 
-	in, err := assets.InstallerAssets.Open(embeddedName)
+	in, err := assets.InstallerAssets.Open(name)
 	if err != nil {
-		return fmt.Errorf("open embedded asset %s: %w", embeddedName, err)
+		return fmt.Errorf("open embedded asset %s: %w", name, err)
 	}
 
 	defer in.Close()
 
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
-	if err != nil {
-		return fmt.Errorf("open destination %s: %w", dst, err)
-	}
-
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-
-		return fmt.Errorf("copy to %s: %w", dst, err)
-	}
-
-	if err := out.Close(); err != nil {
-		return fmt.Errorf("close %s: %w", dst, err)
-	}
-
-	return nil
+	return copyToFile(in, dst, perm)
 }
 
 // showInstallStart displays a pre-installation message
