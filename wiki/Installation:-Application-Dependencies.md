@@ -39,4 +39,10 @@ When compiling/building the **BLE Sync Cycle** application locally, and in addit
     sudo apt-get install libmpv2
     ```
 
+- As well, the Go package used in conjunction with the mpv player ([go-mpv](https://github.com/gen2brain/go-mpv)) requires additional C language developer tools for compiling the package. To install these developer tools:
+
+    ```console
+    sudo apt-get install libmpv-dev pkg-config gcc
+    ```
+
 > Note that the [mpv](https://mpv.io/) media player itself does not need to be installed (just the mpv library)
