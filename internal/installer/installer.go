@@ -111,6 +111,9 @@ func Install() error {
 		return err
 	}
 
+	// Update the GTK icon cache so the new icon displays immediately
+	updateIconCache(paths.iconDir)
+
 	showInstallCompleted(paths)
 
 	return nil
@@ -143,6 +146,9 @@ func Uninstall() error {
 		return err
 	}
 
+	// Update the GTK icon cache so the application icon is flushed permanently
+	updateIconCache(paths.iconDir)
+
 	showInstallCompleted(paths)
 
 	return nil
@@ -165,6 +171,20 @@ func updateDesktopDatabase(appDir string) error {
 	}
 
 	return nil
+}
+
+// updateIconCache runs 'gtk-update-icon-cache' to refresh the desktop icon cache
+func updateIconCache(iconDir string) {
+
+	// Navigate up to the base ".../icons/hicolor" directory (required)
+	themeDir := filepath.Dir(filepath.Dir(iconDir))
+
+	cmd := exec.Command("gtk-update-icon-cache", "-f", "-t", "-q", themeDir)
+
+	// Ignore errors, as the user's system may not have GTK installed, so this shouldn't fail the
+	// installation (the icon will just not update immediately)
+	_ = cmd.Run()
+
 }
 
 // getDataHome returns the XDG_DATA_HOME directory or its standard fallback
