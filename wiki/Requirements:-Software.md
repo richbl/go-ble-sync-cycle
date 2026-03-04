@@ -5,11 +5,9 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-The **BLE Sync Cycle** project currently only offers the option for the local compilation/build of the application. While future releases may provide pre-built binaries (or a flatpak release), the following software requirements are needed:
-
 ### A Go Environment
 
-- In order to compile the executable for this project, an operational [Go language](https://go.dev/) environment is required (with several additional libraries installed: see [Installation:-Application-Dependencies](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation:-Application-Dependencies) for details).
+- While the **BLE Sync Cycle** project offers the option for the download of a pre-compiled application binary, if you prefer to compile the executable locally, an operational [Go language](https://go.dev/) environment is required (with several additional libraries installed: see [Installation:-Application-Dependencies](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation:-Application-Dependencies) for details).
 
   > Once the **BLE Sync Cycle** application is compiled into an executable, it can be run without further dependencies on Go
 

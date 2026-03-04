@@ -32,11 +32,13 @@ type FlagInfo struct {
 
 // CLIFlags holds a list of available command-line flags
 type CLIFlags struct {
-	Config  string
-	Seek    string
-	Logging bool
-	NoGUI   bool
-	Help    bool
+	Config    string
+	Seek      string
+	Logging   bool
+	NoGUI     bool
+	Help      bool
+	Install   bool
+	Uninstall bool
 }
 
 var (
@@ -73,6 +75,22 @@ var (
 			ShortName: "s",
 			Value:     "",
 			Usage:     "Seek to a specific time in the video ('MM:SS')",
+			Mode:      CLI,
+		},
+		{
+			Result:    &flags.Install,
+			Name:      "install",
+			ShortName: "i",
+			Value:     "false",
+			Usage:     "Install the BSC application to the local user environment",
+			Mode:      CLI,
+		},
+		{
+			Result:    &flags.Uninstall,
+			Name:      "uninstall",
+			ShortName: "u",
+			Value:     "false",
+			Usage:     "Uninstall the BSC application from the local user environment",
 			Mode:      CLI,
 		},
 		{
@@ -122,8 +140,6 @@ func ParseArgs() error {
 func ShowHelp() {
 
 	fmt.Fprintln(os.Stdout, "")
-	fmt.Fprintln(os.Stdout, "-----------------------------------------------------------------------------------")
-	fmt.Fprintln(os.Stdout, "")
 	fmt.Fprintln(os.Stdout, "Usage: ble-sync-cycle [flags]")
 	fmt.Fprintln(os.Stdout, "")
 	fmt.Fprintln(os.Stdout, "The following flags are available when running in console/CLI mode:")
@@ -146,8 +162,6 @@ func ShowHelp() {
 	}
 
 	fmt.Fprintln(os.Stdout, "")
-	fmt.Fprintln(os.Stdout, "-----------------------------------------------------------------------------------")
-	fmt.Fprintln(os.Stdout, "")
 }
 
 // Flags returns the parsed flags
@@ -168,4 +182,14 @@ func IsHelpFlag() bool {
 // IsGUIConsoleLogging returns true/false to enable CLI logging while running in GUI mode
 func IsGUIConsoleLogging() bool {
 	return flags.Logging
+}
+
+// IsInstallFlag checks if the user provided the flag to install the application
+func IsInstallFlag() bool {
+	return flags.Install
+}
+
+// IsUninstallFlag checks if the user provided the flag to uninstall the application
+func IsUninstallFlag() bool {
+	return flags.Uninstall
 }

@@ -45,15 +45,15 @@ func testCases() []struct {
 		},
 		{
 			name:     "all flags with long names",
-			args:     []string{"--config", TestConfigFile, "--seek", TestSeekPosition, "--help"},
+			args:     []string{"--config", TestConfigFile, "--seek", TestSeekPosition, "--install", "--uninstall", "--help"},
 			wantErr:  false,
-			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
+			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true, Install: true, Uninstall: true},
 		},
 		{
 			name:     "all flags with short names",
-			args:     []string{"-c", TestConfigFile, "-s", TestSeekPosition, "-h"},
+			args:     []string{"-c", TestConfigFile, "-s", TestSeekPosition, "-i", "-u", "-h"},
 			wantErr:  false,
-			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true},
+			expected: CLIFlags{Config: TestConfigFile, Seek: TestSeekPosition, Help: true, Install: true, Uninstall: true},
 		},
 		{
 			name:     "mixed short and long names",
@@ -170,8 +170,18 @@ func TestFlagInfosConfiguration(t *testing.T) {
 			wantType: (*string)(nil),
 		},
 		{
-			name:     "help flag",
+			name:     "install flag",
 			flagInfo: flagInfos[4],
+			wantType: (*bool)(nil),
+		},
+		{
+			name:     "uninstall flag",
+			flagInfo: flagInfos[5],
+			wantType: (*bool)(nil),
+		},
+		{
+			name:     "help flag",
+			flagInfo: flagInfos[6],
 			wantType: (*bool)(nil),
 		},
 	}

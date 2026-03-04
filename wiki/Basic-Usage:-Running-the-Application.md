@@ -11,10 +11,10 @@
 
 In GUI (graphical user interface) mode, the application is started and run like any other graphical application. Some benefits of running in GUI mode include:
 
-- Easy to start
+- Easy to start (available from the desktop environment's application menu)
 - Easy to visually track video progression and real-time cycling metrics during a cycling session
 - Real-time logging is available directly within the application interface
-- Easy to manage and edit multiple BSC sessions
+- Easy to edit and manage multiple BSC sessions
 
 > Note that in order to run **BLE Sync Cycle** in GUI mode, the application must be installed as a desktop application (see [Installing the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation:-Installing-the-Application)) for details.
 

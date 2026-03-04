@@ -42,6 +42,8 @@
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 
+* Integrated application installer/uninstaller for easy setup and self-removal of the application
+
 <!-- markdownlint-disable MD033 -->
 <p align="center">
 <img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_2x2_part1.png">

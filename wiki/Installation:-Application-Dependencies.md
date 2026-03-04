@@ -5,7 +5,7 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-In addition to having a standard Go environment installed and operational,the following additional libraries are required in order to successfully compile/build the **BLE Sync Cycle** application:
+When compiling/building the **BLE Sync Cycle** application locally, and in addition to having a standard Go environment installed and operational,the following additional libraries are required:
 
 ### The GObject Introspection Package
 
