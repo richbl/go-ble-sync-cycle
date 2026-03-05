@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -302,6 +304,23 @@ func (sc *SessionController) openSaveAsDialog(cfg *config.Config) {
 		sc.saveFileDialog = gtk.NewFileDialog()
 		sc.saveFileDialog.SetTitle("Save Session Configuration")
 		sc.saveFileDialog.SetModal(true)
+	}
+
+	// Resolve the user's config directory
+	if configDir, err := os.UserConfigDir(); err == nil {
+
+		// Build the path to the hidden app folder
+		targetDir := filepath.Join(configDir, ApplicationID)
+
+		// Ensure the directory exists
+		if err := os.MkdirAll(targetDir, 0755); err == nil {
+
+			folder := gio.NewFileForPath(targetDir)
+			sc.saveFileDialog.SetInitialFolder(folder)
+
+		} else {
+			logger.Warn(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to create config dir for file dialog: %v", err))
+		}
 	}
 
 	// Update dialog properties
