@@ -158,7 +158,10 @@ func Uninstall() error {
 // directory to ensure that the desktop environment immediately recognizes the changes
 func updateDesktopDatabase(appDir string) error {
 
-	cleanDir := filepath.Clean(appDir)
+	cleanDir, err := checkDir(appDir)
+	if err != nil {
+		return err
+	}
 
 	// Ensure the application directory is absolute
 	if !filepath.IsAbs(cleanDir) {
@@ -176,16 +179,46 @@ func updateDesktopDatabase(appDir string) error {
 // updateIconCache runs 'gtk-update-icon-cache' to refresh the desktop icon cache
 func updateIconCache(iconDir string) {
 
-	// Navigate up to the base ".../icons/hicolor" directory (required)
-	themeDir := filepath.Dir(filepath.Dir(iconDir))
-
-	cmd := exec.Command("gtk-update-icon-cache", "-f", "-t", "-q", themeDir)
-
 	// Ignore errors, as the user's system may not have GTK installed, so this shouldn't fail the
 	// installation (the icon will just not update immediately)
+
+	cleanDir, err := checkDir(iconDir)
+	if err != nil {
+		return // Silent fail
+	}
+
+	// Ensure the application directory is absolute
+	if !filepath.IsAbs(cleanDir) {
+		return // Silent fail
+	}
+
+	// Navigate up to the base ".../icons/hicolor" directory (required)
+	themeDir := filepath.Dir(filepath.Dir(cleanDir))
+
+	cmd := exec.Command("gtk-update-icon-cache", "-f", "-t", "-q", themeDir)
 	_ = cmd.Run()
 
 }
+
+// checkDir validates that the provided directory is non-empty, absolute, and clean
+func checkDir(dir string) (string, error) {
+
+	if dir == "" {
+		return "", errInvalidAppDir
+	}
+
+	// Clean the path to prevent issues with trailing slashes or redundant separators
+	cleanDir := filepath.Clean(dir)
+
+	// Ensure the application directory is absolute
+	if !filepath.IsAbs(cleanDir) {
+		return "", errInvalidAppDir
+	}
+
+	return cleanDir, nil
+}
+
+//
 
 // getDataHome returns the XDG_DATA_HOME directory or its standard fallback
 func getDataHome(homeDir string) string {
