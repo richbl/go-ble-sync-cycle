@@ -355,6 +355,7 @@ func StartGUI() {
 
 	// Run the GUI application... fly and be free!
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "GTK event loop started")
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "redirecting logging output to the Session Log tab")
 	app.Run(nil)
 
 	// Application has exited, so say goodbye
