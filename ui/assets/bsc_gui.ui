@@ -162,7 +162,6 @@
                                 <property name="halign">center</property>
                                 <property name="orientation">horizontal</property>
                                 <property name="spacing">6</property>
-
                                 <child>
                                   <object class="GtkImage" id="page2_logo_image">
                                     <property name="icon-name">com.github.richbl.ble-sync-cycle</property>
@@ -588,7 +587,7 @@
                                 </property>
                                 <property name="selected">0</property>
                                 <property name="title">Media Player</property>
-                                <property name="tooltip-text">The video playback back-end to use ("mpv")</property>
+                                <property name="tooltip-text">The video playback back-end to use</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
@@ -734,7 +733,7 @@
                                 </property>
                                 <property name="selected">0</property>
                                 <property name="title">Horizontal Position</property>
-                                <property name="tooltip-text">The horizontal position of the OSD ("left", "center", "right")</property>
+                                <property name="tooltip-text">The horizontal position of the OSD</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
@@ -751,7 +750,7 @@
                                 </property>
                                 <property name="selected">0</property>
                                 <property name="title">Vertical Position</property>
-                                <property name="tooltip-text">The vertical position of the OSD ("top", "center", "bottom")</property>
+                                <property name="tooltip-text">The vertical position of the OSD</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
