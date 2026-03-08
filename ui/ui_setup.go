@@ -32,6 +32,9 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 		aboutDialog.SetIssueURL("https://github.com/richbl/go-ble-sync-cycle/issues/new?template=issue-report.md")
 		aboutDialog.SetLicenseType(gtk.LicenseMITX11)
 		aboutDialog.SetWebsite("https://github.com/richbl/go-ble-sync-cycle")
+		aboutDialog.SetComments("BLE Sync Cycle GitHub Project sites:")
+		aboutDialog.AddLink("Wiki", "https://github.com/richbl/go-ble-sync-cycle/wiki")
+		aboutDialog.AddLink("Roadmap", "https://github.com/users/richbl/projects/4")
 
 		var transientParent gtk.Widgetter = ui.Window
 		aboutDialog.Present(transientParent)
