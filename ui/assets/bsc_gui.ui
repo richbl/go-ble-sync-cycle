@@ -190,6 +190,7 @@
                                 <property name="title">Session Title</property>
                                 <property name="subtitle">n/a</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Short description of the current BSC cycling session</property>
                               </object>
                             </child>
                             <child>
@@ -197,6 +198,7 @@
                                 <property name="title">File Location</property>
                                 <property name="subtitle">n/a</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">File location of the BSC cycling session</property>
                               </object>
                             </child>
                           </object>
@@ -211,6 +213,7 @@
                                 <property name="subtitle">Disconnected</property>
                                 <property name="title">Connection</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Current status of the BLE sensor connection</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="connection_status_icon">
                                     <property name="icon-name">bluetooth-disconnected-symbolic</property>
@@ -225,6 +228,7 @@
                                 <property name="subtitle">Unknown</property>
                                 <property name="title">Battery Level</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Current battery level of the BLE sensor</property>
                                 <child type="suffix">
                                   <object class="GtkImage" id="battery_icon">
                                     <property name="icon-name">battery-symbolic</property>
@@ -246,6 +250,7 @@
                                 <property name="subtitle">mph</property>
                                 <property name="title">Current Speed</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Current calculated speed from the BLE sensor</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="speed_large_label">
                                     <property name="label">0.0</property>
@@ -261,6 +266,7 @@
                               <object class="AdwActionRow" id="playback_speed_row">
                                 <property name="title">Playback Speed</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Configured playback speed of the media player</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="playback_speed_large_label">
                                     <property name="label">1.00x</property>
@@ -276,6 +282,7 @@
                               <object class="AdwActionRow" id="time_remaining_row">
                                 <property name="title">Time Remaining</property>
                                 <property name="sensitive">False</property>
+                                <property name="tooltip-text">Current time remaining for the BSC cycling session</property>
                                 <child type="suffix">
                                   <object class="GtkLabel" id="time_remaining_large_label">
                                     <property name="label">--:--:--</property>
@@ -587,7 +594,7 @@
                                 </property>
                                 <property name="selected">0</property>
                                 <property name="title">Media Player</property>
-                                <property name="tooltip-text">The video playback back-end to use</property>
+                                <property name="tooltip-text">The media player to use for BSC session playback</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
