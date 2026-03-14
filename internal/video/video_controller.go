@@ -136,6 +136,17 @@ func (p *PlaybackController) TimeRemaining() (string, error) {
 	return formatSeconds(seconds), nil
 }
 
+// PlaybackPosition returns the current playback position in the video
+func (p *PlaybackController) PlaybackPosition() (string, error) {
+
+	seconds, err := p.player.playbackPosition()
+	if err != nil {
+		return "00:00:00", err
+	}
+
+	return formatSeconds(seconds), nil
+}
+
 // PlaybackSpeed returns the current calculated playback rate multiplier
 func (p *PlaybackController) PlaybackSpeed() float64 {
 

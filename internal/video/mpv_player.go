@@ -342,26 +342,35 @@ func (m *mpvPlayer) setPause(paused bool) error {
 	})
 }
 
-// timeRemaining gets the remaining time of the video
-func (m *mpvPlayer) timeRemaining() (int64, error) {
+// getInt64Property is a helper to retrieve an integer property from the mpv player
+func (m *mpvPlayer) getInt64Property(property string, format mpv.Format, errorContext string) (int64, error) {
 
 	return queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (int64, error) {
-		if m.player == nil {
-			return 0, errPlayerNotInitialized
-		}
 
-		timeRemaining, err := m.player.GetProperty("time-remaining", mpv.FormatInt64)
+		val, err := m.player.GetProperty(property, format)
 		if err != nil {
-			return 0, fmt.Errorf(errFormat, "failed to get video time remaining", err)
+			return 0, fmt.Errorf(errFormat, errorContext, err)
 		}
 
-		timeRemainingInt, ok := timeRemaining.(int64)
-		if !ok {
+		switch v := val.(type) {
+		case int64:
+			return v, nil
+		case float64:
+			return int64(v), nil
+		default:
 			return 0, errInvalidTimeFormat
 		}
-
-		return timeRemainingInt, nil
 	})
+}
+
+// timeRemaining gets the remaining time of the video
+func (m *mpvPlayer) timeRemaining() (int64, error) {
+	return m.getInt64Property("time-remaining", mpv.FormatInt64, "failed to get video time remaining")
+}
+
+// playbackPosition gets the current elapsed time of the video
+func (m *mpvPlayer) playbackPosition() (int64, error) {
+	return m.getInt64Property("time-pos", mpv.FormatDouble, "failed to get video playback position")
 }
 
 // setPlaybackSize sets media player window size

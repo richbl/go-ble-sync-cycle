@@ -1,6 +1,6 @@
 module github.com/richbl/go-ble-sync-cycle
 
-go 1.25.5
+go 1.25.8
 
 require (
 	github.com/BurntSushi/toml v1.5.0

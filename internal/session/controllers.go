@@ -251,6 +251,25 @@ func (m *StateManager) VideoTimeRemaining() string {
 	return timeStr
 }
 
+// VideoPlaybackPosition returns the formatted current playback position (HH:MM:SS)
+func (m *StateManager) VideoPlaybackPosition() string {
+
+	defer m.readLock()()
+
+	noTime := "00:00:00"
+
+	if m.controllers == nil || m.controllers.videoPlayer == nil {
+		return noTime
+	}
+
+	timeStr, err := m.controllers.videoPlayer.PlaybackPosition()
+	if err != nil {
+		return noTime
+	}
+
+	return timeStr
+}
+
 // VideoPlaybackRate returns the current video playback multiplier (e.g. 1.0x)
 func (m *StateManager) VideoPlaybackRate() float64 {
 

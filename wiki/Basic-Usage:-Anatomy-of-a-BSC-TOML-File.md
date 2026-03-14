@@ -18,7 +18,7 @@ The default `config.toml` file is shown below:
 
 ```toml
 # BLE Sync Cycle Configuration
-# v0.60.0
+# v0.61.0
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters)
@@ -38,6 +38,7 @@ The default `config.toml` file is shown below:
   media_player = "mpv"           # The video playback back-end to use ("mpv")
   file_path = "cycling_test.mp4" # File path to the video file for playback
   seek_to_position = "00:00:00"  # Starting playback position in the video ("HH:MM:SS")
+  auto_resume = false            # Resume video playback from last playback position (true/false)
   window_scale_factor = 1.0      # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
   update_interval_secs = 0.25    # Frequency that the video player is sent speed updates (0.10-3.00 seconds)
   speed_multiplier = 0.8         # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
@@ -89,7 +90,8 @@ The `[video]` section defines the configuration for the MPV video player compone
 
 - `media_player`: The media player to use (only "mpv" is currently supported)
 - `file_path`: The full path to the video file to play. The video format must be supported by MPV (e.g., MP4, webm, etc.)
-- `seek_to_position`: The hours:minutes:seconds ("HH:MM:SS") to seek to a specific point in video playback. This can be useful with longer videos that may take multiple training sessions to complete
+- `seek_to_position`: The hours:minutes:seconds ("HH:MM:SS") to seek to a specific point in video playback
+- `auto_resume`: A boolean value that indicates whether to automatically resume video playback from the last playback position. This can be useful with long videos that may take multiple training sessions to complete
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is preferred
 - `update_interval_secs`: The number of seconds to wait between video player updates
 - `speed_multiplier`: The relative playback speed of the video. Usually, a value of 1.0 is used (<1.0 will slow playback; >1.0 will speed up playback), as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the vehicle is in the video during "normal speed" playback, it's recommended to experiment with different values to find a good balance between video playback speed and real-world cycling experience.

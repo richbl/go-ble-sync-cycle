@@ -13,6 +13,7 @@ type VideoConfig struct {
 	WindowScaleFactor float64        `toml:"window_scale_factor"`
 	UpdateIntervalSec float64        `toml:"update_interval_secs"`
 	SpeedMultiplier   float64        `toml:"speed_multiplier"`
+	AutoResume        bool           `toml:"auto_resume"`
 	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
 }
 

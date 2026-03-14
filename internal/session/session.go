@@ -94,9 +94,11 @@ func (m *StateManager) LoadTargetSession(configPath string) error {
 	m.loadedConfig = cfg
 	m.loadedConfigPath = configPath
 
-	// When loading a session to run, we also queue it for editing
-	m.editConfig = cfg
-	m.editConfigPath = configPath
+	// Only set the editConfig if nothing is currently loaded in the editor (e.g., at startup)
+	if m.editConfig == nil {
+		m.editConfig = cfg
+		m.editConfigPath = configPath
+	}
 
 	m.errorMsg = ""
 	if m.state == StateIdle || m.state == StateError {

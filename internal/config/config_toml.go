@@ -32,6 +32,7 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
   media_player = "{{.Video.MediaPlayer}}"{{pad (printf "media_player = \"%s\"" .Video.MediaPlayer)}}# The video playback back-end to use ("mpv")
   file_path = "{{.Video.FilePath}}"{{pad (printf "file_path = \"%s\"" .Video.FilePath)}}# File path to the video file for playback
   seek_to_position = "{{.Video.SeekToPosition}}"{{pad (printf "seek_to_position = \"%s\"" .Video.SeekToPosition)}}# Starting playback position in the video ("HH:MM:SS")
+  auto_resume = {{.Video.AutoResume}}{{pad (printf "auto_resume = %t" .Video.AutoResume)}}# Resume video playback from last playback position (true/false)
   window_scale_factor = {{printf "%.1f" .Video.WindowScaleFactor}}{{pad (printf "window_scale_factor = %.1f" .Video.WindowScaleFactor)}}# Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
   update_interval_secs = {{printf "%.1f" .Video.UpdateIntervalSec}}{{pad (printf "update_interval_secs = %.1f" .Video.UpdateIntervalSec)}}# Frequency that the video player is sent speed updates (0.10-3.00 seconds)
   speed_multiplier = {{printf "%.1f" .Video.SpeedMultiplier}}{{pad (printf "speed_multiplier = %.1f" .Video.SpeedMultiplier)}}# Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
@@ -78,7 +79,7 @@ func Save(filePath string, cfg *Config, version string) error {
 	// Create the template data
 	templateData := tomlContent{
 		Config:  cfg,
-		Version: "v" + version,
+		Version: version,
 	}
 
 	// Merge the data with the template

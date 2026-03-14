@@ -133,6 +133,8 @@ The **Video Settings** section displays the video playback settings for the medi
 
 - The **Start Time** field specifies the time in the video file to start playback. This is sometimes referred to as the "seek time." This value is in seconds and is between 0.00 and 1000.00. The default value is 0.00
 
+- The **Auto Resume** field specifies whether to automatically resume video playback from the last playback position. The default value is false
+
 - The **Window Scale Factor** field specifies the scaling factor for the media player window. This value is between 0.1 and 1.0. The default value is 1.0, where 1.0 is full screen
 
 - The **Update Interval** field specifies the interval in seconds at which the media player will update video playback. This field value is between 0.10 and 3.00 seconds. The default value is 0.25 seconds

@@ -86,13 +86,14 @@ type PageSessionEditor struct {
 	SpeedSmoothing     *adw.SpinRow
 
 	// Video Settings
-	MediaPlayer     *adw.ComboRow
-	VideoFileRow    *adw.ActionRow
-	VideoFileButton *gtk.Button
-	StartTimeEntry  *adw.EntryRow
-	WindowScale     *adw.SpinRow
-	UpdateInterval  *adw.SpinRow
-	SpeedMultiplier *adw.SpinRow
+	MediaPlayer      *adw.ComboRow
+	VideoFileRow     *adw.ActionRow
+	VideoFileButton  *gtk.Button
+	StartTimeEntry   *adw.EntryRow
+	SwitchAutoResume *adw.SwitchRow
+	WindowScale      *adw.SpinRow
+	UpdateInterval   *adw.SpinRow
+	SpeedMultiplier  *adw.SpinRow
 
 	// OSD
 	SwitchCycleSpeed    *adw.SwitchRow
@@ -272,6 +273,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		SwitchCycleSpeed:    objGTK[*adw.SwitchRow](builder, "display_cycle_speed_switch"),
 		SwitchPlaybackSpeed: objGTK[*adw.SwitchRow](builder, "display_playback_speed_switch"),
 		SwitchTimeRemaining: objGTK[*adw.SwitchRow](builder, "display_time_remaining_switch"),
+		SwitchAutoResume:    objGTK[*adw.SwitchRow](builder, "auto_resume_switch"),
 		FontSize:            objGTK[*adw.SpinRow](builder, "display_font_size_spin"),
 		MarginLeft:          objGTK[*adw.SpinRow](builder, "pixel_offset_left_spin"),
 		MarginTop:           objGTK[*adw.SpinRow](builder, "pixel_offset_top_spin"),
