@@ -16,12 +16,12 @@
   smoothing_window = 5          # Number of recent speed readings to generate a stable moving average (1-25)
 
 [video]
-  media_player = "mpv"         # The video playback back-end to use ("mpv")
-  file_path = "test_video.mp4" # File path to the video file for playback
-  seek_to_position = "00:00"   # Starting playback position in the video ("MM:SS")
-  window_scale_factor = 1.0    # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
-  update_interval_secs = 0.25  # Frequency that the video player is sent speed updates (0.10-3.00 seconds)
-  speed_multiplier = 0.8       # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
+  media_player = "mpv"          # The video playback back-end to use ("mpv")
+  file_path = "test_video.mp4"  # File path to the video file for playback
+  seek_to_position = "00:00:00" # Starting playback position in the video ("HH:MM:SS")
+  window_scale_factor = 1.0     # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
+  update_interval_secs = 0.25   # Frequency that the video player is sent speed updates (0.10-3.00 seconds)
+  speed_multiplier = 0.8        # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
 
   [video.OSD]
     display_cycle_speed = true    # Display the current cycle speed on the on-screen display (true/false)

@@ -126,7 +126,7 @@ func createTestConfig() *Config {
 		Video: VideoConfig{
 			MediaPlayer:       "mpv",
 			FilePath:          "/tmp/video.mp4",
-			SeekToPosition:    "00:00",
+			SeekToPosition:    "00:00:00",
 			WindowScaleFactor: 1.0,
 			UpdateIntervalSec: 0.5,
 			SpeedMultiplier:   1.0,

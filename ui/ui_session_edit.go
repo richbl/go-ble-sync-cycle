@@ -52,7 +52,7 @@ func (sc *SessionController) setupSessionEditSignals() {
 
 	// Define widget validators for BD_ADDR and video seek/start time
 	bindValidator(sc.UI.Page4.BTAddressEntry, `^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`, updateSaveButtons)
-	bindValidator(sc.UI.Page4.StartTimeEntry, `^\d{1,2}:[0-5]\d$`, updateSaveButtons)
+	bindValidator(sc.UI.Page4.StartTimeEntry, `^\d{2}:[0-5]\d:[0-5]\d$`, updateSaveButtons)
 
 	// Video file picker dialog
 	sc.UI.Page4.VideoFileButton.ConnectClicked(func() {

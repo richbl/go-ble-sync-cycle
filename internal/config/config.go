@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"strconv"
+	"regexp"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -65,7 +65,7 @@ var (
 	errVideoFile           = errors.New("video file error")
 	errInvalidPlayer       = errors.New("invalid media player")
 	errInvalidInterval     = errors.New("update_interval_secs must be 0.1-3.0")
-	errInvalidSeek         = errors.New("seek_to_position must be in MM:SS or SS format")
+	errInvalidSeek         = errors.New("seek_to_position must be in HH:MM:SS format")
 	errSmoothingWindow     = errors.New("smoothing window must be 1-25")
 	errWheelCircumference  = errors.New("wheel_circumference_mm must be 50-3000")
 	errSpeedThreshold      = errors.New("speed_threshold must be 0.00-10.00")
@@ -241,49 +241,19 @@ func validateRange[T ValidationType](value, minVal, maxVal T, errMsg error) erro
 	return nil
 }
 
-// validateTimeFormat checks if the provided string is valid time in MM:SS or SS format
+// validateTimeFormat checks if the provided string is valid time in HH:MM:SS format
 func validateTimeFormat(input string) bool {
-
 	input = strings.TrimSpace(input)
 
-	if strings.Contains(input, ":") {
-		return validateMMSSFormat(input)
-	}
-
-	return validateSSFormat(input)
+	return validateHHMMSSFormat(input)
 }
 
-// validateMMSSFormat checks if the provided string is a valid time in MM:SS format
-func validateMMSSFormat(input string) bool {
+// validateHHMMSSFormat checks if the provided string is a valid time in HH:MM:SS format
+func validateHHMMSSFormat(input string) bool {
 
-	parts := strings.SplitN(input, ":", 2)
-	if len(parts) != 2 {
-		return false
-	}
+	// \d{2}     = exactly 2 digits for hours (00-99)
+	// [0-5]\d   = exactly 2 digits for minutes and seconds, bounded to 00-59
+	matched, _ := regexp.MatchString(`^\d{2}:[0-5]\d:[0-5]\d$`, input)
 
-	minutesStr := parts[0]
-	secondsStr := parts[1]
-
-	minutes, err := strconv.Atoi(minutesStr)
-	if err != nil || minutes < 0 {
-		return false
-	}
-
-	seconds, err := strconv.Atoi(secondsStr)
-	if err != nil || seconds < 0 || seconds > 59 {
-		return false
-	}
-
-	return true
-}
-
-// validateSSFormat checks if the provided string is a valid time in SS format
-func validateSSFormat(input string) bool {
-
-	seconds, err := strconv.Atoi(input)
-	if err != nil || seconds < 0 {
-		return false
-	}
-
-	return true
+	return matched
 }
