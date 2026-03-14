@@ -56,7 +56,7 @@ var testConfigData = struct {
 }{
 	filename:        "test_video.mp4",
 	windowScale:     1.0,
-	SeekToPosition:  "0.25",
+	SeekToPosition:  "00:00:00",
 	updateInterval:  1.0,
 	speedMultiplier: 1.0,
 	speedThreshold:  0.1,

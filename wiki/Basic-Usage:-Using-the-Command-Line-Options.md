@@ -14,7 +14,7 @@ The following flags are available when running in console/CLI mode:
 
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
-  -s, --seek         Seek to a specific time in the video ('MM:SS')
+  -s, --seek         Seek to a specific time in the video ('HH:MM:SS')
   -i, --install      Install the BSC application to the local user environment
   -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message
@@ -87,7 +87,7 @@ The following flags are available when running in console/CLI mode:
 
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
-  -s, --seek         Seek to a specific time in the video ('MM:SS')
+  -s, --seek         Seek to a specific time in the video ('HH:MM:SS')
   -i, --install      Install the BSC application to the local user environment
   -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message

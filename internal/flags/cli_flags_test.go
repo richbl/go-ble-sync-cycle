@@ -8,7 +8,7 @@ import (
 
 const (
 	TestConfigFile   = "test.toml"
-	TestSeekPosition = "01:30"
+	TestSeekPosition = "01:30:00"
 )
 
 // TestParseArgs tests the ParseArgs function

@@ -621,9 +621,9 @@
                               <object class="AdwEntryRow" id="start_time_entry_row">
                                 <property name="input-purpose">number</property>
                                 <property name="show-apply-button">True</property>
-                                <property name="text">00:00</property>
+                                <property name="text">00:00:00</property>
                                 <property name="title" translatable="yes">Start Time</property>
-                                <property name="tooltip-text" translatable="yes">Starting playback position in the video (MM:SS format)</property>
+                                <property name="tooltip-text" translatable="yes">Starting playback position in the video (HH:MM:SS format)</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>

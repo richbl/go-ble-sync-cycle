@@ -164,6 +164,8 @@ func TestSpeedConfigValidate(t *testing.T) {
 // TestVideoConfigValidate tests the VideoConfig validate function
 func TestVideoConfigValidate(t *testing.T) {
 
+	const defaultTimeout = "00:00:30"
+
 	// Define test cases
 	tests := []struct {
 		name              string
@@ -180,14 +182,14 @@ func TestVideoConfigValidate(t *testing.T) {
 		marginY           int
 		expectError       bool
 	}{
-		{"valid config", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 0.5, 20, "center", "bottom", 25, 25, false},
-		{"invalid media player", "xyz", testVideo, 0.5, "00:30", 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, "00:30", 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, "00:30", 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
+		{"valid config", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, false},
+		{"invalid media player", "xyz", testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
+		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
+		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
 		{"invalid seek position", MediaPlayerMPV, testVideo, 0.5, "invalid", 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, "00:30", 3.1, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 1.6, 20, "center", "bottom", 25, 25, true},
-		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, "00:30", 1.0, 0.5, 201, "center", "bottom", 25, 25, true},
+		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 3.1, 0.5, 20, "center", "bottom", 25, 25, true},
+		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 1.6, 20, "center", "bottom", 25, 25, true},
+		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 201, "center", "bottom", 25, 25, true},
 	}
 
 	// Run tests
@@ -230,10 +232,13 @@ func TestValidateTimeFormat(t *testing.T) {
 		input       string
 		expectValid bool
 	}{
-		{"valid MM:SS", "01:30", true},
-		{"valid SS", "90", true},
-		{"invalid MM:SS", "01:60", false},
-		{"invalid SS", "-10", false},
+		{"valid HH:MM:SS", "00:01:30", true},
+		{"valid maximums", "99:59:59", true},
+		{"invalid MM:SS", "01:30", false},
+		{"invalid SS", "90", false},
+		{"invalid hours", "100:00:00", false},
+		{"invalid minutes", "00:60:00", false},
+		{"invalid seconds", "00:00:60", false},
 		{"invalid format", "invalid", false},
 	}
 

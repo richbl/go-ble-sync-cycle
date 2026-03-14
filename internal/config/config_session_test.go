@@ -110,7 +110,7 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
   media_player = "mpv"
   file_path = "test_video.mp4"
   window_scale_factor = 1.0
-  seek_to_position = "00:00"
+  seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
 
@@ -172,7 +172,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
   media_player = "mpv"
   file_path = "test_video.mp4"
   window_scale_factor = 1.0
-  seek_to_position = "00:00"
+  seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
 
@@ -231,7 +231,7 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
   media_player = "mpv"
   file_path = "test_video.mp4"
   window_scale_factor = 1.0
-  seek_to_position = "00:00"
+  seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
 

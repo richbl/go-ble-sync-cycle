@@ -229,7 +229,7 @@ func createDefaultConfig(videoPath string) *config.Config {
 		Video: config.VideoConfig{
 			MediaPlayer:       config.MediaPlayerMPV,
 			FilePath:          videoPath,
-			SeekToPosition:    "00:00",
+			SeekToPosition:    "00:00:00",
 			WindowScaleFactor: 1.0,
 			UpdateIntervalSec: 1.0,
 			SpeedMultiplier:   1.0,

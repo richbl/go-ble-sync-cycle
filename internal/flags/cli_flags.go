@@ -74,7 +74,7 @@ var (
 			Name:      "seek",
 			ShortName: "s",
 			Value:     "",
-			Usage:     "Seek to a specific time in the video ('MM:SS')",
+			Usage:     "Seek to a specific time in the video ('HH:MM:SS')",
 			Mode:      CLI,
 		},
 		{
