@@ -18,6 +18,7 @@
     * Speed smoothing for natural playback
     * Video file selection with support for multiple file formats (mp4, mkv, etc.)
     * Seek to a specific start time in the video
+    * Auto resume video playback from the last playback position
     * Display options:
         * On-screen display (OSD) for speed and time remaining
         * Video window scaling (fullscreen, etc.)

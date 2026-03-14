@@ -42,6 +42,7 @@ func NewShutdownManager(timeout time.Duration) *ShutdownManager {
 	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("creating ShutdownManager object (id:%04d)...", instanceID))
 
 	// Create a context with a timeout
+	//nolint:gosec // ShutdownManager explicitly owns this cancellation lifecycle
 	ctx, cancel := context.WithCancel(logger.BackgroundCtx)
 	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("created ShutdownManager object (id:%04d)", instanceID))
 

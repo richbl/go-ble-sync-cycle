@@ -8,6 +8,7 @@ import (
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/richbl/go-ble-sync-cycle/internal/ble"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 	"github.com/richbl/go-ble-sync-cycle/internal/video"
@@ -133,24 +134,50 @@ func (sc *SessionController) handleStartError(err error) {
 // handleStop processes stopping the session
 func (sc *SessionController) handleStop() error {
 
+	// Determine if Auto-Resume was enabled when this session was initially started
+	runningCfg := sc.SessionManager.ActiveConfig()
+	shouldAutoResume := false
+	autoResumeSaved := false
+	var currentPos string
+
+	// If Auto-Resume is enabled, get the current playback position
+	if runningCfg != nil && runningCfg.Video.AutoResume {
+		shouldAutoResume = true
+		currentPos = sc.SessionManager.VideoPlaybackPosition()
+	}
+
+	// Get the path of the session that is currently running
+	activePath := sc.SessionManager.LoadedConfigPath()
+
+	// Terminate the active controllers and hardware polling loops
 	if err := sc.SessionManager.StopSession(); err != nil {
 		return fmt.Errorf(errFormat, "unable to stop session services", err)
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services stopped")
 
+	// If Auto-Resume is enabled and we have a valid playback position, save it to the config
+	if shouldAutoResume && currentPos != "" && currentPos != "00:00:00" {
+		autoResumeSaved = sc.saveAutoResumePosition(activePath, currentPos)
+	}
+
 	safeUpdateUI(func() {
 		sc.updateSessionControlButton(false)
 		sc.updatePage2Status(StatusStopped, StatusNotConnected, StatusUnknown)
 		sc.resetMetrics()
 
-		// User edited the running session! (so update the details)
-		if cfg := sc.SessionManager.ActiveConfig(); cfg != nil {
-			sc.UI.Page2.SessionNameRow.SetSubtitle(cfg.App.SessionTitle)
+		// User edited the running session! (so update the details using latest config)
+		if c := sc.SessionManager.ActiveConfig(); c != nil {
+			sc.UI.Page2.SessionNameRow.SetSubtitle(c.App.SessionTitle)
 		}
 
-		path := sc.SessionManager.LoadedConfigPath()
-		sc.UI.Page2.SessionFileLocationRow.SetSubtitle(path)
+		sc.UI.Page2.SessionFileLocationRow.SetSubtitle(activePath)
+
+		// Safely synchronize the Session Editor UI with the new auto-resume position
+		if autoResumeSaved && sc.SessionManager.EditConfigPath() == activePath {
+			sc.populateEditor()
+		}
+
 	})
 
 	return nil
@@ -191,6 +218,33 @@ func (sc *SessionController) startSessionGUI() {
 		sc.startMetricsLoop()
 	})
 
+}
+
+// saveAutoResumePosition persists the current playback position to the session configuration
+func (sc *SessionController) saveAutoResumePosition(path, pos string) bool {
+
+	cfg := sc.SessionManager.ActiveConfig()
+	if cfg == nil {
+		return false
+	}
+
+	// Merge just the playback position into the freshest config
+	cfg.Video.SeekToPosition = pos
+
+	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save auto-resume position: %v", err))
+
+		return false
+	}
+
+	logger.Info(logger.BackgroundCtx, logger.GUI, "auto-resume position saved: "+pos)
+
+	// Only synchronize if the user is editing the same session that was just stopped
+	if sc.SessionManager.EditConfigPath() == path {
+		sc.handleLoadedSessionUpdate(path, cfg)
+	}
+
+	return true
 }
 
 // updatePage2WithSession refreshes Page 2 UI elements with the given session data

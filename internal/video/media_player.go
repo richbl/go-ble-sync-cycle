@@ -78,6 +78,7 @@ type mediaPlayer interface {
 	setSpeed(speed float64) error
 	setPause(paused bool) error
 	timeRemaining() (int64, error)
+	playbackPosition() (int64, error)
 	terminatePlayer()
 
 	// Configuration methods
@@ -138,6 +139,7 @@ func queryGuarded[T any](mu *sync.RWMutex, isNil func() bool, action func() (T, 
 func parseTimePosition(position string) (int, error) {
 
 	position = strings.TrimSpace(position)
+
 	totalSeconds, err := parseHHMMSS(position)
 	if err != nil {
 		return 0, err
@@ -149,25 +151,27 @@ func parseTimePosition(position string) (int, error) {
 // parseHHMMSS parses "HH:MM:SS" time format and returns total seconds
 func parseHHMMSS(position string) (int64, error) {
 
+	// Parse the time string into components
 	parts := strings.Split(position, ":")
 	if len(parts) != 3 {
 		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
 	}
 
-	hours, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil || hours < 0 || hours > 99 {
-		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+	// Set limits and multipliers for hours, minutes, and seconds
+	var totalSeconds int64
+	limits := []int64{99, 59, 59}
+	multipliers := []int64{3600, 60, 1}
+
+	// Parse each part of the time string and calculate total seconds
+	for i, part := range parts {
+
+		val, err := strconv.ParseInt(part, 10, 64)
+		if err != nil || val < 0 || val > limits[i] {
+			return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
+		}
+
+		totalSeconds += val * multipliers[i]
 	}
 
-	minutes, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil || minutes < 0 || minutes > 59 {
-		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
-	}
-
-	seconds, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil || seconds < 0 || seconds > 59 {
-		return 0, fmt.Errorf(errFormat, position, errInvalidTimeFormat)
-	}
-
-	return (hours * 3600) + (minutes * 60) + seconds, nil
+	return totalSeconds, nil
 }

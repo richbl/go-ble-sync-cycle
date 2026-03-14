@@ -628,6 +628,14 @@
                               </object>
                             </child>
                             <child>
+                              <object class="AdwSwitchRow" id="auto_resume_switch">
+                                <property name="active">False</property>
+                                <property name="title" translatable="yes">Auto-Resume Session</property>
+                                <property name="tooltip-text" translatable="yes">Resume video playback from last playback position</property>
+                                <property name="sensitive">False</property>
+                              </object>
+                            </child>
+                            <child>
                               <object class="AdwSpinRow" id="edit_window_scale_factor_spin">
                                 <property name="adjustment">
                                   <object class="GtkAdjustment" id="window_scale_factor_adjustment">

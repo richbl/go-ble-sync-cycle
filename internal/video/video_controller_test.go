@@ -31,6 +31,8 @@ type mockMediaPlayer struct {
 	showTextErr          error
 	remainingTime        int64
 	remainingTimeErr     error
+	playbackPos          int64
+	playbackPosErr       error
 	eventChan            chan *playerEvent
 }
 
@@ -214,6 +216,14 @@ func (m *mockMediaPlayer) timeRemaining() (int64, error) {
 	m.recordCall("timeRemaining")
 
 	return m.remainingTime, m.remainingTimeErr
+}
+
+// playbackPosition gets the current elapsed time of the video
+func (m *mockMediaPlayer) playbackPosition() (int64, error) {
+
+	m.recordCall("playbackPosition")
+
+	return m.playbackPos, m.playbackPosErr
 }
 
 // waitEvent waits for a player event or times out

@@ -33,7 +33,7 @@ func TestSave(t *testing.T) {
 	// Sub-tests for specific validation logic
 	t.Run("Version Header", func(t *testing.T) {
 
-		if !strings.Contains(content, "# v"+version) {
+		if !strings.Contains(content, "# "+version) {
 			t.Errorf("Output missing version header. Got:\n%s", content)
 		}
 

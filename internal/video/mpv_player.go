@@ -364,6 +364,29 @@ func (m *mpvPlayer) timeRemaining() (int64, error) {
 	})
 }
 
+// playbackPosition gets the current elapsed time of the video
+func (m *mpvPlayer) playbackPosition() (int64, error) {
+
+	return queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (int64, error) {
+
+		if m.player == nil {
+			return 0, errPlayerNotInitialized
+		}
+
+		timePos, err := m.player.GetProperty("time-pos", mpv.FormatDouble)
+		if err != nil {
+			return 0, fmt.Errorf(errFormat, "failed to get video playback position", err)
+		}
+
+		timePosFloat, ok := timePos.(float64)
+		if !ok {
+			return 0, errInvalidTimeFormat
+		}
+
+		return int64(timePosFloat), nil
+	})
+}
+
 // setPlaybackSize sets media player window size
 func (m *mpvPlayer) setPlaybackSize(windowSize float64) error {
 

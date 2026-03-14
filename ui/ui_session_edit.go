@@ -140,6 +140,7 @@ func (sc *SessionController) populateEditor() {
 	p4.MediaPlayer.SetSelected(indexOf(cfg.Video.MediaPlayer, mediaPlayers))
 	p4.VideoFileRow.SetSubtitle(cfg.Video.FilePath)
 	p4.StartTimeEntry.SetText(cfg.Video.SeekToPosition)
+	p4.SwitchAutoResume.SetActive(cfg.Video.AutoResume)
 	p4.WindowScale.SetValue(cfg.Video.WindowScaleFactor)
 	p4.UpdateInterval.SetValue(cfg.Video.UpdateIntervalSec)
 	p4.SpeedMultiplier.SetValue(cfg.Video.SpeedMultiplier)
@@ -203,6 +204,7 @@ func (sc *SessionController) harvestEditor() *config.Config {
 	cfg.Video.MediaPlayer = mediaPlayers[p4.MediaPlayer.Selected()]
 	cfg.Video.FilePath = p4.VideoFileRow.Subtitle()
 	cfg.Video.SeekToPosition = p4.StartTimeEntry.Text()
+	cfg.Video.AutoResume = p4.SwitchAutoResume.Active()
 	cfg.Video.WindowScaleFactor = p4.WindowScale.Value()
 	cfg.Video.UpdateIntervalSec = p4.UpdateInterval.Value()
 	cfg.Video.SpeedMultiplier = p4.SpeedMultiplier.Value()
