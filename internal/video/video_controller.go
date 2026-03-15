@@ -334,10 +334,6 @@ func (p *PlaybackController) updateDisplay(ctx context.Context, cycleSpeed, play
 		return nil
 	}
 
-	if cycleSpeed == 0 {
-		return p.player.showOSDText("Paused")
-	}
-
 	var osdText strings.Builder
 
 	if p.osdConfig.displayCycleSpeed {
@@ -357,6 +353,11 @@ func (p *PlaybackController) updateDisplay(ctx context.Context, cycleSpeed, play
 			logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("%s: %v", errTimeRemaining, err))
 		}
 
+	}
+
+	// Display "PAUSED" if the playback speed is 0
+	if cycleSpeed == 0 {
+		fmt.Fprintf(&osdText, "PAUSED")
 	}
 
 	return p.player.showOSDText(osdText.String())

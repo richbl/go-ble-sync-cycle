@@ -124,7 +124,7 @@ func (m *mpvPlayer) loadFile(path string) error {
 
 		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
 
-		if err := m.player.Command([]string{"loadfile", path}); err != nil {
+		if err := m.player.Command([]string{"loadfile", path, "replace", "0", "pause=yes"}); err != nil {
 			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
 
 			return wrapError(errFailedToLoadVideo.Error(), err)
