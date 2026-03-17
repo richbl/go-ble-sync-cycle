@@ -29,7 +29,7 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
 
 ## Features
 
-* Real-time synchronization of cycling speed and video playback
+* Real-time synchronization between cycling speed and video playback
 
 * Support for compliant BLE Cycling Speed and Cadence (CSC) sensors (in speed mode)
 
@@ -40,8 +40,9 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
     * Wheel circumference (for accurate speed)
     * Speed units (mph or km/h)
     * Speed smoothing for natural playback
-    * Video file selection
+    * Video file selection with support for multiple file formats (mp4, mkv, etc.)
     * Seek to a specific start time in the video
+    * Auto resume video playback from the last playback position
     * Display options:
         * On-screen display (OSD) for speed and time remaining
         * Video window scaling (fullscreen, etc.)
@@ -52,7 +53,7 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
         * Cycling session selection
         * Session status (including cycling speed and session time remaining), and video playback
         * Session logging
-        * Session editing and management
+        * BSC session creation and management
 
     * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
         * Application flags to override configuration file settings:
@@ -62,9 +63,11 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
 
 * Configurable logging levels (debug, info, warn, error)
 
-* On every application startup, the battery level of the BLE sensor is checked and displayed
+* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for their training session
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
+
+* Integrated application installer/uninstaller for easy setup and self-removal of the application
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
