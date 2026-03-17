@@ -67,6 +67,7 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	sessionCtrl := NewSessionController(ui, shutdownMgr)
 	sessionCtrl.scanForSessions()
 	sessionCtrl.PopulateSessionList()
+	sessionCtrl.CheckForNoSessions()
 
 	setupAllSignals(sessionCtrl)
 	ui.Window.SetApplication(app)

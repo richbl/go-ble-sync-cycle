@@ -9,7 +9,7 @@ The **BLE Sync Cycle** application is configured using an external configuration
 
 In general, most of the default settings found in this BSC TOML file can be left unchanged. However, here are the fields that will definitely need to be updated:
 
-- `session_title`: A short description of the current cycling session (0-200 characters)
+- `session_title`: A short description of the current cycling session (0-200 characters, excluding ", &, and < characters)
 - `sensor_bd_addr`: The address of the BLE peripheral device (e.g., sensor) to connect with and monitor for speed data
 - `wheel_circumference_mm`: The wheel circumference of the trainer/bicycle (50-3000 millimeters)
 - `file_path`: The path to the video file to be played back
@@ -18,10 +18,10 @@ The default `config.toml` file is shown below:
 
 ```toml
 # BLE Sync Cycle Configuration
-# v0.61.0
+# v0.62.0
 
 [app]
-  session_title = "Session Title" # Short description of the current cycling session (0-200 characters)
+  session_title = "Session Title" # Short description of the current cycling session (0-200 characters, excluding ", &, and <)
   logging_level = "info"          # Log messages generated during execution ("debug", "info", "warn", "error")
 
 [ble]
@@ -60,7 +60,7 @@ An explanation of the various sections of the `config.toml` file is provided bel
 
 The `[app]` section is used for configuration of the **BLE Sync Cycle** application itself. It includes the following parameter:
 
-- `session_title`: A short description of the current cycling session (0-200 characters) used in the application GUI
+- `session_title`: A short description of the current cycling session (0-200 characters, excluding ", &, and < characters) used in the application GUI
 
 - `logging_level`: The logging level to use, which displays messages to the console as the application executes. This can be "debug", "info", "warn", or "error", where "debug" is the most verbose and "error" is least verbose.
 

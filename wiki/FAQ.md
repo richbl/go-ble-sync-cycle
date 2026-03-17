@@ -25,10 +25,6 @@
 
     - > Hint: even if you decide to run **BLE Sync Cycle** in CLI mode, you can still use the BSC Session Editor (when running **BLE Sync Cycle** in GUI mode) to edit BSC TOML configuration files
 
-- <u>Can I disable the log messages in **BLE Sync Cycle**?</u>
-
-  The level of logging messages output in the **BLE Sync Cycle** application is configured via the `logging_level` parameter in a BSC TOML configuration file. See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File) section for details. This parameter can be set to "debug", "info", "warn", or "error", where "debug" is the most verbose (all log messages displayed), and "error" is least verbose.
-
 - <u>My BLE sensor takes a long time to connect, and often times out. What can I do?</u>
 
   **This is normal**.

@@ -451,7 +451,7 @@
                                 <property name="show-apply-button">True</property>
                                 <property name="text">n/a</property>
                                 <property name="title" translatable="yes">Session Title</property>
-                                <property name="tooltip-text">Short description of the current cycling session (0-200 characters)</property>
+                                <property name="tooltip-text">Short description of the current cycling session (0-200 characters, excluding &quot;, &amp;, and &lt;)</property>
                                 <property name="sensitive">False</property>
                               </object>
                             </child>
@@ -821,6 +821,16 @@
                                     <property name="orientation">horizontal</property>
                                     <property name="spacing">12</property>
                                     <property name="sensitive">True</property>
+                                    <child>
+                                      <object class="GtkButton" id="delete_session_button">
+                                        <property name="sensitive">False</property>
+                                        <property name="label" translatable="yes">Delete</property>
+                                        <style>
+                                          <class name="destructive-action" />
+                                          <class name="pill" />
+                                        </style>
+                                      </object>
+                                    </child>
                                     <child>
                                       <object class="GtkButton" id="save_as_button">
                                         <property name="sensitive">False</property>

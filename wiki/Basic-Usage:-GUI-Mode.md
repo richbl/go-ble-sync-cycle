@@ -182,3 +182,9 @@ After making changes to a BSC session, you can save the changes by clicking the 
 If you want to save a new BSC session, click the **Save Session As...** button and enter a name for the new session.
 
 > Importantly, newly created BSC session files should be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** looks for BSC session files
+
+### Deleting BSC Sessions
+
+In the event a BSC session needs to be removed from the list of sessions, you can click the **Delete Session** to permanently remove the session currently in the Session Editor. 
+
+> Note that you will not be permitted to delete an actively-running BSC session. You must first stop that running session, and only then can you safely delete it.

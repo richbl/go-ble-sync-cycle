@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
@@ -50,7 +51,8 @@ func (sc *SessionController) setupSessionEditSignals() {
 		sc.updateSaveButtonState()
 	}
 
-	// Define widget validators for BD_ADDR and video seek/start time
+	// Define widget validators for Session Title, BD_ADDR, and video seek/start time
+	bindValidator(sc.UI.Page4.TitleEntry, `^[^<&\"]{1,200}$`, updateSaveButtons)
 	bindValidator(sc.UI.Page4.BTAddressEntry, `^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$`, updateSaveButtons)
 	bindValidator(sc.UI.Page4.StartTimeEntry, `^\d{2}:[0-5]\d:[0-5]\d$`, updateSaveButtons)
 
@@ -70,21 +72,31 @@ func (sc *SessionController) setupSessionEditSignals() {
 		sc.saveSession(true) // Save As new path
 	})
 
+	// Delete button
+	sc.UI.Page4.DeleteButton.ConnectClicked(func() {
+		sc.deleteSession()
+	})
+
 }
 
 // updateSaveButtonState checks the validity of fields and toggles the Save buttons
 func (sc *SessionController) updateSaveButtonState() {
 
+	titleEntry := sc.UI.Page4.TitleEntry
 	bdAddrEntry := sc.UI.Page4.BTAddressEntry
 	timeEntry := sc.UI.Page4.StartTimeEntry
 
+	isTitleValid := titleEntry.Text() != "" && !titleEntry.HasCSSClass("error")
 	isBDAddrValid := bdAddrEntry.Text() != "" && !bdAddrEntry.HasCSSClass("error")
 	isTimeValid := timeEntry.Text() != "" && !timeEntry.HasCSSClass("error")
 
-	canSave := isBDAddrValid && isTimeValid
+	canSave := isTitleValid && isBDAddrValid && isTimeValid
 
 	sc.UI.Page4.SaveButton.SetSensitive(canSave)
 	sc.UI.Page4.SaveAsButton.SetSensitive(canSave)
+
+	// Delete is only allowed if we have a file path to delete
+	sc.UI.Page4.DeleteButton.SetSensitive(sc.SessionManager.EditConfigPath() != "")
 
 }
 
@@ -158,6 +170,9 @@ func (sc *SessionController) populateEditor() {
 	// Enable all widgets
 	toggleSensitive(p4, true)
 
+	// Refresh button states (Save, Delete)
+	sc.updateSaveButtonState()
+
 }
 
 // toggleSensitive enables or disables widgets
@@ -165,8 +180,15 @@ func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 
 	// Use reflection to iterate through the widgets and set their sensitivity
 	v := reflect.ValueOf(p4).Elem()
+	t := v.Type()
 
 	for i := range v.NumField() {
+
+		// Skip ScrolledWindow to ensure the page remains scrollable even when widgets are disabled
+		if t.Field(i).Name == "ScrolledWindow" {
+			continue
+		}
+
 		field := v.Field(i)
 		if field.CanInterface() {
 			widget, ok := field.Interface().(interface{ SetSensitive(enabled bool) })
@@ -424,6 +446,88 @@ func (sc *SessionController) handleLoadedSessionUpdate(path string, cfg *config.
 		})
 
 	}
+
+}
+
+// performDelete contains the core logic for deleting a session file and updating the UI
+func (sc *SessionController) performDelete(path, title, loadedPath string) {
+
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "attempting to delete session file: "+path)
+
+	if err := os.Remove(path); err != nil {
+		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to delete session file: %v", err))
+		safeUpdateUI(func() {
+			displayAlertDialog(sc.UI.Window, "BSC Session Delete Error", fmt.Sprintf("The file %s could not be deleted.\n\nPlease review the BSC Session Log for details.", path))
+		})
+
+		return
+	}
+
+	logger.Info(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session file '%s' deleted from: %s", title, path))
+
+	isLoadedSession := (path == loadedPath)
+	sc.SessionManager.Reset()
+
+	safeUpdateUI(func() {
+		sc.resetEditorAfterDelete()
+
+		if isLoadedSession {
+			sc.clearPage2()
+		}
+
+		sc.scanForSessions()
+		sc.PopulateSessionList()
+
+		displayAlertDialog(sc.UI.Window, "BSC Session Deleted", fmt.Sprintf("'%s' has been deleted.", title))
+	})
+
+}
+
+// resetEditorAfterDelete clears and disables the editor UI after a deletion
+func (sc *SessionController) resetEditorAfterDelete() {
+
+	p4 := sc.UI.Page4
+
+	// Clear text fields
+	p4.TitleEntry.SetText("")
+	p4.BTAddressEntry.SetText("")
+	p4.StartTimeEntry.SetText("")
+	p4.VideoFileRow.SetSubtitle("/")
+
+	// Disable all widgets
+	toggleSensitive(p4, false)
+
+}
+
+// deleteSession initiates the session deletion process
+func (sc *SessionController) deleteSession() {
+
+	path := sc.SessionManager.EditConfigPath()
+	if path == "" {
+		return
+	}
+
+	loadedPath := sc.SessionManager.LoadedConfigPath()
+	if path == loadedPath && sc.SessionManager.SessionState() > session.StateLoaded {
+		displayAlertDialog(sc.UI.Window, "Active BSC Session Error", "The BSC session file you are attempting to delete is currently running.\n\nYou must first stop the current session, and then delete the session.")
+
+		return
+	}
+
+	title := "Unknown"
+	if cfg := sc.SessionManager.Config(); cfg != nil {
+		title = cfg.App.SessionTitle
+	}
+
+	displayConfirmationDialog(
+		sc.UI.Window,
+		"Delete BSC Session?",
+		fmt.Sprintf("Are you sure you want to delete '%s'?\n\nThis action cannot be undone.", title),
+		adw.ResponseDestructive,
+		func() {
+			sc.performDelete(path, title, loadedPath)
+		},
+	)
 
 }
 

@@ -15,7 +15,7 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
 # {{.Version}}
 
 [app]
-  session_title = "{{.App.SessionTitle}}"{{pad (printf "session_title = \"%s\"" .App.SessionTitle)}}# Short description of the current cycling session (0-200 characters)
+  session_title = "{{.App.SessionTitle}}"{{pad (printf "session_title = \"%s\"" .App.SessionTitle)}}# Short description of the current cycling session (0-200 characters, excluding ", &, and <)
   logging_level = "{{.App.LogLevel}}"{{pad (printf "logging_level = \"%s\"" .App.LogLevel)}}# Log messages generated during execution ("debug", "info", "warn", "error")
 
 [ble]

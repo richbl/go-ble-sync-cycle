@@ -5,7 +5,7 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-* Real-time synchronization of cycling speed and video playback
+* Real-time synchronization between cycling speed and video playback
 
 * Support for compliant BLE Cycling Speed and Cadence (CSC) sensors (in speed mode)
 
@@ -29,7 +29,7 @@
         * Cycling session selection
         * Session status (including cycling speed and session time remaining), and video playback
         * Session logging
-        * Session editing and management
+        * BSC session creation and management
 
     * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
         * Application flags to override configuration file settings:
