@@ -105,8 +105,9 @@ type PageSessionEditor struct {
 	AlignX              *adw.ComboRow
 	AlignY              *adw.ComboRow
 
-	// Save Actions
+	// Save/Delete Actions
 	SaveRow      *adw.ActionRow
+	DeleteButton *gtk.Button
 	SaveButton   *gtk.Button
 	SaveAsButton *gtk.Button
 }
@@ -280,6 +281,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		AlignX:              objGTK[*adw.ComboRow](builder, "align_x_combo"),
 		AlignY:              objGTK[*adw.ComboRow](builder, "align_y_combo"),
 		SaveRow:             objGTK[*adw.ActionRow](builder, "edit_save_row"),
+		DeleteButton:        objGTK[*gtk.Button](builder, "delete_session_button"),
 		SaveButton:          objGTK[*gtk.Button](builder, "save_button"),
 		SaveAsButton:        objGTK[*gtk.Button](builder, "save_as_button"),
 	}
@@ -295,6 +297,7 @@ func setupAllSignals(sc *SessionController) {
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "view switched to Session Select: refreshing session list...")
 			sc.scanForSessions()
 			sc.PopulateSessionList()
+			sc.CheckForNoSessions()
 		},
 
 		"page2": func() {

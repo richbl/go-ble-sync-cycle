@@ -525,7 +525,7 @@ func TestUpdateDisplay(t *testing.T) {
 			t.Fatalf("updateDisplay failed: %v", err)
 		}
 
-		if mockPlayer.lastShowText != "Paused" {
+		if mockPlayer.lastShowText != "Cycle Speed: 0.0 mph\nPlayback Speed: 0.00x\nTime Remaining: 00:00:00\nPAUSED" {
 			t.Errorf("expected OSD text 'Paused', got %q", mockPlayer.lastShowText)
 		}
 

@@ -26,5 +26,3 @@ In CLI (command line interface) mode, the application is started from the comman
 - The application can be configured with optional command-line configuration flags
 - Real-time logging is available (outputs to `stdout`)
 - Easy to shutdown the application (CTRL+C, which sends a `SIGINT` signal to the application)
-
-> Running **BLE Sync Cycle** in CLI mode does not require any additional installation beyond building the application (see [Building the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation:-Building-the-Application)).

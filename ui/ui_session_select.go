@@ -74,6 +74,27 @@ func (sc *SessionController) PopulateSessionList() {
 
 }
 
+// CheckForNoSessions checks if any session files exist and prompts to create one if not
+func (sc *SessionController) CheckForNoSessions() {
+
+	if len(sc.Sessions) == 0 {
+		logger.Debug(logger.BackgroundCtx, logger.GUI, "no session configuration files found, prompting to create new session...")
+
+		safeUpdateUI(func() {
+			displayConfirmationDialog(
+				sc.UI.Window,
+				"No BSC Sessions",
+				"No Configuration files found in the BSC configuration directory.\n\nDo you want to create a new BSC session file?",
+				adw.ResponseSuggested,
+				func() {
+					sc.createNewDefaultSession()
+				},
+			)
+		})
+	}
+
+}
+
 // setupSessionSelectSignals wires up event listeners for the session selection tab (Page 1)
 func (sc *SessionController) setupSessionSelectSignals() {
 
@@ -132,23 +153,6 @@ func (sc *SessionController) scanForSessions() {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session scan complete: found %d valid session(s)", len(sc.Sessions)))
 
-	// Check if any files were actually found
-	if len(sc.Sessions) == 0 {
-		logger.Debug(logger.BackgroundCtx, logger.GUI, "no session configuration files found")
-
-		safeUpdateUI(func() {
-			displayConfirmationDialog(
-				sc.UI.Window,
-				"No BSC Sessions",
-				"No Configuration files found in the BSC configuration directory.\n\nDo you want to create a new BSC session file?",
-				adw.ResponseSuggested,
-				func() {
-					sc.createNewDefaultSession()
-				},
-			)
-		})
-	}
-
 }
 
 // createNewDefaultSession creates a default configuration file, a placeholder video, and refreshes the list
@@ -203,9 +207,6 @@ func (sc *SessionController) createNewDefaultSession() {
 		sc.PopulateSessionList()
 	})
 
-	// Navigate to the newly created session for editing
-	sc.loadAndNavigateToEditor(sc.Sessions[0])
-
 }
 
 // createDefaultConfig returns a Config struct populated with default values
@@ -213,7 +214,7 @@ func createDefaultConfig(videoPath string) *config.Config {
 
 	return &config.Config{
 		App: config.AppConfig{
-			SessionTitle: "New Session",
+			SessionTitle: "New BSC Session",
 			LogLevel:     "info",
 		},
 		BLE: config.BLEConfig{

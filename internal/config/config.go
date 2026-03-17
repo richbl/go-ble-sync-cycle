@@ -166,8 +166,13 @@ func (ac *AppConfig) validate() error {
 		return fmt.Errorf(errFormatRev, errInvalidLogLevel, ac.LogLevel)
 	}
 
+	// SessionTitle must not exceed 200 characters and must not contain <, &, or "
 	if len(ac.SessionTitle) > 200 {
-		return fmt.Errorf(errFormatRev, errInvalidSessionTitle, ac.SessionTitle)
+		return fmt.Errorf(errFormatRev, errInvalidSessionTitle, "session title exceeds 200 characters")
+	}
+
+	if strings.ContainsAny(ac.SessionTitle, "<&\"") {
+		return fmt.Errorf(errFormatRev, errInvalidSessionTitle, "session title contains illegal characters (<, &, or \")")
 	}
 
 	return nil

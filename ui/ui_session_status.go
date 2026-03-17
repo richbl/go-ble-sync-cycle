@@ -288,6 +288,27 @@ func (sc *SessionController) resetMetrics() {
 
 }
 
+// clearPage2 resets the Page 2 UI elements to their default (no session) state
+func (sc *SessionController) clearPage2() {
+
+	// Reset labels and icons
+	sc.UI.Page2.SessionNameRow.SetSubtitle("n/a")
+	sc.UI.Page2.SessionFileLocationRow.SetSubtitle("n/a")
+	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, StatusUnknown)
+	sc.resetMetrics()
+
+	// Disable all rows
+	sc.UI.Page2.SessionNameRow.SetSensitive(false)
+	sc.UI.Page2.SessionFileLocationRow.SetSensitive(false)
+	sc.UI.Page2.SensorStatusRow.SetSensitive(false)
+	sc.UI.Page2.SensorBatteryRow.SetSensitive(false)
+	sc.UI.Page2.SpeedRow.SetSensitive(false)
+	sc.UI.Page2.PlaybackSpeedRow.SetSensitive(false)
+	sc.UI.Page2.TimeRemainingRow.SetSensitive(false)
+	sc.UI.Page2.SessionControlRow.SetSensitive(false)
+
+}
+
 // updatePage2Status updates the BLE and Battery status indicators on Page 2
 func (sc *SessionController) updatePage2Status(bleStatus Status, batteryStatus Status, batteryLevel string) {
 
