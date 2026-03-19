@@ -77,6 +77,17 @@ func (sc *SessionController) setupSessionEditSignals() {
 		sc.deleteSession()
 	})
 
+	// Speed units listener to update the speed threshold subtitle
+	sc.UI.Page4.SpeedUnits.Connect("notify::selected", func() {
+
+		idx := sc.UI.Page4.SpeedUnits.Selected()
+		if idx < uint(len(speedUnits)) {
+			unit := speedUnits[idx]
+			sc.UI.Page4.SpeedThreshold.SetSubtitle(unit)
+		}
+
+	})
+
 }
 
 // updateSaveButtonState checks the validity of fields and toggles the Save buttons
@@ -146,6 +157,7 @@ func (sc *SessionController) populateEditor() {
 	p4.WheelCircumference.SetValue(float64(cfg.Speed.WheelCircumferenceMM))
 	p4.SpeedUnits.SetSelected(indexOf(cfg.Speed.SpeedUnits, speedUnits))
 	p4.SpeedThreshold.SetValue(cfg.Speed.SpeedThreshold)
+	p4.SpeedThreshold.SetSubtitle(cfg.Speed.SpeedUnits)
 	p4.SpeedSmoothing.SetValue(float64(cfg.Speed.SmoothingWindow))
 
 	// --- Video Section ---

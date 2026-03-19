@@ -247,7 +247,7 @@
                             <property name="focusable">false</property>
                             <child>
                               <object class="AdwActionRow" id="speed_row">
-                                <property name="subtitle">mph</property>
+                                <property name="subtitle">n/a</property>
                                 <property name="title">Current Speed</property>
                                 <property name="sensitive">False</property>
                                 <property name="tooltip-text">Current calculated speed from the BLE sensor</property>
@@ -555,7 +555,7 @@
                                   </object>
                                 </property>
                                 <property name="digits">2</property>
-                                <property name="subtitle">mph or km/h</property>
+                                <property name="subtitle"></property>
                                 <property name="title">Speed Threshold</property>
                                 <property name="tooltip-text" translatable="yes">Minimum speed change to trigger video playback update (0.00-10.00)</property>
                                 <property name="sensitive">False</property>

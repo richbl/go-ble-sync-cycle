@@ -169,6 +169,7 @@ func (sc *SessionController) handleStop() error {
 		// User edited the running session! (so update the details using latest config)
 		if c := sc.SessionManager.ActiveConfig(); c != nil {
 			sc.UI.Page2.SessionNameRow.SetSubtitle(c.App.SessionTitle)
+			sc.UI.Page2.SpeedRow.SetSubtitle(c.Speed.SpeedUnits)
 		}
 
 		sc.UI.Page2.SessionFileLocationRow.SetSubtitle(activePath)
@@ -256,6 +257,11 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	sc.UI.Page2.SessionFileLocationRow.SetSubtitle(sess.ConfigPath)
 	sc.UI.Page2.SessionNameRow.SetSensitive(true)
 
+	// Update the speed units based on the loaded configuration
+	if c := sc.SessionManager.ActiveConfig(); c != nil {
+		sc.UI.Page2.SpeedRow.SetSubtitle(c.Speed.SpeedUnits)
+	}
+
 	// Initial state: BLE not connected, Battery unknown
 	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, StatusUnknown)
 	sc.resetMetrics()
@@ -294,6 +300,7 @@ func (sc *SessionController) clearPage2() {
 	// Reset labels and icons
 	sc.UI.Page2.SessionNameRow.SetSubtitle("n/a")
 	sc.UI.Page2.SessionFileLocationRow.SetSubtitle("n/a")
+	sc.UI.Page2.SpeedRow.SetSubtitle("n/a")
 	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, StatusUnknown)
 	sc.resetMetrics()
 
