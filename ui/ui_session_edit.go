@@ -93,21 +93,34 @@ func (sc *SessionController) setupSessionEditSignals() {
 // updateSaveButtonState checks the validity of fields and toggles the Save buttons
 func (sc *SessionController) updateSaveButtonState() {
 
-	titleEntry := sc.UI.Page4.TitleEntry
-	bdAddrEntry := sc.UI.Page4.BTAddressEntry
-	timeEntry := sc.UI.Page4.StartTimeEntry
+	p4 := sc.UI.Page4
+	titleEntry := p4.TitleEntry
+	bdAddrEntry := p4.BTAddressEntry
+	timeEntry := p4.StartTimeEntry
+	videoFileRow := p4.VideoFileRow
 
+	// Validate EntryRow fields
 	isTitleValid := titleEntry.Text() != "" && !titleEntry.HasCSSClass("error")
 	isBDAddrValid := bdAddrEntry.Text() != "" && !bdAddrEntry.HasCSSClass("error")
 	isTimeValid := timeEntry.Text() != "" && !timeEntry.HasCSSClass("error")
 
-	canSave := isTitleValid && isBDAddrValid && isTimeValid
+	// Validate VideoFileRow
+	videoPath := videoFileRow.Subtitle()
+	isVideoValid := videoPath != "" && !strings.Contains(videoPath, placeholderNullVideoFile)
 
-	sc.UI.Page4.SaveButton.SetSensitive(canSave)
-	sc.UI.Page4.SaveAsButton.SetSensitive(canSave)
+	if isVideoValid {
+		videoFileRow.RemoveCSSClass("error")
+	} else {
+		videoFileRow.AddCSSClass("error")
+	}
+
+	canSave := isTitleValid && isBDAddrValid && isTimeValid && isVideoValid
+
+	p4.SaveButton.SetSensitive(canSave)
+	p4.SaveAsButton.SetSensitive(canSave)
 
 	// Delete is only allowed if we have a file path to delete
-	sc.UI.Page4.DeleteButton.SetSensitive(sc.SessionManager.EditConfigPath() != "")
+	p4.DeleteButton.SetSensitive(sc.SessionManager.EditConfigPath() != "")
 
 }
 
@@ -302,6 +315,7 @@ func (sc *SessionController) openVideoFilePicker() {
 
 			if path != "" {
 				sc.UI.Page4.VideoFileRow.SetSubtitle(path)
+				sc.updateSaveButtonState()
 			}
 
 		})

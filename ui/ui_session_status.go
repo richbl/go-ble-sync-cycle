@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/richbl/go-ble-sync-cycle/internal/ble"
@@ -17,7 +18,10 @@ import (
 const (
 	errFormat              = "%v: %w"
 	StatusUnknown          = "unknown"
+	undefinedTimeStamp     = "--:--:--"
 	errSeekExceedsDuration = "The configured start/seek time exceeds the video playback duration.\n\nPlease edit the BSC session file and try again."
+	sessionTimeout         = "BSC Session Timeout"
+	sessionError           = "BSC Session Error"
 )
 
 // setupSessionStatusSignals wires up event listeners for the session status tab (Page 2)
@@ -79,6 +83,9 @@ func (sc *SessionController) handleStart() {
 		return
 	}
 
+	// Record start time for session playback
+	sc.startTime = time.Now()
+
 	// Update UI to show connecting state
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "updating UI for start")
 
@@ -102,6 +109,8 @@ func (sc *SessionController) handleStartError(err error) {
 
 	safeUpdateUI(func() {
 
+		sc.startTime = time.Time{}
+
 		sc.updateSessionControlButton(false)
 		if errors.Is(err, context.Canceled) {
 			sc.updatePage2Status(StatusStopped, StatusNotConnected, StatusUnknown)
@@ -118,13 +127,19 @@ func (sc *SessionController) handleStartError(err error) {
 		switch {
 		case errors.Is(err, ble.ErrScanTimeout):
 			sessionConnectTimeout := sc.SessionManager.ActiveConfig().BLE.ScanTimeoutSecs
-			displayAlertDialog(sc.UI.Window, "BSC Session Start Timeout", fmt.Sprintf("Failed to start the BSC Session due to a BLE device timeout (%ds).\n\nPlease restart the BSC Session.", sessionConnectTimeout))
+			displayAlertDialog(sc.UI.Window, "BSC Session Start Timeout", fmt.Sprintf("Failed to start the BSC Session due to BLE device timeout (%ds).\n\nPlease restart the BSC Session.", sessionConnectTimeout))
 
 		case errors.Is(err, video.ErrSeekExceedsDuration):
 			displayAlertDialog(sc.UI.Window, "BSC Session Video Error", errSeekExceedsDuration)
 
+		case errors.Is(err, session.ErrFailedToGetBatteryService):
+			displayAlertDialog(sc.UI.Window, sessionTimeout, "Unable to acquire the device battery service due to BLE device timeout.\n\nPlease restart the BSC Session.")
+
+		case errors.Is(err, session.ErrFailedToGetBatteryLevel):
+			displayAlertDialog(sc.UI.Window, sessionTimeout, "Unable to acquire the BLE device battery level due to BLE device timeout.\n\nPlease restart the BSC Session.")
+
 		default:
-			displayAlertDialog(sc.UI.Window, "Start Session Error", "Failed to start the BSC Session.\n\nPlease review the BSC Session Log for details.")
+			displayAlertDialog(sc.UI.Window, sessionError, "Failed to start the BSC Session.\n\nPlease review the BSC Session Log for details.")
 		}
 
 	})
@@ -154,6 +169,9 @@ func (sc *SessionController) handleStop() error {
 		return fmt.Errorf(errFormat, "unable to stop session services", err)
 	}
 
+	// Reset start time for session playback
+	sc.startTime = time.Time{}
+
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "session services stopped")
 
 	// If Auto-Resume is enabled and we have a valid playback position, save it to the config
@@ -171,8 +189,6 @@ func (sc *SessionController) handleStop() error {
 			sc.UI.Page2.SessionNameRow.SetSubtitle(c.App.SessionTitle)
 			sc.UI.Page2.SpeedRow.SetSubtitle(c.Speed.SpeedUnits)
 		}
-
-		sc.UI.Page2.SessionFileLocationRow.SetSubtitle(activePath)
 
 		// Safely synchronize the Session Editor UI with the new auto-resume position
 		if autoResumeSaved && sc.SessionManager.EditConfigPath() == activePath {
@@ -251,10 +267,8 @@ func (sc *SessionController) saveAutoResumePosition(path, pos string) bool {
 // updatePage2WithSession refreshes Page 2 UI elements with the given session data
 func (sc *SessionController) updatePage2WithSession(sess Session) {
 
-	// Update session name and file location
+	// Update session name
 	sc.UI.Page2.SessionNameRow.SetSubtitle(sess.Title)
-	sc.UI.Page2.SessionFileLocationRow.SetSensitive(true)
-	sc.UI.Page2.SessionFileLocationRow.SetSubtitle(sess.ConfigPath)
 	sc.UI.Page2.SessionNameRow.SetSensitive(true)
 
 	// Update the speed units based on the loaded configuration
@@ -273,6 +287,7 @@ func (sc *SessionController) updatePage2WithSession(sess Session) {
 	// Enable session metrics controls
 	sc.UI.Page2.SpeedRow.SetSensitive(true)
 	sc.UI.Page2.PlaybackSpeedRow.SetSensitive(true)
+	sc.UI.Page2.RideTimeRow.SetSensitive(true)
 	sc.UI.Page2.TimeRemainingRow.SetSensitive(true)
 
 	// Set button to start mode
@@ -290,7 +305,8 @@ func (sc *SessionController) resetMetrics() {
 
 	sc.UI.Page2.SpeedLabel.SetLabel("0.0")
 	sc.UI.Page2.PlaybackSpeedLabel.SetLabel("0.00x")
-	sc.UI.Page2.TimeRemainingLabel.SetLabel("--:--:--")
+	sc.UI.Page2.RideTimeLabel.SetLabel(undefinedTimeStamp)
+	sc.UI.Page2.TimeRemainingLabel.SetLabel(undefinedTimeStamp)
 
 }
 
@@ -299,18 +315,17 @@ func (sc *SessionController) clearPage2() {
 
 	// Reset labels and icons
 	sc.UI.Page2.SessionNameRow.SetSubtitle("n/a")
-	sc.UI.Page2.SessionFileLocationRow.SetSubtitle("n/a")
 	sc.UI.Page2.SpeedRow.SetSubtitle("n/a")
 	sc.updatePage2Status(StatusNotConnected, StatusNotConnected, StatusUnknown)
 	sc.resetMetrics()
 
 	// Disable all rows
 	sc.UI.Page2.SessionNameRow.SetSensitive(false)
-	sc.UI.Page2.SessionFileLocationRow.SetSensitive(false)
 	sc.UI.Page2.SensorStatusRow.SetSensitive(false)
 	sc.UI.Page2.SensorBatteryRow.SetSensitive(false)
 	sc.UI.Page2.SpeedRow.SetSensitive(false)
 	sc.UI.Page2.PlaybackSpeedRow.SetSensitive(false)
+	sc.UI.Page2.RideTimeRow.SetSensitive(false)
 	sc.UI.Page2.TimeRemainingRow.SetSensitive(false)
 	sc.UI.Page2.SessionControlRow.SetSensitive(false)
 
@@ -388,7 +403,7 @@ func (sc *SessionController) startMetricsLoop() {
 				displayAlertDialog(sc.UI.Window, "BSC Session Load Error", errSeekExceedsDuration)
 
 			default:
-				displayAlertDialog(sc.UI.Window, "BSC Session Error", "An unexpected session error has occurred.\n\nPlease review the BSC Session Log for details.")
+				displayAlertDialog(sc.UI.Window, sessionError, "An unexpected session error has occurred.\n\nPlease review the BSC Session Log for details.")
 			}
 
 			// Reset UI and application state
@@ -412,6 +427,19 @@ func (sc *SessionController) startMetricsLoop() {
 		// Update widget labels
 		sc.UI.Page2.SpeedLabel.SetLabel(fmt.Sprintf("%.1f", speed))
 		sc.UI.Page2.PlaybackSpeedLabel.SetLabel(fmt.Sprintf("%.2fx", rate))
+
+		rideTime := undefinedTimeStamp
+
+		// If we have a start time, calculate the session ride time
+		if !sc.startTime.IsZero() {
+			duration := time.Since(sc.startTime)
+			hours := int(duration.Hours())
+			minutes := int(duration.Minutes()) % 60
+			seconds := int(duration.Seconds()) % 60
+			rideTime = fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+		}
+
+		sc.UI.Page2.RideTimeLabel.SetLabel(rideTime)
 		sc.UI.Page2.TimeRemainingLabel.SetLabel(timeRem)
 
 		// Return true to keep the loop chugging along...
