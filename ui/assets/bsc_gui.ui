@@ -280,7 +280,7 @@
                                     <property name="label">--:--:--</property>
                                     <property name="valign">center</property>
                                     <style>
-                                      <class name="title-2" />
+                                      <class name="title-1" />
                                     </style>
                                   </object>
                                 </child>
@@ -296,7 +296,7 @@
                                     <property name="label">--:--:--</property>
                                     <property name="valign">center</property>
                                     <style>
-                                      <class name="title-3" />
+                                      <class name="title-1" />
                                     </style>
                                   </object>
                                 </child>
