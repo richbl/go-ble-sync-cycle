@@ -193,14 +193,6 @@
                                 <property name="tooltip-text">Short description of the current BSC cycling session</property>
                               </object>
                             </child>
-                            <child>
-                              <object class="AdwActionRow" id="session_file_location_row">
-                                <property name="title">File Location</property>
-                                <property name="subtitle">n/a</property>
-                                <property name="sensitive">False</property>
-                                <property name="tooltip-text">File location of the BSC cycling session</property>
-                              </object>
-                            </child>
                           </object>
                         </child>
                         <child>
@@ -279,6 +271,22 @@
                               </object>
                             </child>
                             <child>
+                              <object class="AdwActionRow" id="ride_time_row">
+                                <property name="title">Ride Time</property>
+                                <property name="sensitive">False</property>
+                                <property name="tooltip-text">Ride time spent in the current BSC cycling session</property>
+                                <child type="suffix">
+                                  <object class="GtkLabel" id="ride_time_large_label">
+                                    <property name="label">--:--:--</property>
+                                    <property name="valign">center</property>
+                                    <style>
+                                      <class name="title-2" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
                               <object class="AdwActionRow" id="time_remaining_row">
                                 <property name="title">Time Remaining</property>
                                 <property name="sensitive">False</property>
@@ -288,7 +296,7 @@
                                     <property name="label">--:--:--</property>
                                     <property name="valign">center</property>
                                     <style>
-                                      <class name="title-2" />
+                                      <class name="title-3" />
                                     </style>
                                   </object>
                                 </child>
@@ -555,7 +563,7 @@
                                   </object>
                                 </property>
                                 <property name="digits">2</property>
-                                <property name="subtitle"></property>
+                                <property name="subtitle">mph</property>
                                 <property name="title">Speed Threshold</property>
                                 <property name="tooltip-text" translatable="yes">Minimum speed change to trigger video playback update (0.00-10.00)</property>
                                 <property name="sensitive">False</property>
@@ -879,7 +887,7 @@
         </child>
       </object>
     </property>
-    <property name="default-height">886</property>
+    <property name="default-height">858</property>
     <property name="default-width">600</property>
     <property name="title">BLE Sync Cycle</property>
   </object>

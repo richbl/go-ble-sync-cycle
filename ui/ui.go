@@ -42,13 +42,14 @@ type PageSessionSelect struct {
 // PageSessionStatus holds widgets for the Session Status tab (Page 2)
 type PageSessionStatus struct {
 	SessionNameRow           *adw.ActionRow
-	SessionFileLocationRow   *adw.ActionRow
 	SensorStatusRow          *adw.ActionRow
 	SensorBatteryRow         *adw.ActionRow
 	SpeedRow                 *adw.ActionRow
 	SpeedLabel               *gtk.Label
 	PlaybackSpeedRow         *adw.ActionRow
 	PlaybackSpeedLabel       *gtk.Label
+	RideTimeLabel            *gtk.Label
+	RideTimeRow              *adw.ActionRow
 	TimeRemainingLabel       *gtk.Label
 	TimeRemainingRow         *adw.ActionRow
 	SessionControlRow        *adw.ActionRow
@@ -160,13 +161,14 @@ func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 
 	return &PageSessionStatus{
 		SessionNameRow:           objGTK[*adw.ActionRow](builder, "session_name_row"),
-		SessionFileLocationRow:   objGTK[*adw.ActionRow](builder, "session_file_location_row"),
 		SensorStatusRow:          objGTK[*adw.ActionRow](builder, "sensor_status_row"),
 		SensorBatteryRow:         objGTK[*adw.ActionRow](builder, "battery_level_row"),
 		SpeedRow:                 objGTK[*adw.ActionRow](builder, "speed_row"),
 		SpeedLabel:               objGTK[*gtk.Label](builder, "speed_large_label"),
 		PlaybackSpeedLabel:       objGTK[*gtk.Label](builder, "playback_speed_large_label"),
 		PlaybackSpeedRow:         objGTK[*adw.ActionRow](builder, "playback_speed_row"),
+		RideTimeLabel:            objGTK[*gtk.Label](builder, "ride_time_large_label"),
+		RideTimeRow:              objGTK[*adw.ActionRow](builder, "ride_time_row"),
 		TimeRemainingLabel:       objGTK[*gtk.Label](builder, "time_remaining_large_label"),
 		TimeRemainingRow:         objGTK[*adw.ActionRow](builder, "time_remaining_row"),
 		SessionControlRow:        objGTK[*adw.ActionRow](builder, "session_control_row"),

@@ -16,10 +16,12 @@ import (
 
 // Error definitions
 var (
-	errNoActiveConfig        = errors.New("cannot initialize controllers: no active configuration")
-	errNoActiveSession       = errors.New("no active session to stop")
-	errInitializeControllers = errors.New("failed to initialize controllers")
-	errBLEConnectionFailed   = errors.New("failed to connect to BLE device")
+	errNoActiveConfig            = errors.New("cannot initialize controllers: no active configuration")
+	errNoActiveSession           = errors.New("no active session to stop")
+	errInitializeControllers     = errors.New("failed to initialize controllers")
+	errBLEConnectionFailed       = errors.New("failed to connect to BLE device")
+	ErrFailedToGetBatteryService = errors.New("failed to get battery service")
+	ErrFailedToGetBatteryLevel   = errors.New("failed to get battery level")
 )
 
 // controllers holds the application component controllers
@@ -239,6 +241,7 @@ func (m *StateManager) VideoTimeRemaining() string {
 
 	noTime := "--:--:--"
 
+	// Check for nil controllers (session stopped or not started)
 	if m.controllers == nil || m.controllers.videoPlayer == nil {
 		return noTime
 	}
@@ -345,12 +348,12 @@ func (m *StateManager) connectBLE(ctx context.Context, ctrl *controllers) (bluet
 	// Get battery service
 	batteryServices, err := ctrl.bleController.BatteryService(ctx, &device)
 	if err != nil {
-		return bluetooth.Device{}, fmt.Errorf("failed to get battery service: %w", err)
+		return bluetooth.Device{}, ErrFailedToGetBatteryService
 	}
 
 	// Get battery level
 	if err = ctrl.bleController.BatteryLevel(ctx, batteryServices); err != nil {
-		return bluetooth.Device{}, fmt.Errorf("failed to get battery level: %w", err)
+		return bluetooth.Device{}, ErrFailedToGetBatteryLevel
 	}
 
 	// Get CSC services

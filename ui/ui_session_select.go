@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/core/glib"
@@ -15,6 +16,9 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/session"
 )
 
+// Placeholder session name
+const placeholderNullVideoFile = "new_session_null_video"
+
 // SessionController manages the logic for Page 1 (Session Selection) and related UI
 type SessionController struct {
 	UI             *AppUI
@@ -22,6 +26,7 @@ type SessionController struct {
 	SessionManager *session.StateManager
 	shutdownMgr    *services.ShutdownManager
 	starting       atomic.Bool
+	startTime      time.Time
 	metricsLoop    glib.SourceHandle
 	saveFileDialog *gtk.FileDialog
 }
@@ -169,7 +174,7 @@ func (sc *SessionController) createNewDefaultSession() {
 	}
 
 	// Create a placeholder video file so validation passes (and session can be displayed)
-	placeholderVideoPath := filepath.Join(configDir, "new_session_null_video.mp4")
+	placeholderVideoPath := filepath.Join(configDir, placeholderNullVideoFile+".mp4")
 
 	if _, err := os.Stat(placeholderVideoPath); os.IsNotExist(err) {
 
