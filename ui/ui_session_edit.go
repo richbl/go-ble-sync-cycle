@@ -160,6 +160,7 @@ func (sc *SessionController) populateEditor() {
 
 	// --- App Section ---
 	p4.TitleEntry.SetText(cfg.App.SessionTitle)
+	p4.SessionFileRow.SetSubtitle(sc.SessionManager.EditConfigPath())
 	p4.LogLevel.SetSelected(indexOf(cfg.App.LogLevel, logLevels))
 
 	// --- BLE Section ---
@@ -441,6 +442,9 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 	sc.scanForSessions()
 	sc.PopulateSessionList()
 
+	// Refresh the Session Editor UI to show the updated file data
+	sc.populateEditor()
+
 }
 
 // handleLoadedSessionUpdate handles session updates when the saved session is currently loaded
@@ -514,11 +518,12 @@ func (sc *SessionController) resetEditorAfterDelete() {
 
 	p4 := sc.UI.Page4
 
-	// Clear text fields
-	p4.TitleEntry.SetText("")
-	p4.BTAddressEntry.SetText("")
-	p4.StartTimeEntry.SetText("")
-	p4.VideoFileRow.SetSubtitle("/")
+	// Reset text fields to their default values
+	p4.TitleEntry.SetText("n/a")
+	p4.SessionFileRow.SetSubtitle("n/a")
+	p4.BTAddressEntry.SetText("AA:BB:CC:DD:EE:FF")
+	p4.StartTimeEntry.SetText("00:00:00")
+	p4.VideoFileRow.SetSubtitle("n/a")
 
 	// Disable all widgets
 	toggleSensitive(p4, false)

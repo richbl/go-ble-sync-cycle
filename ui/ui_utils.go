@@ -120,7 +120,8 @@ func bindValidator(entry *adw.EntryRow, pattern string, onUpdate func()) {
 
 		text := entry.Text()
 
-		if text == "" || reg.MatchString(text) {
+		// Toggle error class based on regex
+		if reg.MatchString(text) {
 			entry.RemoveCSSClass("error")
 		} else {
 			entry.AddCSSClass("error")
