@@ -52,7 +52,7 @@ type PageSessionStatus struct {
 	RideTimeRow              *adw.ActionRow
 	TimeRemainingLabel       *gtk.Label
 	TimeRemainingRow         *adw.ActionRow
-	SessionControlRow        *adw.ActionRow
+	SessionControlRow        *gtk.ListBoxRow
 	SessionControlBtn        *gtk.Button
 	SessionControlBtnContent *adw.ButtonContent
 	SensorConnIcon           *gtk.Image
@@ -88,6 +88,7 @@ type PageSessionEditor struct {
 
 	// Video Settings
 	MediaPlayer      *adw.ComboRow
+	SessionFileRow   *adw.ActionRow
 	VideoFileRow     *adw.ActionRow
 	VideoFileButton  *gtk.Button
 	StartTimeEntry   *adw.EntryRow
@@ -107,7 +108,7 @@ type PageSessionEditor struct {
 	AlignY              *adw.ComboRow
 
 	// Save/Delete Actions
-	SaveRow      *adw.ActionRow
+	SaveRow      *gtk.ListBoxRow
 	DeleteButton *gtk.Button
 	SaveButton   *gtk.Button
 	SaveAsButton *gtk.Button
@@ -171,7 +172,7 @@ func hydrateSessionStatus(builder *gtk.Builder) *PageSessionStatus {
 		RideTimeRow:              objGTK[*adw.ActionRow](builder, "ride_time_row"),
 		TimeRemainingLabel:       objGTK[*gtk.Label](builder, "time_remaining_large_label"),
 		TimeRemainingRow:         objGTK[*adw.ActionRow](builder, "time_remaining_row"),
-		SessionControlRow:        objGTK[*adw.ActionRow](builder, "session_control_row"),
+		SessionControlRow:        objGTK[*gtk.ListBoxRow](builder, "session_control_row"),
 		SessionControlBtn:        objGTK[*gtk.Button](builder, "session_control_button"),
 		SessionControlBtnContent: objGTK[*adw.ButtonContent](builder, "session_control_button_content"),
 		SensorConnIcon:           objGTK[*gtk.Image](builder, "connection_status_icon"),
@@ -258,6 +259,7 @@ func applyLogStyles() {
 func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 	return &PageSessionEditor{
 		ScrolledWindow:      objGTK[*adw.PreferencesPage](builder, "session_editor_page"),
+		SessionFileRow:      objGTK[*adw.ActionRow](builder, "session_file_row"),
 		TitleEntry:          objGTK[*adw.EntryRow](builder, "session_title_entry_row"),
 		LogLevel:            objGTK[*adw.ComboRow](builder, "log_level_combo"),
 		BTAddressEntry:      objGTK[*adw.EntryRow](builder, "bt_address_entry_row"),
@@ -282,7 +284,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		MarginTop:           objGTK[*adw.SpinRow](builder, "pixel_offset_top_spin"),
 		AlignX:              objGTK[*adw.ComboRow](builder, "align_x_combo"),
 		AlignY:              objGTK[*adw.ComboRow](builder, "align_y_combo"),
-		SaveRow:             objGTK[*adw.ActionRow](builder, "edit_save_row"),
+		SaveRow:             objGTK[*gtk.ListBoxRow](builder, "edit_save_row"),
 		DeleteButton:        objGTK[*gtk.Button](builder, "delete_session_button"),
 		SaveButton:          objGTK[*gtk.Button](builder, "save_button"),
 		SaveAsButton:        objGTK[*gtk.Button](builder, "save_as_button"),

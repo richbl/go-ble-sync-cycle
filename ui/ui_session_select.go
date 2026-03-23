@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -157,6 +159,11 @@ func (sc *SessionController) scanForSessions() {
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("session scan complete: found %d valid session(s)", len(sc.Sessions)))
+
+	// Sort sessions alphabetically by title
+	slices.SortFunc(sc.Sessions, func(a, b Session) int {
+		return strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
+	})
 
 }
 
