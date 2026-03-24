@@ -25,10 +25,10 @@ A successful installation will result in the following output:
 
 ```console
 18:23:43 [INF] [APP] ---------------------------------------------------
-18:23:43 [INF] [APP] BLE Sync Cycle v0.62.0 starting...
+18:23:43 [INF] [APP] BLE Sync Cycle v0.63.0 starting...
 18:23:43 [INF] [APP] ---------------------------------------------------
 
-Installing the following BLE Sync Cycle v0.62.0 files...
+Installing the following BLE Sync Cycle v0.63.0 files...
 
 Binary:       /home/richbl/.local/bin/ble-sync-cycle
 Desktop file: /home/richbl/.local/share/applications/com.github.richbl.ble-sync-cycle.desktop
@@ -37,7 +37,7 @@ Icon:         /home/richbl/.local/share/icons/hicolor/scalable/apps/com.github.r
 Installation completed successfully.
 
 18:23:43 [INF] [APP] ---------------------------------------------------
-18:23:43 [INF] [APP] BLE Sync Cycle v0.62.0 shutdown complete. Goodbye
+18:23:43 [INF] [APP] BLE Sync Cycle v0.63.0 shutdown complete. Goodbye
 18:23:43 [INF] [APP] ---------------------------------------------------
 ```
 
@@ -53,10 +53,10 @@ A successful uninstallation will result in the following output:
 
 ```console
 18:24:03 [INF] [APP] ---------------------------------------------------
-18:24:03 [INF] [APP] BLE Sync Cycle v0.62.0 starting...
+18:24:03 [INF] [APP] BLE Sync Cycle v0.63.0 starting...
 18:24:03 [INF] [APP] ---------------------------------------------------
 
-Uninstalling the following BLE Sync Cycle v0.62.0 files...
+Uninstalling the following BLE Sync Cycle v0.63.0 files...
 
 Binary:       /home/richbl/.local/bin/ble-sync-cycle
 Desktop file: /home/richbl/.local/share/applications/com.github.richbl.ble-sync-cycle.desktop
@@ -65,5 +65,5 @@ Icon:         /home/richbl/.local/share/icons/hicolor/scalable/apps/com.github.r
 Uninstallation completed successfully.
 
 18:24:03 [INF] [APP] ---------------------------------------------------
-18:24:03 [INF] [APP] BLE Sync Cycle v0.62.0 shutdown complete. Goodbye
+18:24:03 [INF] [APP] BLE Sync Cycle v0.63.0 shutdown complete. Goodbye
 18:24:03 [INF] [APP] ---------------------------------------------------

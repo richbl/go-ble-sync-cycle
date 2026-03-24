@@ -95,7 +95,9 @@ The **BSC Session Editor** page is used to manage BSC sessions. From this page, 
 
 #### The Session Details Section
 
-- The **Session Details** section displays the BSC session title and the logging level. Both fields are editable
+- The **Session Title** section displays the current BSC session title (editable)
+- The **Session File** section displays the full path to the current BSC session file
+- The **Logging Level** section displays the current logging level for this session (editable)
 
 #### The BLE Sensor Section
 
@@ -185,6 +187,6 @@ If you want to save a new BSC session, click the **Save Session As...** button a
 
 ### Deleting BSC Sessions
 
-In the event a BSC session needs to be removed from the list of sessions, you can click the **Delete Session** to permanently remove the session currently in the Session Editor. 
+In the event a BSC session needs to be removed from the list of sessions, you can click the **Delete Session** to permanently remove the session currently in the Session Editor.
 
 > Note that you will not be permitted to delete an actively-running BSC session. You must first stop that running session, and only then can you safely delete it.

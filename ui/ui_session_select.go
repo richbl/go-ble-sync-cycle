@@ -245,8 +245,8 @@ func createDefaultConfig(videoPath string) *config.Config {
 			SeekToPosition:    "00:00:00",
 			AutoResume:        false,
 			WindowScaleFactor: 1.0,
-			UpdateIntervalSec: 1.0,
-			SpeedMultiplier:   1.0,
+			UpdateIntervalSec: 0.25,
+			SpeedMultiplier:   0.8,
 			OnScreenDisplay: config.VideoOSDConfig{
 				DisplayCycleSpeed:    true,
 				DisplayPlaybackSpeed: true,
