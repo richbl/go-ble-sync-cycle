@@ -78,7 +78,7 @@ The output of that command is as follows:
 
 ```console
 18:25:46 [INF] [APP] ---------------------------------------------------
-18:25:46 [INF] [APP] BLE Sync Cycle v0.62.0 starting...
+18:25:46 [INF] [APP] BLE Sync Cycle v0.63.0 starting...
 18:25:46 [INF] [APP] ---------------------------------------------------
 
 Usage: ble-sync-cycle [flags]
@@ -97,6 +97,6 @@ The following flag is available when running in GUI mode:
   -l, --log-console  Enable logging to the console
 
 18:25:46 [INF] [APP] ---------------------------------------------------
-18:25:46 [INF] [APP] BLE Sync Cycle v0.62.0 shutdown complete. Goodbye
+18:25:46 [INF] [APP] BLE Sync Cycle v0.63.0 shutdown complete. Goodbye
 18:25:46 [INF] [APP] ---------------------------------------------------
 ```

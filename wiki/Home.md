@@ -16,9 +16,9 @@
 <img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trail_gui_hd.png">
 </p>
 
-Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle works:
+Here's a short (~60 seconds) YouTube video demonstrating how BLE Sync Cycle works:
 
 <p align="center">
-  <a href="https://youtu.be/oZqs__8KdnI"><img width="850" alt="Screenshot showing YouTube thumbnail" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/bsc_video_thumbnail.png"></a>
+  <a href="https://youtu.be/WjaNG7kHTqI"><img width="850" alt="Screenshot showing YouTube thumbnail" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/bsc_video_thumbnail.png"></a>
 </p>
 <!-- markdownlint-enable MD033 -->

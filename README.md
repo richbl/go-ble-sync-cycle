@@ -20,10 +20,10 @@
 <img width="850" alt="Screenshot showing BSC GUI" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trail_gui_hd.png">
 </p>
 
-Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle works:
+Here's a short (~60 seconds) YouTube video demonstrating how BLE Sync Cycle works:
 
 <p align="center">
-  <a href="https://youtu.be/oZqs__8KdnI"><img width="850" alt="Screenshot showing YouTube thumbnail" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/bsc_video_thumbnail.png"></a>
+  <a href="https://youtu.be/WjaNG7kHTqI"><img width="850" alt="Screenshot showing YouTube thumbnail" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/bsc_video_thumbnail.png"></a>
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -51,9 +51,9 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
 * Choice of running modes:
     * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
         * Cycling session selection
-        * Session status (including cycling speed and session time remaining), and video playback
+        * Session status (including cycling speed, ride time, and session time remaining), and video playback
         * Session logging
-        * BSC session creation and management
+        * BSC session creation, editing, and management
 
     * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
         * Application flags to override configuration file settings:
@@ -63,7 +63,7 @@ Here's a short (~30 seconds) YouTube video demonstrating how BLE Sync Cycle work
 
 * Configurable logging levels (debug, info, warn, error)
 
-* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for their training session
+* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for an accurate training session
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 

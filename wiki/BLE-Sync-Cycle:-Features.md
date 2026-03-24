@@ -27,9 +27,9 @@
 * Choice of running modes:
     * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
         * Cycling session selection
-        * Session status (including cycling speed and session time remaining), and video playback
+        * Session status (including cycling speed, ride time, and session time remaining), and video playback
         * Session logging
-        * BSC session creation and management
+        * BSC session creation, editing, and management
 
     * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
         * Application flags to override configuration file settings:
@@ -39,7 +39,7 @@
 
 * Configurable logging levels (debug, info, warn, error)
 
-* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for their training session
+* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for an accurate training session
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 

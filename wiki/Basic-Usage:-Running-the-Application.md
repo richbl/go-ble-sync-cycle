@@ -13,6 +13,8 @@ In GUI (graphical user interface) mode, the application is started and run like 
 
 - Easy to start (available from the desktop environment's application menu)
 - Easy to visually track video progression and real-time cycling metrics during a cycling session
+    - Real-time presentation of session metrics, including ride time
+    - Optional auto-resume feature allows you to continue a session from where you left off
 - Real-time logging is available directly within the application interface
 - Easy to edit and manage multiple BSC sessions
 
