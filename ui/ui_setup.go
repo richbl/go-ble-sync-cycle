@@ -69,6 +69,9 @@ func setupGUIApplication(app *gtk.Application, shutdownMgr *services.ShutdownMan
 	sessionCtrl.PopulateSessionList()
 	sessionCtrl.CheckForNoSessions()
 
+	// Initialize the Session Editor (Page 4) to a clean state
+	sessionCtrl.resetEditor()
+
 	setupAllSignals(sessionCtrl)
 	ui.Window.SetApplication(app)
 	ui.Window.Present()

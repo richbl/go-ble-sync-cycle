@@ -1,5 +1,5 @@
 # BLE Sync Cycle Configuration
-# v0.63.0
+# v0.64.0
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters, excluding ", &, and <)
@@ -23,6 +23,7 @@
   window_scale_factor = 1.0      # Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
   update_interval_secs = 0.25    # Frequency that the video player is sent speed updates (0.10-3.00 seconds)
   speed_multiplier = 0.8         # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
+  target_display_name = ""       # Force playback to a specific monitor (e.g., "eDP-1") ("" to use default primary display)
 
   [video.OSD]
     display_cycle_speed = true    # Display the current cycle speed on the on-screen display (true/false)

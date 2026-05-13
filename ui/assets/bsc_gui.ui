@@ -678,6 +678,14 @@
                             <property name="sensitive">0</property>
                           </object>
                         </child>
+                        <child>
+                          <object class="AdwComboRow" id="edit_screen-name_combo">
+                            <property name="selected">0</property>
+                            <property name="title">Playback Screen Name</property>
+                            <property name="tooltip-text">Display screen name for video playback</property>
+                            <property name="sensitive">0</property>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>

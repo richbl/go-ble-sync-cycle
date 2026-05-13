@@ -87,15 +87,16 @@ type PageSessionEditor struct {
 	SpeedSmoothing     *adw.SpinRow
 
 	// Video Settings
-	MediaPlayer      *adw.ComboRow
-	SessionFileRow   *adw.ActionRow
-	VideoFileRow     *adw.ActionRow
-	VideoFileButton  *gtk.Button
-	StartTimeEntry   *adw.EntryRow
-	SwitchAutoResume *adw.SwitchRow
-	WindowScale      *adw.SpinRow
-	UpdateInterval   *adw.SpinRow
-	SpeedMultiplier  *adw.SpinRow
+	MediaPlayer       *adw.ComboRow
+	SessionFileRow    *adw.ActionRow
+	VideoFileRow      *adw.ActionRow
+	VideoFileButton   *gtk.Button
+	StartTimeEntry    *adw.EntryRow
+	SwitchAutoResume  *adw.SwitchRow
+	WindowScale       *adw.SpinRow
+	UpdateInterval    *adw.SpinRow
+	SpeedMultiplier   *adw.SpinRow
+	TargetDisplayName *adw.ComboRow
 
 	// OSD
 	SwitchCycleSpeed    *adw.SwitchRow
@@ -275,6 +276,7 @@ func hydrateSessionEditor(builder *gtk.Builder) *PageSessionEditor {
 		WindowScale:         objGTK[*adw.SpinRow](builder, "edit_window_scale_factor_spin"),
 		UpdateInterval:      objGTK[*adw.SpinRow](builder, "edit_update_interval_spin"),
 		SpeedMultiplier:     objGTK[*adw.SpinRow](builder, "edit_speed_multiplier_spin"),
+		TargetDisplayName:   objGTK[*adw.ComboRow](builder, "edit_screen-name_combo"),
 		SwitchCycleSpeed:    objGTK[*adw.SwitchRow](builder, "display_cycle_speed_switch"),
 		SwitchPlaybackSpeed: objGTK[*adw.SwitchRow](builder, "display_playback_speed_switch"),
 		SwitchTimeRemaining: objGTK[*adw.SwitchRow](builder, "display_time_remaining_switch"),

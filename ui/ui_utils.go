@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
@@ -134,4 +136,58 @@ func bindValidator(entry *adw.EntryRow, pattern string, onUpdate func()) {
 
 	})
 
+}
+
+// evaluateDisplayTarget checks the requested TOML display name against active Wayland monitors,
+// returning a valid string ONLY if the target is an active secondary monitor, otherwise, it
+// returns "" (empty string) to preserve windowed scaling behavior
+func evaluateDisplayTarget(requestedName string) string {
+
+	requestedName = strings.TrimSpace(requestedName)
+	if requestedName == "" {
+		return ""
+	}
+
+	// Set default display from GDK
+	display := gdk.DisplayGetDefault()
+	if display == nil {
+		return ""
+	}
+
+	monitors := display.Monitors()
+	count := monitors.NItems()
+
+	// Iterate through all connected display devices
+	for i := range count {
+
+		item := monitors.Item(i)
+		if item == nil {
+			continue
+		}
+
+		mon, ok := item.Cast().(*gdk.Monitor)
+		if !ok {
+			continue
+		}
+
+		if mon.Connector() == requestedName {
+
+			// Index 0 is the primary/default display, so we return "" so mpv doesn't force fullscreen
+			if i == 0 {
+				logger.Debug(logger.BackgroundCtx, logger.GUI, "Target display '%s' is the primary monitor. Preserving default scaling behavior.", requestedName)
+
+				return ""
+			}
+
+			// Found a valid, non-default display
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "Target '%s' validated as secondary monitor.", requestedName)
+
+			return requestedName
+		}
+	}
+
+	// No screen name match, so return "" (default display)
+	logger.Debug(logger.BackgroundCtx, logger.GUI, "Target display '%s' not found or inactive. Falling back to primary.", requestedName)
+
+	return ""
 }
