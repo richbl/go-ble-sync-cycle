@@ -8,7 +8,7 @@ import (
 
 // mpvPlayerFactory creates a new mpvPlayer instance for testing
 func mpvPlayerFactory() (*mpvPlayer, error) {
-	return newMpvPlayer(logger.BackgroundCtx)
+	return newMpvPlayer(logger.BackgroundCtx, "")
 }
 
 func TestMpvPlayerLifecycle(t *testing.T) {

@@ -36,6 +36,8 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
   window_scale_factor = {{printf "%.1f" .Video.WindowScaleFactor}}{{pad (printf "window_scale_factor = %.1f" .Video.WindowScaleFactor)}}# Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
   update_interval_secs = {{printf "%.1f" .Video.UpdateIntervalSec}}{{pad (printf "update_interval_secs = %.1f" .Video.UpdateIntervalSec)}}# Frequency that the video player is sent speed updates (0.10-3.00 seconds)
   speed_multiplier = {{printf "%.1f" .Video.SpeedMultiplier}}{{pad (printf "speed_multiplier = %.1f" .Video.SpeedMultiplier)}}# Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
+  target_display_name = "{{.Video.TargetDisplayName}}"{{pad (printf "target_display_name = \"%s\"" .Video.TargetDisplayName)}}# Force playback to a specific monitor (e.g., "eDP-1") ("" to use default primary display)
+
 
 [video.OSD]
   display_cycle_speed = {{.Video.OnScreenDisplay.DisplayCycleSpeed}}{{pad (printf "display_cycle_speed = %t" .Video.OnScreenDisplay.DisplayCycleSpeed)}}# Display the current cycle speed on the on-screen display (true/false)

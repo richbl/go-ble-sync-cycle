@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,13 +35,36 @@ var (
 )
 
 // newMpvPlayer creates a new mpvPlayer instance
-func newMpvPlayer(ctx context.Context) (*mpvPlayer, error) {
+func newMpvPlayer(ctx context.Context, targetDisplayName string) (*mpvPlayer, error) {
 
 	// Ensure C locale is set to "C" for numeric formats
 	C.set_c_locale_numeric()
 
 	m := &mpvPlayer{
 		player: mpv.New(),
+	}
+
+	if m.player == nil {
+		return nil, errFailedToCreatePlayer
+	}
+
+	// Clean the string just in case there are trailing spaces from the config
+	targetDisplayName = strings.TrimSpace(targetDisplayName)
+
+	// Attempt to force mpv playback on the display requested
+	if targetDisplayName != "" {
+
+		// Force fullscreen, which is required to lock to a Wayland output
+		if err := m.player.SetOptionString("fs", "yes"); err != nil {
+			return nil, fmt.Errorf("failed to set fullscreen (fs) option: %w", err)
+		}
+
+		// Target the specific hardware connector
+		if err := m.player.SetOptionString("fs-screen-name", targetDisplayName); err != nil {
+			return nil, fmt.Errorf("failed to set fs-screen-name option to %s: %w", targetDisplayName, err)
+		}
+
+		logger.Info(ctx, logger.VIDEO, "mpv configured to target display: "+targetDisplayName)
 	}
 
 	if err := m.player.Initialize(); err != nil {

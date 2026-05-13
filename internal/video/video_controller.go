@@ -62,7 +62,7 @@ func NewPlaybackController(ctx context.Context, videoConfig config.VideoConfig, 
 	switch videoConfig.MediaPlayer {
 
 	case config.MediaPlayerMPV:
-		player, err = newMpvPlayer(ctx)
+		player, err = newMpvPlayer(ctx, videoConfig.TargetDisplayName)
 
 	default:
 		return nil, errUnsupportedVideoPlayer

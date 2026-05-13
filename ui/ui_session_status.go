@@ -83,6 +83,9 @@ func (sc *SessionController) handleStart() {
 		return
 	}
 
+	// Before session start, calculate the requested video playback screen (per user configuration)
+	sc.SessionManager.Config().Video.TargetDisplayName = evaluateDisplayTarget(sc.SessionManager.Config().Video.TargetDisplayName)
+
 	// Record start time for session playback
 	sc.startTime = time.Now()
 
@@ -207,6 +210,7 @@ func (sc *SessionController) startSessionGUI() {
 		logger.Debug(logger.BackgroundCtx, logger.GUI, "session services stopped")
 
 		safeUpdateUI(func() {
+
 			// Re-toggle to Start if success/error, but only if stopped
 			if sc.SessionManager.SessionState() == session.StateLoaded {
 				sc.updateSessionControlButton(false)

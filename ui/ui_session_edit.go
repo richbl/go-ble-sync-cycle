@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
@@ -18,11 +19,12 @@ import (
 
 // Maps for dropdown list widgets
 var (
-	logLevels    = []string{"debug", "info", "warn", "error"}
-	speedUnits   = []string{"mph", "km/h"}
-	mediaPlayers = []string{"mpv"}
-	alignX       = []string{"left", "center", "right"}
-	alignY       = []string{"top", "center", "bottom"}
+	logLevels      = []string{"debug", "info", "warn", "error"}
+	speedUnits     = []string{"mph", "km/h"}
+	mediaPlayers   = []string{"mpv"}
+	targetDisplays = []string{""}
+	alignX         = []string{"left", "center", "right"}
+	alignY         = []string{"top", "center", "bottom"}
 )
 
 // setupSessionEditSignals wires up event listeners for the Edit tab and its controls
@@ -156,11 +158,24 @@ func (sc *SessionController) populateEditor() {
 
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "populating editor with session data and enabling widgets")
 
+	sc.populateEditorFields(cfg, sc.SessionManager.EditConfigPath())
+
+	// Enable all widgets
+	toggleSensitive(sc.UI.Page4, true)
+
+	// Refresh button states (Save, Delete)
+	sc.updateSaveButtonState()
+
+}
+
+// populateEditorFields maps configuration data to UI widgets
+func (sc *SessionController) populateEditorFields(cfg *config.Config, path string) {
+
 	p4 := sc.UI.Page4
 
 	// --- App Section ---
 	p4.TitleEntry.SetText(cfg.App.SessionTitle)
-	p4.SessionFileRow.SetSubtitle(sc.SessionManager.EditConfigPath())
+	p4.SessionFileRow.SetSubtitle(path)
 	p4.LogLevel.SetSelected(indexOf(cfg.App.LogLevel, logLevels))
 
 	// --- BLE Section ---
@@ -183,6 +198,10 @@ func (sc *SessionController) populateEditor() {
 	p4.UpdateInterval.SetValue(cfg.Video.UpdateIntervalSec)
 	p4.SpeedMultiplier.SetValue(cfg.Video.SpeedMultiplier)
 
+	// Dynamically build comboRow list elements for display targets, then set values
+	p4.setupTargetDisplayCombo(cfg.Video.TargetDisplayName)
+	p4.TargetDisplayName.SetSelected(indexOf(cfg.Video.TargetDisplayName, targetDisplays))
+
 	// --- OSD Section ---
 	p4.SwitchCycleSpeed.SetActive(cfg.Video.OnScreenDisplay.DisplayCycleSpeed)
 	p4.SwitchPlaybackSpeed.SetActive(cfg.Video.OnScreenDisplay.DisplayPlaybackSpeed)
@@ -193,11 +212,92 @@ func (sc *SessionController) populateEditor() {
 	p4.AlignX.SetSelected(indexOf(cfg.Video.OnScreenDisplay.AlignX, alignX))
 	p4.AlignY.SetSelected(indexOf(cfg.Video.OnScreenDisplay.AlignY, alignY))
 
-	// Enable all widgets
-	toggleSensitive(p4, true)
+}
 
-	// Refresh button states (Save, Delete)
-	sc.updateSaveButtonState()
+// setupTargetDisplayCombo populates the ComboRow with active Wayland monitors
+func (ui *PageSessionEditor) setupTargetDisplayCombo(currentConfigTarget string) {
+
+	var monitors *gio.ListModel
+
+	if disp := gdk.DisplayGetDefault(); disp != nil {
+		monitors = disp.Monitors()
+	}
+
+	defaultLabel := getPrimaryDisplayLabel(monitors)
+	stringList := gtk.NewStringList([]string{defaultLabel})
+
+	populateSecondaryMonitors(monitors, stringList)
+
+	ui.TargetDisplayName.SetModel(stringList)
+	ui.TargetDisplayName.SetSensitive(len(targetDisplays) > 1)
+
+	selectInitialDisplay(ui.TargetDisplayName, currentConfigTarget)
+
+}
+
+// getPrimaryDisplayLabel returns a descriptive label for the primary display
+func getPrimaryDisplayLabel(monitors *gio.ListModel) string {
+
+	if monitors != nil && monitors.NItems() > 0 {
+
+		if mon, ok := monitors.Item(0).Cast().(*gdk.Monitor); ok {
+
+			if connector := mon.Connector(); connector != "" {
+				return fmt.Sprintf("default (%s)", connector)
+			}
+
+		}
+	}
+
+	return "default"
+}
+
+// populateSecondaryMonitors identifies secondary displays and adds them to the combo list
+func populateSecondaryMonitors(monitors *gio.ListModel, stringList *gtk.StringList) {
+
+	// Reset the list of secondary displays to just the "default" entry
+	targetDisplays = []string{""}
+
+	if monitors == nil {
+		return
+	}
+
+	for i := uint(1); i < monitors.NItems(); i++ {
+		item := monitors.Item(i)
+		if item == nil {
+			continue
+		}
+
+		if mon, ok := item.Cast().(*gdk.Monitor); ok {
+			name := mon.Connector()
+			if name != "" {
+				stringList.Append(name)
+				targetDisplays = append(targetDisplays, name)
+			}
+
+		}
+	}
+
+}
+
+// selectInitialDisplay sets the initial selection for the target display dropdown
+func selectInitialDisplay(comboRow *adw.ComboRow, currentConfigTarget string) {
+
+	if currentConfigTarget != "" {
+
+		for idx, val := range targetDisplays {
+
+			if val == currentConfigTarget {
+				comboRow.SetSelected(uint(idx))
+
+				return
+			}
+
+		}
+	}
+
+	// Fallback to the first item (default)
+	comboRow.SetSelected(0)
 
 }
 
@@ -256,6 +356,7 @@ func (sc *SessionController) harvestEditor() *config.Config {
 	cfg.Video.WindowScaleFactor = p4.WindowScale.Value()
 	cfg.Video.UpdateIntervalSec = p4.UpdateInterval.Value()
 	cfg.Video.SpeedMultiplier = p4.SpeedMultiplier.Value()
+	cfg.Video.TargetDisplayName = targetDisplays[p4.TargetDisplayName.Selected()]
 
 	// OSD
 	cfg.Video.OnScreenDisplay.DisplayCycleSpeed = p4.SwitchCycleSpeed.Active()
@@ -499,7 +600,7 @@ func (sc *SessionController) performDelete(path, title, loadedPath string) {
 	sc.SessionManager.Reset()
 
 	safeUpdateUI(func() {
-		sc.resetEditorAfterDelete()
+		sc.resetEditor()
 
 		if isLoadedSession {
 			sc.clearPage2()
@@ -513,17 +614,22 @@ func (sc *SessionController) performDelete(path, title, loadedPath string) {
 
 }
 
-// resetEditorAfterDelete clears and disables the editor UI after a deletion
-func (sc *SessionController) resetEditorAfterDelete() {
+// resetEditor clears and disables the editor UI after a deletion
+func (sc *SessionController) resetEditor() {
 
 	p4 := sc.UI.Page4
 
-	// Reset text fields to their default values
-	p4.TitleEntry.SetText("n/a")
-	p4.SessionFileRow.SetSubtitle("n/a")
-	p4.BTAddressEntry.SetText("AA:BB:CC:DD:EE:FF")
-	p4.StartTimeEntry.SetText("00:00:00")
-	p4.VideoFileRow.SetSubtitle("n/a")
+	// Use a default config as the source of truth for reset values
+	cfg := createDefaultConfig("n/a")
+	cfg.App.SessionTitle = "n/a"
+
+	// Populate the UI fields from the template config
+	sc.populateEditorFields(cfg, "n/a")
+
+	// Explicitly override the TargetDisplayName with an "n/a" placeholder
+	targetDisplays = []string{"n/a"}
+	p4.TargetDisplayName.SetModel(gtk.NewStringList(targetDisplays))
+	p4.TargetDisplayName.SetSelected(0)
 
 	// Disable all widgets
 	toggleSensitive(p4, false)

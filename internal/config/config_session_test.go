@@ -113,6 +113,7 @@ func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
   seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
+	target_display_name = ""
 
   [video.OSD]
     display_cycle_speed = true
@@ -175,6 +176,7 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
   seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
+	target_display_name = ""
 
   [video.OSD]
     display_cycle_speed = true
@@ -234,6 +236,7 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
   seek_to_position = "00:00:00"
   update_interval_secs = 0.1
   speed_multiplier = 0.8
+	target_display_name = ""
 
   [video.OSD]
     display_cycle_speed = true

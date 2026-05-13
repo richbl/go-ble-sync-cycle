@@ -247,6 +247,7 @@ func createDefaultConfig(videoPath string) *config.Config {
 			WindowScaleFactor: 1.0,
 			UpdateIntervalSec: 0.25,
 			SpeedMultiplier:   0.8,
+			TargetDisplayName: "",
 			OnScreenDisplay: config.VideoOSDConfig{
 				DisplayCycleSpeed:    true,
 				DisplayPlaybackSpeed: true,
