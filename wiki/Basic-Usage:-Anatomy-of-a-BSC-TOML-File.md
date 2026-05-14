@@ -44,7 +44,6 @@ The default `config.toml` file is shown below:
   speed_multiplier = 0.8         # Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
   target_display_name = ""       # Force playback to a specific monitor (e.g., "eDP-1") ("" to use default primary display)
 
-
   [video.OSD]
     display_cycle_speed = true    # Display the current cycle speed on the on-screen display (true/false)
     display_playback_speed = true # Display the current video playback speed on the on-screen display (true/false)
@@ -97,7 +96,7 @@ The `[video]` section defines the configuration for the MPV video player compone
 - `window_scale_factor`: A scaling factor for the video window, where 1.0 is full screen. This value can be useful when debugging or when running the video player in a non-maximized window is preferred
 - `update_interval_secs`: The number of seconds to wait between video player updates
 - `speed_multiplier`: The relative playback speed of the video. Usually, a value of 1.0 is used (<1.0 will slow playback; >1.0 will speed up playback), as this is the default value (normal playback speed). However, since it's typically unknown what the speed of the vehicle is in the video during "normal speed" playback, it's recommended to experiment with different values to find a good balance between video playback speed and real-world cycling experience.
-- `target_display_name`: Force video playback to a specific monitor (hardware connector name) on Wayland (e.g., "eDP-1", "HDMI-A-1"). Leave empty ("") to use the default primary display
+- `target_display_name`: Force video playback to a specific monitor (using the hardware connector name, e.g., "eDP-1", "HDMI-A-1"). Leave empty ("") to use the default primary display. This can be useful for multi-monitor setups, especially when the primary display is not the desired monitor for video playback. Note that--as a limitation of the Wayland display environment--video playback on non-primary monitors may not support windowed playback (full-screen playback only)
 
 ### The Video On-Screen Display Section
 
