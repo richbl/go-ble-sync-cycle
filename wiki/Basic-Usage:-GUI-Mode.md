@@ -143,6 +143,8 @@ The **Video Settings** section displays the video playback settings for the medi
 
 - The **Speed Multiplier** field specifies the playback speed multiplier for the media player. This value is between 0.1 and 1.5. The default value is 0.8. This value is particularly useful as it allows you to speed up or slow down the video playback speed for a BSC session, relative to your cycling speed. Since it's unknown what the actual speed of the cyclist might be in any given video (they could be cycling at 25 mph, or at 5 mph), this value can be used to "balance" the video playback speed with your actual cycling speed
 
+- The **Playback Screen Name** field forces video playback to a specific monitor (using the hardware connector name, e.g., "eDP-1", "HDMI-A-1"). Leave empty ("") to use the default primary display. This can be useful for multi-monitor setups, especially when the primary display is not the desired monitor for video playback. Note that--as a limitation of the Wayland display environment--video playback on non-primary monitors may not support windowed playback (full-screen playback only)
+
 <!-- markdownlint-disable MD033 -->
 <p align="center">
 <img width="600" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/gui_session_editor_B.png">
