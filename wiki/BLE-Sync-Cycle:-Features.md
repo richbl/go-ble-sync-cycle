@@ -37,6 +37,8 @@
             * Video start time (seek)
             * Help/usage information
 
+* Support for video playback on a non-primary display, allowing users to utilize a dedicated big-screen monitor or TV for video output while keeping the application running on a separate display
+
 * Configurable logging levels (debug, info, warn, error)
 
 * The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for an accurate training session
