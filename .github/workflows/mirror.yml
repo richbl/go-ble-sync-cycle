@@ -3,131 +3,53 @@ on: [push, delete]
 jobs:
   mirror:
     runs-on: ubuntu-latest
+    env:
+      # Suppress the Node.js 20 deprecation warning for pinned actions/checkout
+      # without requiring a SHA change (per GitHub's recommended interim path).
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       # actions/checkout@v4.2.2
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
 
-      # ── DIAGNOSTIC STEP 1 ───────────────────────────────────────────────────
-      # Inspect the repo state BEFORE any replacement. Check the Actions log
-      # output here to confirm:
-      #   - README.md and wiki/ exist and are git-tracked
-      #   - The target URL is actually present in those files
-      - name: DEBUG - Pre-replacement state
-        run: |
-          echo "════════════════════════════════════════"
-          echo " Git refs and log"
-          echo "════════════════════════════════════════"
-          git log --oneline -5
-          echo ""
-          git branch -avv
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " Git status (are markdown files tracked?)"
-          echo "════════════════════════════════════════"
-          git status
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " README.md — GitHub URL occurrences"
-          echo "════════════════════════════════════════"
-          if [ -f README.md ]; then
-            grep -n "github.com/richbl/go-ble-sync-cycle" README.md \
-              && echo "(matches above)" \
-              || echo "  *** NO MATCHES FOUND in README.md ***"
-          else
-            echo "  *** README.md does not exist ***"
-          fi
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " wiki/ — GitHub URL occurrences"
-          echo "════════════════════════════════════════"
-          if [ -d wiki ]; then
-            echo "Files in wiki/:"
-            ls -1 wiki/
-            echo ""
-            grep -rn "github.com/richbl/go-ble-sync-cycle" wiki/ \
-              && echo "(matches above)" \
-              || echo "  *** NO MATCHES FOUND in wiki/ ***"
-          else
-            echo "  *** wiki/ directory does not exist ***"
-          fi
-
-      # ── URL REPLACEMENT ──────────────────────────────────────────────────────
-      # Replace GitHub project URLs with Codeberg equivalents in markdown files.
-      # Uses git status --porcelain (after staging) rather than git diff --quiet
-      # (before staging) for a more reliable change-detection path.
+      # Replace GitHub project URLs with Codeberg equivalents in markdown files,
+      # then advance refs/remotes/origin/<branch> to our modified HEAD.
+      #
+      # Why the update-ref step is required:
+      #   The pixta-dev mirror action pushes refs/remotes/origin/* → Codeberg
+      #   refs/heads/* (not the local refs/heads/* branch). Our replacement
+      #   commit lives on refs/heads/<branch>, so without advancing the remote
+      #   tracking ref the mirror action would push the unmodified GitHub commit
+      #   to Codeberg and the URL replacement would be silently discarded.
       - name: Replace GitHub URLs with Codeberg URLs in markdown files
         run: |
           GITHUB_URL="https://github.com/richbl/go-ble-sync-cycle"
           CODEBERG_URL="https://codeberg.org/richbl/go-ble-sync-cycle"
 
           # Replace in README.md (repo root)
-          if [ -f README.md ]; then
+          [ -f README.md ] && \
             sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
-            echo "sed applied to README.md"
-          fi
 
           # Replace in all .md files under wiki/ (if the directory exists)
           if [ -d wiki ]; then
             find wiki -name "*.md" \
               -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
-            echo "sed applied to wiki/*.md"
           fi
 
-          # Stage everything first, then test for staged changes.
-          # This is more reliable than testing git diff before staging.
+          # Stage and commit if any files changed.
           git add -A
-
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git commit -m "chore: replace GitHub URLs with Codeberg URLs"
-            echo "Replacement commit created."
-          else
-            echo "No changes staged — nothing to commit."
-          fi
 
-      # ── DIAGNOSTIC STEP 2 ───────────────────────────────────────────────────
-      # Inspect the repo state AFTER replacement. Check the Actions log here to
-      # confirm:
-      #   - The replacement commit appears in git log
-      #   - The modified file content shows Codeberg URLs
-      #   - No GitHub URLs remain
-      - name: DEBUG - Post-replacement state
-        run: |
-          echo "════════════════════════════════════════"
-          echo " Git log after replacement"
-          echo "════════════════════════════════════════"
-          git log --oneline -5
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " Git show (diff of most recent commit)"
-          echo "════════════════════════════════════════"
-          git show --stat HEAD
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " README.md — remaining GitHub URL check"
-          echo "════════════════════════════════════════"
-          if [ -f README.md ]; then
-            grep -n "github.com/richbl/go-ble-sync-cycle" README.md \
-              && echo "  *** GITHUB URLs STILL PRESENT — replacement failed ***" \
-              || echo "  OK: no GitHub URLs found"
-          fi
-          echo ""
-
-          echo "════════════════════════════════════════"
-          echo " wiki/ — remaining GitHub URL check"
-          echo "════════════════════════════════════════"
-          if [ -d wiki ]; then
-            grep -rn "github.com/richbl/go-ble-sync-cycle" wiki/ \
-              && echo "  *** GITHUB URLs STILL PRESENT — replacement failed ***" \
-              || echo "  OK: no GitHub URLs found in wiki/"
+            # Advance refs/remotes/origin/<branch> to our modified HEAD.
+            # The mirror action maps refs/remotes/origin/* → Codeberg
+            # refs/heads/*, so this ref must include our replacement commit
+            # or the mirror will push the original unmodified content instead.
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git update-ref refs/remotes/origin/${CURRENT_BRANCH} HEAD
           fi
 
       # pixta-dev/repository-mirroring-action@v1.1.1
