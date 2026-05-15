@@ -108,7 +108,7 @@ Since I already use an analog bicycle trainer while riding indoors, it made sens
 
 ## Would You Like to Know More?
 
-For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle project wiki](/richbl/go-ble-sync-cycle/wiki). The wiki includes the following sections:
+For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle project wiki](https://github.com/richbl/go-ble-sync-cycle/wiki). The wiki includes the following sections:
 
 ### BLE Sync Cycle
 
