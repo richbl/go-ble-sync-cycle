@@ -1,5 +1,12 @@
 name: Mirror to Codeberg
+
 on: [push, delete]
+
+env:
+  # Opt into Node.js 24 to gracefully suppress the deprecation warning 
+  # for the locked actions/checkout SHA tag below
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
@@ -9,32 +16,43 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Replace GitHub project URLs with Codeberg equivalents in markdown files.
-      # This commit is local-only and never pushed back to GitHub; the mirror
-      # action below then forwards the modified state to Codeberg.
-      - name: Replace GitHub URLs with Codeberg URLs in markdown files
+      - name: Replace GitHub URLs with Codeberg URLs
+        if: github.event_name != 'delete'
         run: |
-          GITHUB_URL="https://github.com/richbl/go-ble-sync-cycle"
-          CODEBERG_URL="https://codeberg.org/richbl/go-ble-sync-cycle"
-
-          # Replace in README.md (repo root)
-          [ -f README.md ] && \
-            sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
-
-          # Replace in all .md files under wiki/ (if the directory exists)
-          if [ -d wiki ]; then
-            find wiki -name "*.md" \
-              -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
+          # 1. Search and replace in README.md and all ./wiki markdowns
+          if [ -f "README.md" ]; then
+            sed -i 's|https://github.com/richbl/go-ble-sync-cycle|https://codeberg.org/richbl/go-ble-sync-cycle|g' README.md
           fi
-
-          # Commit locally only if changes were made.
-          # This commit is never pushed to GitHub — only forwarded to Codeberg
-          # by the mirror action below.
-          if ! git diff --quiet; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: replace GitHub URLs with Codeberg URLs"
+          
+          if [ -d "./wiki" ]; then
+            find ./wiki -name "*.md" -type f -exec sed -i 's|https://github.com/richbl/go-ble-sync-cycle|https://codeberg.org/richbl/go-ble-sync-cycle|g' {} +
+          fi
+          
+          # 2. Check if files changed and create a local commit
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -a -m "Automated URL replacement for Codeberg mirror"
+            
+            # Force update local and remote tracking branches
+            if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+              BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+              git update-ref "refs/heads/$BRANCH_NAME" HEAD
+              git update-ref "refs/remotes/origin/$BRANCH_NAME" HEAD
+            elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+              TAG_NAME="${GITHUB_REF#refs/tags/}"
+              git tag -f "$TAG_NAME" HEAD
+            fi
+            
+            # 3. Prevent the mirroring action from overwriting our commit.
+            # By setting the origin URL to the local directory, any internal 'git fetch' 
+            # executed by the mirroring action will safely fetch our modified commit 
+            # instead of reaching out to GitHub and reverting our changes.
+            git remote set-url origin .
+            
+            echo "URLs successfully replaced and Git history prepped for mirroring."
+          else
+            echo "No URL replacements were needed."
           fi
 
       # pixta-dev/repository-mirroring-action@v1.1.1
