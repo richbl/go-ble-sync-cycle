@@ -4,8 +4,8 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     env:
-      # Suppress the Node.js 20 deprecation warning for pinned actions/checkout
-      # without requiring a SHA change (per GitHub's recommended interim path).
+      # Suppress the Node.js 20 deprecation warning for the pinned
+      # actions/checkout SHA without requiring a version change.
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       # actions/checkout@v4.2.2
@@ -13,44 +13,58 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Replace GitHub project URLs with Codeberg equivalents in markdown files,
-      # then advance refs/remotes/origin/<branch> to our modified HEAD.
+      # Replace GitHub project URLs with Codeberg equivalents across ALL
+      # branches, not just the branch that triggered this workflow run.
       #
-      # Why the update-ref step is required:
-      #   The pixta-dev mirror action pushes refs/remotes/origin/* → Codeberg
-      #   refs/heads/* (not the local refs/heads/* branch). Our replacement
-      #   commit lives on refs/heads/<branch>, so without advancing the remote
-      #   tracking ref the mirror action would push the unmodified GitHub commit
-      #   to Codeberg and the URL replacement would be silently discarded.
+      # Why loop over every branch:
+      #   The mirror action maps refs/remotes/origin/* → Codeberg refs/heads/*.
+      #   If only the currently-checked-out branch has its remote tracking ref
+      #   updated, every other branch is mirrored unmodified — meaning Codeberg's
+      #   main (or any other branch) keeps the original GitHub URLs.
+      #
+      # Why git update-ref is required:
+      #   Our replacement commit lives on the local refs/heads/<branch>. The
+      #   mirror action ignores local branch refs and reads only the remote
+      #   tracking refs (refs/remotes/origin/*). Advancing each remote tracking
+      #   ref to our modified HEAD is what causes the mirror to forward the
+      #   corrected content to Codeberg.
       - name: Replace GitHub URLs with Codeberg URLs in markdown files
         run: |
           GITHUB_URL="https://github.com/richbl/go-ble-sync-cycle"
           CODEBERG_URL="https://codeberg.org/richbl/go-ble-sync-cycle"
 
-          # Replace in README.md (repo root)
-          [ -f README.md ] && \
-            sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Replace in all .md files under wiki/ (if the directory exists)
-          if [ -d wiki ]; then
-            find wiki -name "*.md" \
-              -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
-          fi
+          for remote_ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/); do
+            branch="${remote_ref#refs/remotes/origin/}"
 
-          # Stage and commit if any files changed.
-          git add -A
-          if [ -n "$(git status --porcelain)" ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: replace GitHub URLs with Codeberg URLs"
+            # Skip the synthetic HEAD pointer
+            [ "$branch" = "HEAD" ] && continue
 
-            # Advance refs/remotes/origin/<branch> to our modified HEAD.
-            # The mirror action maps refs/remotes/origin/* → Codeberg
-            # refs/heads/*, so this ref must include our replacement commit
-            # or the mirror will push the original unmodified content instead.
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            git update-ref refs/remotes/origin/${CURRENT_BRANCH} HEAD
-          fi
+            # Check out this branch on top of its remote tracking ref.
+            # --force handles the case where a prior loop iteration left the
+            # working tree on a different branch.
+            git checkout --force -B "$branch" "$remote_ref"
+
+            # Apply URL replacement in README.md (repo root) and wiki/*.md
+            [ -f README.md ] && \
+              sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
+            [ -d wiki ] && \
+              find wiki -name "*.md" \
+                -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
+
+            # Commit if any files changed, then advance the remote tracking ref.
+            # Skipping branches with no GitHub URLs avoids unnecessary commits.
+            git add -A
+            if [ -n "$(git status --porcelain)" ]; then
+              git commit -m "chore: replace GitHub URLs with Codeberg URLs"
+              git update-ref "$remote_ref" HEAD
+              echo "Branch '${branch}': URL replacement applied ($(git rev-parse --short HEAD))"
+            else
+              echo "Branch '${branch}': no GitHub URLs found — skipped"
+            fi
+          done
 
       # pixta-dev/repository-mirroring-action@v1.1.1
       - uses: pixta-dev/repository-mirroring-action@674e65a7d483ca28dafaacba0d07351bdcc8bd75
