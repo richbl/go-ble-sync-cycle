@@ -1,0 +1,90 @@
+name: Mirror Release to Codeberg
+on:
+  release:
+    types: [published]
+
+jobs:
+  mirror-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Recreate Release and Upload Assets to Codeberg
+        env:
+          # GitHub token is automatically provided by Actions to download assets
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The token you just created on Codeberg
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          # 1. Extract release details directly from GitHub's native webhook payload
+          TAG_NAME=$(jq -r '.release.tag_name' "$GITHUB_EVENT_PATH")
+          RELEASE_NAME=$(jq -r '.release.name' "$GITHUB_EVENT_PATH")
+          DRAFT=$(jq -r '.release.draft' "$GITHUB_EVENT_PATH")
+          PRERELEASE=$(jq -r '.release.prerelease' "$GITHUB_EVENT_PATH")
+          BODY=$(jq -r '.release.body' "$GITHUB_EVENT_PATH")
+          TARGET_COMMIT=$(jq -r '.release.target_commitish' "$GITHUB_EVENT_PATH")
+
+          # 2. Automatically format the repository URLs for text replacement
+          GITHUB_URL="https://github.com/${{ github.repository }}"
+          CODEBERG_URL="https://codeberg.org/${{ github.repository }}"
+          
+          # 3. Securely build the JSON payload to send to Codeberg
+          jq -n \
+            --arg tag "$TAG_NAME" \
+            --arg target "$TARGET_COMMIT" \
+            --arg name "$RELEASE_NAME" \
+            --arg body "$BODY" \
+            --argjson draft "$DRAFT" \
+            --argjson prerelease "$PRERELEASE" \
+            '{tag_name: $tag, target_commitish: $target, name: $name, body: $body, draft: $draft, prerelease: $prerelease}' > payload.json
+            
+          # Replace GitHub URLs with Codeberg URLs in the release notes body
+          jq --arg gh "$GITHUB_URL" --arg cb "$CODEBERG_URL" \
+            '.body |= gsub($gh; $cb)' payload.json > final_payload.json
+
+          echo "Payload prepared for Codeberg:"
+          cat final_payload.json
+
+          # 4. Create the Release via Codeberg API
+          echo "Creating release on Codeberg..."
+          HTTP_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases" \
+            -H "accept: application/json" \
+            -H "Authorization: token $CODEBERG_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @final_payload.json)
+
+          # Extract response body and status code securely
+          RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+          # 201 Created is the expected success response
+          if [ "$HTTP_STATUS" -ne 201 ]; then
+            echo "Error: Failed to create release. HTTP Status: $HTTP_STATUS"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          RELEASE_ID=$(echo "$RESPONSE_BODY" | jq -r '.id')
+          echo "Successfully created Codeberg release (ID: $RELEASE_ID)"
+
+          # 5. Download Release Assets from GitHub and Upload to Codeberg
+          echo "Downloading binary assets from GitHub..."
+          mkdir -p release_assets
+          # If there are no assets, this gracefully skips instead of failing
+          gh release download "$TAG_NAME" --dir release_assets || echo "No assets found or download skipped."
+
+          # Loop through downloaded files and upload each to Codeberg
+          shopt -s nullglob
+          for file in release_assets/*; do
+            if [ -f "$file" ]; then
+              FILENAME=$(basename "$file")
+              echo "Uploading $FILENAME to Codeberg..."
+              curl -s -X POST "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" \
+                -H "accept: application/json" \
+                -H "Authorization: token $CODEBERG_TOKEN" \
+                -F "attachment=@$file"
+            fi
+          done
+          
+          echo "Codeberg Release mirroring complete!"
