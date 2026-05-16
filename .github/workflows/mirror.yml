@@ -1,63 +1,69 @@
 name: Mirror to Codeberg
-
 on: [push, delete]
-
-env:
-  # Opt into Node.js 24 to gracefully suppress the deprecation warning 
-  # for the locked actions/checkout SHA tag below
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   mirror:
     runs-on: ubuntu-latest
+    env:
+      # Suppress the Node.js 20 deprecation warning for the pinned
+      # actions/checkout SHA without requiring a version change.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       # actions/checkout@v4.2.2
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
 
-      - name: Replace URLs across ALL branches
-        if: github.event_name != 'delete'
+      # Replace GitHub project URLs with Codeberg equivalents across ALL
+      # branches before mirroring.
+      #
+      # Why git worktree instead of "git checkout --force" inside a loop:
+      #   Sequential checkouts share a single working directory. When the loop
+      #   moves from a branch that has wiki/ to one that does not (e.g.
+      #   archive/vlc-instability), git removes wiki/ from the working tree.
+      #   Subsequent iterations then fail the [ -d wiki ] test even for branches
+      #   that do track that directory. Worktrees give each branch a fully
+      #   isolated directory so one branch's structure never affects another's.
+      #
+      # Why git update-ref is required:
+      #   The mirror action maps refs/remotes/origin/* → Codeberg refs/heads/*.
+      #   Our replacement commit exists only in the worktree. Advancing each
+      #   remote tracking ref to that commit is what causes the mirror to push
+      #   the corrected content to Codeberg instead of the original.
+      
+      - name: Replace GitHub URLs with Codeberg URLs in markdown files
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Iterate over every remote tracking branch fetched from GitHub
-          for branch_ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/); do
-            # Strip the Git prefix to get just the branch name (e.g., 'main', 'dev', 'archive')
-            BRANCH_NAME=${branch_ref#refs/remotes/origin/}
-            
-            # Skip the hidden HEAD pointer
-            if [ "$BRANCH_NAME" == "HEAD" ]; then continue; fi
-            
-            echo "--- Processing branch: $BRANCH_NAME ---"
-            
-            # Force checkout the branch locally
-            git checkout -B "$BRANCH_NAME" "$branch_ref"
-            
-            # 1. Search and replace in README.md and all ./wiki markdowns
-            if [ -f "README.md" ]; then
-              sed -i 's|https://github.com/richbl/go-ble-sync-cycle|https://codeberg.org/richbl/go-ble-sync-cycle|g' README.md
-            fi
-            
-            if [ -d "./wiki" ]; then
-              find ./wiki -name "*.md" -type f -exec sed -i 's|https://github.com/richbl/go-ble-sync-cycle|https://codeberg.org/richbl/go-ble-sync-cycle|g' {} +
-            fi
-            
-            # 2. Check if files changed and create a local commit
-            if [[ -n "$(git status --porcelain)" ]]; then
-              git commit -a -m "Automated URL replacement for Codeberg mirror"
-              
-              # Force update the remote tracking branch so the mirror action pushes this newly modified commit
-              git update-ref "$branch_ref" HEAD
-              echo "✅ Updated URLs for $BRANCH_NAME"
+          GITHUB_URL="https://github.com/richbl/go-ble-sync-cycle"
+          CODEBERG_URL="https://codeberg.org/richbl/go-ble-sync-cycle"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          for remote_ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/); do
+            branch="${remote_ref#refs/remotes/origin/}"
+            [ "$branch" = "HEAD" ] && continue
+
+            git checkout --force -B "$branch" "$remote_ref"
+
+            echo "--- Branch: ${branch} ---"
+            echo "wiki/ present: $([ -d wiki ] && echo YES || echo NO)"
+            echo "wiki GitHub URL count: $(find wiki -name '*.md' -exec grep -l "${GITHUB_URL}" {} + 2>/dev/null | wc -l) file(s)"
+
+            [ -f README.md ] && sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
+            [ -d wiki ] && find wiki -name "*.md" \
+              -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
+
+            echo "git status after sed:"
+            git status --porcelain
+
+            git add -A
+            if [ -n "$(git status --porcelain)" ]; then
+              git commit -m "chore: replace GitHub URLs with Codeberg URLs"
+              git update-ref "$remote_ref" HEAD
+              echo "Committed: $(git rev-parse --short HEAD)"
             else
-              echo "⚡ No URL replacements needed for $BRANCH_NAME"
+              echo "Nothing to commit"
             fi
           done
-          
-          # 3. CRITICAL FIX: Prevent the mirroring action from overwriting our commits.
-          git remote set-url origin .
 
       # pixta-dev/repository-mirroring-action@v1.1.1
       - uses: pixta-dev/repository-mirroring-action@674e65a7d483ca28dafaacba0d07351bdcc8bd75
