@@ -1,7 +1,7 @@
 // Package video provides video playback control with support for the mpv media player
 //
-// It manages playback speed synchronization with external speed controllers and provides on-screen
-// display (OSD) capabilities
+// It manages multi-monitor display validation, playback speed synchronization with external speed
+// controllers and provides on-screen display (OSD) capabilities
 //
 // The package uses a mediaPlayer interface to abstract different player implementations, allowing
 // for easy extension to support additional future players

@@ -273,6 +273,7 @@ func (sc *SessionController) setupListBoxSignals() {
 
 		if hasSelection {
 			idx := row.Index()
+
 			if idx >= 0 && idx < len(sc.Sessions) {
 				selectedSession := sc.Sessions[idx]
 				logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("selected session: %s (config file: %s)", selectedSession.Title, selectedSession.ConfigPath))

@@ -507,7 +507,6 @@ func (sc *SessionController) performSessionSave(path string, cfg *config.Config)
 
 	// Perform file I/O
 	if err := config.Save(path, cfg, config.GetVersion()); err != nil {
-
 		logger.Error(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("failed to save config: %v", err))
 
 		safeUpdateUI(func() {

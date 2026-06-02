@@ -59,10 +59,13 @@ func NewPlaybackController(ctx context.Context, videoConfig config.VideoConfig, 
 	instanceID := videoInstanceCounter.Add(1)
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("creating video controller object (id:%04d)...", instanceID))
 
+	// Validate the target display name before creating the media player
+	videoConfig.ValidationResult = ValidateDisplay(ctx, videoConfig.TargetDisplayName)
+
 	switch videoConfig.MediaPlayer {
 
 	case config.MediaPlayerMPV:
-		player, err = newMpvPlayer(ctx, videoConfig.TargetDisplayName)
+		player, err = newMpvPlayer(ctx, videoConfig)
 
 	default:
 		return nil, errUnsupportedVideoPlayer
@@ -105,15 +108,13 @@ func (p *PlaybackController) StartPlayback(ctx context.Context, speedController 
 	logger.Info(ctx, logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
 
 	defer func() {
-
 		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("terminating video controller object (id:%04d)...", p.InstanceID))
 		p.player.terminatePlayer()
 		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("destroyed video controller object (id:%04d)", p.InstanceID))
-
 	}()
 
 	// Configure the media player
-	if err := p.configurePlayback(); err != nil {
+	if err := p.configurePlayback(ctx); err != nil {
 		return fmt.Errorf("failed to configure %s video playback: %w", p.videoConfig.MediaPlayer, err)
 	}
 
@@ -158,10 +159,10 @@ func (p *PlaybackController) PlaybackSpeed() float64 {
 }
 
 // configurePlayback configures the media player for playback based on the video configuration
-func (p *PlaybackController) configurePlayback() error {
+func (p *PlaybackController) configurePlayback(ctx context.Context) error {
 
 	// Configure playback options before loadFile() for mpv
-	if err := p.setPlaybackOptions(); err != nil {
+	if err := p.setPlaybackOptions(ctx); err != nil {
 		return err
 	}
 
@@ -209,11 +210,18 @@ func (p *PlaybackController) configureCommon() error {
 }
 
 // setPlaybackOptions sets load-time sensitive playback options for mpv
-func (p *PlaybackController) setPlaybackOptions() error {
+func (p *PlaybackController) setPlaybackOptions(ctx context.Context) error {
 
-	// Set playback window size
-	if err := p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor); err != nil {
-		return err
+	// Set the initial window scale factor for mpv, unless the target display requires fullscreen
+	// (e.g., a non-default monitor under Wayland)
+	if p.videoConfig.ValidationResult.IsValid && p.videoConfig.ValidationResult.IsNonDefaultMonitor {
+		logger.Debug(ctx, logger.VIDEO, "bypassing autofit scale factor: target display requires forced fullscreen")
+	} else {
+
+		if err := p.player.setPlaybackSize(p.videoConfig.WindowScaleFactor); err != nil {
+			return err
+		}
+
 	}
 
 	// Set seek position into video playback
@@ -310,6 +318,7 @@ func (p *PlaybackController) updateSpeed(ctx context.Context) error {
 
 	// Update the playback speed based on current speed and unit multiplier
 	playbackSpeed := p.PlaybackSpeed()
+
 	logger.Debug(ctx, logger.VIDEO, fmt.Sprintf(logger.Cyan+"updating video playback speed to %.2fx...", playbackSpeed))
 
 	if err := p.player.setSpeed(playbackSpeed); err != nil {

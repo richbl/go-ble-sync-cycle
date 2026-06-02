@@ -55,6 +55,7 @@ func (sc *SessionController) handleSessionControl() error {
 	})
 
 	currentState := sc.SessionManager.SessionState()
+
 	logger.Debug(logger.BackgroundCtx, logger.GUI, fmt.Sprintf("Session Start/Stop button clicked: session status: %s", currentState))
 
 	if currentState >= session.StateConnecting || sc.starting.Load() {
@@ -82,9 +83,6 @@ func (sc *SessionController) handleStart() {
 
 		return
 	}
-
-	// Before session start, calculate the requested video playback screen (per user configuration)
-	sc.SessionManager.Config().Video.TargetDisplayName = evaluateDisplayTarget(sc.SessionManager.Config().Video.TargetDisplayName)
 
 	// Record start time for session playback
 	sc.startTime = time.Now()
@@ -395,6 +393,7 @@ func (sc *SessionController) startMetricsLoop() {
 		if state == session.StateError {
 
 			errMsg := sc.SessionManager.ErrorMessage()
+
 			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session error")
 			logger.Error(logger.BackgroundCtx, logger.GUI, "session error: "+errMsg)
 

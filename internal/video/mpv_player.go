@@ -15,11 +15,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"os"
 	"sync"
 	"time"
 
 	mpv "github.com/gen2brain/go-mpv"
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
@@ -35,7 +36,7 @@ var (
 )
 
 // newMpvPlayer creates a new mpvPlayer instance
-func newMpvPlayer(ctx context.Context, targetDisplayName string) (*mpvPlayer, error) {
+func newMpvPlayer(ctx context.Context, videoConfig config.VideoConfig) (*mpvPlayer, error) {
 
 	// Ensure C locale is set to "C" for numeric formats
 	C.set_c_locale_numeric()
@@ -48,25 +49,15 @@ func newMpvPlayer(ctx context.Context, targetDisplayName string) (*mpvPlayer, er
 		return nil, errFailedToCreatePlayer
 	}
 
-	// Clean the string just in case there are trailing spaces from the config
-	targetDisplayName = strings.TrimSpace(targetDisplayName)
+	// Attempt to force Wayland context if we detect a Wayland environment
+	m.setupGPUContext(ctx)
 
-	// Attempt to force mpv playback on the display requested
-	if targetDisplayName != "" {
-
-		// Force fullscreen, which is required to lock to a Wayland output
-		if err := m.player.SetOptionString("fs", "yes"); err != nil {
-			return nil, fmt.Errorf("failed to set fullscreen (fs) option: %w", err)
-		}
-
-		// Target the specific hardware connector
-		if err := m.player.SetOptionString("fs-screen-name", targetDisplayName); err != nil {
-			return nil, fmt.Errorf("failed to set fs-screen-name option to %s: %w", targetDisplayName, err)
-		}
-
-		logger.Info(ctx, logger.VIDEO, "mpv configured to target display: "+targetDisplayName)
+	// Apply display targeting logic based on validation result
+	if err := m.setupDisplayTargeting(ctx, videoConfig); err != nil {
+		return nil, err
 	}
 
+	// Initialize the mpv player
 	if err := m.player.Initialize(); err != nil {
 		return nil, fmt.Errorf(errFormat, "failed to initialize mpv player", err)
 	}
@@ -74,6 +65,65 @@ func newMpvPlayer(ctx context.Context, targetDisplayName string) (*mpvPlayer, er
 	logger.Info(ctx, logger.VIDEO, "mpv player object created")
 
 	return m, nil
+}
+
+// setupGPUContext attempts to force Wayland context if we detect a Wayland environment
+func (m *mpvPlayer) setupGPUContext(ctx context.Context) {
+
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+
+		if err := m.player.SetOptionString("gpu-context", "wayland"); err != nil {
+			logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("failed to set gpu-context=wayland: %v", err))
+		} else {
+			logger.Debug(ctx, logger.VIDEO, "mpv configured for native Wayland context")
+		}
+
+	}
+
+}
+
+// setupDisplayTargeting configures mpv to target a specific display
+func (m *mpvPlayer) setupDisplayTargeting(ctx context.Context, videoConfig config.VideoConfig) error {
+
+	targetName := videoConfig.ValidationResult.ActualDisplayName
+	isValid := videoConfig.ValidationResult.IsValid
+	isNonDefault := videoConfig.ValidationResult.IsNonDefaultMonitor
+
+	// If we have a valid non-default monitor, target it directly in fullscreen mode
+	if isValid && isNonDefault {
+
+		// Force fullscreen, which is required to lock to a Wayland output
+		if err := m.player.SetOptionString("fs", "yes"); err != nil {
+			return fmt.Errorf("failed to set fullscreen (fs) option: %w", err)
+		}
+
+		// Target the specific hardware connector
+		if err := m.player.SetOptionString("fs-screen-name", targetName); err != nil {
+			return fmt.Errorf("failed to set fs-screen-name option to %s: %w", targetName, err)
+		}
+
+		logger.Info(ctx, logger.VIDEO, "mpv configured to target non-default display in fullscreen: "+targetName)
+
+		return nil
+	}
+
+	// Either default/embedded monitor or invalid/fallback: Wayland supports windowed mode here
+	if err := m.player.SetOptionString("fs", "no"); err != nil {
+		return fmt.Errorf("failed to unset fullscreen option: %w", err)
+	}
+
+	if isValid {
+		logger.Info(ctx, logger.VIDEO, "mpv configured to target default display in windowed mode: "+targetName)
+	} else {
+
+		if videoConfig.TargetDisplayName != "" {
+			logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("target display '%s' not found; falling back to default display in windowed mode", videoConfig.TargetDisplayName))
+		} else {
+			logger.Info(ctx, logger.VIDEO, "no target display specified; using default display in windowed mode")
+		}
+	}
+
+	return nil
 }
 
 // validateVideoFile validates the video file using a tmp/headless MPV instance
@@ -145,7 +195,6 @@ func (m *mpvPlayer) validateSeekPosition(p *mpv.Mpv, position string) error {
 func (m *mpvPlayer) loadFile(path string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-
 		logger.Debug(logger.BackgroundCtx, logger.VIDEO, "attempting to load file: "+path)
 
 		if err := m.player.Command([]string{"loadfile", path, "replace", "0", "pause=yes"}); err != nil {
