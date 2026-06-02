@@ -5,17 +5,25 @@ import (
 	"os"
 )
 
+// DisplayValidationResult captures the results of the Wayland display validation
+type DisplayValidationResult struct {
+	IsValid             bool
+	IsNonDefaultMonitor bool
+	ActualDisplayName   string
+}
+
 // VideoConfig defines video playback and display settings from the TOML config file
 type VideoConfig struct {
-	MediaPlayer       string         `toml:"media_player"`
-	FilePath          string         `toml:"file_path"`
-	SeekToPosition    string         `toml:"seek_to_position"`
-	WindowScaleFactor float64        `toml:"window_scale_factor"`
-	UpdateIntervalSec float64        `toml:"update_interval_secs"`
-	SpeedMultiplier   float64        `toml:"speed_multiplier"`
-	TargetDisplayName string         `toml:"target_display_name"`
-	AutoResume        bool           `toml:"auto_resume"`
-	OnScreenDisplay   VideoOSDConfig `toml:"OSD"`
+	MediaPlayer       string                  `toml:"media_player"`
+	FilePath          string                  `toml:"file_path"`
+	SeekToPosition    string                  `toml:"seek_to_position"`
+	WindowScaleFactor float64                 `toml:"window_scale_factor"`
+	UpdateIntervalSec float64                 `toml:"update_interval_secs"`
+	SpeedMultiplier   float64                 `toml:"speed_multiplier"`
+	TargetDisplayName string                  `toml:"target_display_name"`
+	AutoResume        bool                    `toml:"auto_resume"`
+	OnScreenDisplay   VideoOSDConfig          `toml:"OSD"`
+	ValidationResult  DisplayValidationResult `toml:"-"`
 }
 
 // VideoOSDConfig defines on-screen display settings for video playback from the TOML config file

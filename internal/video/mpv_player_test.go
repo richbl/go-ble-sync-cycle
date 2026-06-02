@@ -3,12 +3,13 @@ package video
 import (
 	"testing"
 
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
 // mpvPlayerFactory creates a new mpvPlayer instance for testing
 func mpvPlayerFactory() (*mpvPlayer, error) {
-	return newMpvPlayer(logger.BackgroundCtx, "")
+	return newMpvPlayer(logger.BackgroundCtx, config.VideoConfig{})
 }
 
 func TestMpvPlayerLifecycle(t *testing.T) {
