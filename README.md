@@ -5,7 +5,7 @@
 </p>
 <!-- markdownlint-enable MD041 -->
 
-<a href="https://github.com/richbl/go-ble-sync-cycle/releases"><img alt="Link to Releases" src="https://badgen.net/github/tag/richbl/go-ble-sync-cycle?label=release"></a>
+<a href="https://github.com/richbl/go-ble-sync-cycle/releases"><img alt="Link to Releases" src="https://badgen.net/github/tag/richbl/go-ble-sync-cycle?icon=github&label=release"></a>
 <a href="https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle"><img alt="Link to Go Report Card" src="https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle"></a>
 <a href="https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img alt="Link to Codacy Report" src="https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419"></a>
 <a href="https://sonarcloud.io/summary/new_code?id=richbl_go-ble-sync-cycle"><img alt="Link to SonarCloud Report" src="https://sonarcloud.io/api/project_badges/measure?project=richbl_go-ble-sync-cycle&metric=alert_status"></a>
