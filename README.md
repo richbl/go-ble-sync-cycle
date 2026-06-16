@@ -3,15 +3,19 @@
 <p align="left">
 <img width="350" alt="BSC logo" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/ui/bsc_logo_title.png">
 </p>
-<!-- markdownlint-enable MD033,MD041 -->
+<!-- markdownlint-enable MD041 -->
 
-![GitHub Release](https://img.shields.io/github/v/release/richbl/go-ble-sync-cycle?include_prereleases&sort=semver&display_name=tag&color=blue) [![Go Report Card](https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle)](https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419)](https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=richbl_go-ble-sync-cycle&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=richbl_go-ble-sync-cycle)
+<a href="https://github.com/richbl/go-ble-sync-cycle/releases"><img alt="Link to Releases" src="https://badgen.net/github/tag/richbl/go-ble-sync-cycle?label=release"></a>
+<a href="https://goreportcard.com/report/github.com/richbl/go-ble-sync-cycle"><img alt="Link to Go Report Card" src="https://goreportcard.com/badge/github.com/richbl/go-ble-sync-cycle"></a>
+<a href="https://app.codacy.com/gh/richbl/go-ble-sync-cycle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img alt="Link to Codacy Report" src="https://app.codacy.com/project/badge/Grade/595889e53f25475da18dea64b5a60419"></a>
+<a href="https://sonarcloud.io/summary/new_code?id=richbl_go-ble-sync-cycle"><img alt="Link to SonarCloud Report" src="https://sonarcloud.io/api/project_badges/measure?project=richbl_go-ble-sync-cycle&metric=alert_status"></a>
+<a href="https://codeberg.org/richbl/go-ble-sync-cycle"><img alt="Link to Codeberg Mirror" src="https://badgen.net/badge/icon/Go-BLE-Sync-Cycle?icon=codeberg&label=codeberg%20mirror"></a>
+<!-- markdownlint-enable MD033 -->
 
 ## Overview
 
 **BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with a more immersive and engaging indoor cycling experience by matching first-person video playback speed with their actual cycling pace.
 
-<!-- markdownlint-disable MD033 -->
 <p align="center">
 <img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trainer_0_hd.png">
 </p>
