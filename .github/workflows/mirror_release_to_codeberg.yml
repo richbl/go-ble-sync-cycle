@@ -20,7 +20,7 @@ jobs:
       - name: Recreate Release and Upload Assets to Codeberg
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_GLOBAL_ACCESS_TOKEN }}
         run: |
           # 1. Determine the tag based on how the action was triggered
           TAG_NAME="${{ inputs.tag_name || github.event.release.tag_name }}"
