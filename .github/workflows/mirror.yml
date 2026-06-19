@@ -1,72 +1,165 @@
+# mirror-to-codeberg.yml
+#
+# Mirrors this repository to Codeberg on every push or branch/tag deletion
+#
+# SETUP (do this once per repository):
+#   1. Create a Codeberg access token with write access to the target repo
+#   2. Add it as a repository (or organisation) secret named CODEBERG_GLOBAL_ACCESS_TOKEN
+#   3. Copy this file to .github/workflows/ — no other edits are required
+#
+# HOW IT WORKS:
+#   • Concurrent runs are queued (not cancelled) to prevent a partial mirror push
+#     from leaving Codeberg in an inconsistent state
+#   • The Codeberg remote is checked for existence before any work begins; the
+#     workflow fails fast with a clear error if the repo is missing or the token
+#     lacks access
+#   • All branches and tags are force-pushed to the matching Codeberg repository
+#     (same owner/name as the GitHub repository)
+#   • Before pushing, every branch is scanned for GitHub URLs in README.md and
+#     any wiki/ Markdown files; those URLs are rewritten to their Codeberg
+#     equivalents so links remain valid on the mirror
+#   • The rewritten commits are local-only: they are never pushed back to GitHub
+
 name: Mirror to Codeberg
-on: [push, delete]
+
+on:
+  push:
+  delete:
+
+# Queue concurrent runs rather than canceling them
+# Canceling a mirror mid-push could leave Codeberg in a partially-updated state
+# Queuing ensures each run completes cleanly before the next one starts
+# 
+concurrency:
+  group: mirror-to-codeberg-${{ github.repository }}
+  cancel-in-progress: false
+
+# Minimal permissions — read-only on repository contents is enough because we
+# only write to the external Codeberg remote, never back to GitHub
+# 
+permissions:
+  contents: read
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
+
+    # -------------------------------------------------------------------------
+    # All variables live here (though unlikely to edit on a per-repo basis)
+    # -------------------------------------------------------------------------
     env:
-      # Suppress the Node.js 20 deprecation warning for the pinned
-      # actions/checkout SHA without requiring a version change.
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      CODEBERG_HOST: codeberg.org
+      CODEBERG_TOKEN: ${{ secrets.CODEBERG_GLOBAL_ACCESS_TOKEN }}
+      
+      # Derived from GitHub context — no hard-coding required
+      REPO_SLUG:     ${{ github.repository }}
+
     steps:
-      # actions/checkout@v4.2.2
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      # Fetch the complete history and all remote refs so we can iterate over
+      # every branch below
+      # Pinned to actions/checkout@v6.0.3 (SHA for supply-chain safety)
+      # 
+      - name: Checkout (full history)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
 
-      # Replace GitHub project URLs with Codeberg equivalents across ALL
-      # branches before mirroring.
+      # ----------------------------------------------------------------------
+      # Verify the Codeberg repository exists and the token has access
       #
-      # Why git worktree instead of "git checkout --force" inside a loop:
-      #   Sequential checkouts share a single working directory. When the loop
-      #   moves from a branch that has wiki/ to one that does not (e.g.
-      #   archive/vlc-instability), git removes wiki/ from the working tree.
-      #   Subsequent iterations then fail the [ -d wiki ] test even for branches
-      #   that do track that directory. Worktrees give each branch a fully
-      #   isolated directory so one branch's structure never affects another's.
+      # git ls-remote exits non-zero if the repo is missing, the token is
+      # invalid, or the token lacks read access
+      # ----------------------------------------------------------------------
       #
-      # Why git update-ref is required:
-      #   The mirror action maps refs/remotes/origin/* → Codeberg refs/heads/*.
-      #   Our replacement commit exists only in the worktree. Advancing each
-      #   remote tracking ref to that commit is what causes the mirror to push
-      #   the corrected content to Codeberg instead of the original.
-      
-      - name: Replace GitHub URLs with Codeberg URLs in markdown files
+      - name: Verify Codeberg remote is reachable
         run: |
-          GITHUB_URL="https://github.com/richbl/go-ble-sync-cycle"
-          CODEBERG_URL="https://codeberg.org/richbl/go-ble-sync-cycle"
+          set -euo pipefail
+
+          REMOTE="https://x-access-token:${CODEBERG_TOKEN}@${CODEBERG_HOST}/${REPO_SLUG}.git"
+
+          echo "Checking Codeberg remote: https://${CODEBERG_HOST}/${REPO_SLUG}.git"
+
+          if ! git ls-remote --quiet --exit-code "$REMOTE" HEAD > /dev/null 2>&1; then
+            echo "::error::Codeberg remote not found or token lacks access."
+            echo "::error::Verify that https://codeberg.org/${REPO_SLUG} exists"
+            echo "::error::and that CODEBERG_ACCESS_TOKEN has write permission."
+            exit 1
+          fi
+
+          echo "Remote reachable ✓"
+
+      # ----------------------------------------------------------------------
+      # Rewrite GitHub URLs → Codeberg URLs in Markdown across all branches
+      #
+      # Only README.md and wiki/*.md are touched; other files are left alone
+      # Changes are committed locally so they travel to Codeberg but are never
+      # pushed back to GitHub (permissions: contents: read prevents that)
+      # ----------------------------------------------------------------------
+      - name: Rewrite GitHub URLs to Codeberg URLs in Markdown files
+        run: |
+          set -euo pipefail
+
+          GITHUB_URL="https://github.com/${REPO_SLUG}"
+          CODEBERG_URL="https://${CODEBERG_HOST}/${REPO_SLUG}"
 
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           for remote_ref in $(git for-each-ref --format='%(refname)' refs/remotes/origin/); do
             branch="${remote_ref#refs/remotes/origin/}"
-            [ "$branch" = "HEAD" ] && continue
+            [[ "$branch" == "HEAD" ]] && continue
 
             git checkout --force -B "$branch" "$remote_ref"
 
-            echo "--- Branch: ${branch} ---"
-            echo "wiki/ present: $([ -d wiki ] && echo YES || echo NO)"
-            echo "wiki GitHub URL count: $(find wiki -name '*.md' -exec grep -l "${GITHUB_URL}" {} + 2>/dev/null | wc -l) file(s)"
+            echo "━━━ Branch: ${branch} ━━━"
+            echo "  wiki/ present : $([ -d wiki ] && echo YES || echo NO)"
+            echo "  README.md     : $([ -f README.md ] && echo YES || echo NO)"
 
-            [ -f README.md ] && sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
-            [ -d wiki ] && find wiki -name "*.md" \
-              -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
+            changed=0
 
-            echo "git status after sed:"
-            git status --porcelain
+            if [ -f README.md ]; then
+              sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" README.md
+              changed=1
+            fi
 
-            git add -A
-            if [ -n "$(git status --porcelain)" ]; then
-              git commit -m "chore: replace GitHub URLs with Codeberg URLs"
-              git update-ref "$remote_ref" HEAD
-              echo "Committed: $(git rev-parse --short HEAD)"
-            else
-              echo "Nothing to commit"
+            if [ -d wiki ]; then
+              match_count=$(find wiki -name "*.md" -exec grep -l "${GITHUB_URL}" {} + 2>/dev/null | wc -l)
+              echo "  wiki files with GitHub URLs: ${match_count}"
+              find wiki -name "*.md" -exec sed -i "s|${GITHUB_URL}|${CODEBERG_URL}|g" {} +
+              changed=1
+            fi
+
+            if [ "$changed" -eq 1 ]; then
+              git add -A
+              if [ -n "$(git status --porcelain)" ]; then
+                git commit -m "chore: replace GitHub URLs with Codeberg URLs [mirror]"
+                git update-ref "$remote_ref" HEAD
+                echo "  Committed: $(git rev-parse --short HEAD)"
+              else
+                echo "  No URLs needed rewriting — nothing to commit"
+              fi
             fi
           done
 
-      # pixta-dev/repository-mirroring-action@v1.1.1
-      - uses: pixta-dev/repository-mirroring-action@674e65a7d483ca28dafaacba0d07351bdcc8bd75
-        with:
-          target_repo_url: git@codeberg.org:richbl/go-ble-sync-cycle.git
-          ssh_private_key: ${{ secrets.CODEBERG_SSH_KEY }}
+      # ----------------------------------------------------------------------
+      # Push every branch and every tag to Codeberg
+      #
+      # --force is intentional: Codeberg is a read-only mirror, so divergence
+      # from GitHub is always resolved in GitHub's favor
+      # --prune removes refs on Codeberg that no longer exist on GitHub,
+      # keeping the mirror clean after branch/tag deletions
+      # ----------------------------------------------------------------------
+      # 
+      - name: Push mirror to Codeberg
+        run: |
+          set -euo pipefail
+
+          REMOTE="https://x-access-token:${CODEBERG_TOKEN}@${CODEBERG_HOST}/${REPO_SLUG}.git"
+
+          echo "Pushing all branches…"
+          git push --force --prune "$REMOTE" "refs/heads/*:refs/heads/*"
+
+          echo "Pushing all tags…"
+          git push --force --prune "$REMOTE" "refs/tags/*:refs/tags/*"
+
+          echo "Mirror complete."
