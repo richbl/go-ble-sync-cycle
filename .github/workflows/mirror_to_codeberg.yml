@@ -49,7 +49,7 @@ jobs:
     # -------------------------------------------------------------------------
     env:
       CODEBERG_HOST: codeberg.org
-      CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+      CODEBERG_TOKEN: ${{ secrets.CODEBERG_GLOBAL_ACCESS_TOKEN }}
       
       # Derived from GitHub context — no hard-coding required
       REPO_SLUG:     ${{ github.repository }}
