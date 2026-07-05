@@ -173,7 +173,10 @@ func (m *mpvPlayer) validateSeekPosition(p *mpv.Mpv, position string) error {
 
 	// Get playback duration in milliseconds
 	var duration int64
-	val, _ := p.GetProperty("duration", mpv.FormatInt64)
+	val, err := p.GetProperty("duration", mpv.FormatInt64)
+	if err != nil {
+		return fmt.Errorf("failed to get video duration: %w", err)
+	}
 	if dur, ok := val.(int64); ok {
 		duration = dur * 1000
 	}
@@ -253,29 +256,13 @@ func (m *mpvPlayer) pollForActiveStream(p *mpv.Mpv) (*videoValidationInfo, error
 
 		case <-ticker.C:
 
-			// Check for internal errors
-			if err := m.checkPlayerError(p); err != nil {
+			info, active, err := m.pollOneIteration(p)
+			if err != nil {
 				return nil, err
 			}
 
-			// Attempt to extract stream info
-			info, active := m.extractStreamInfo(p)
 			if !active {
 				continue
-			}
-
-			// If we have video codec but dimensions aren't ready yet, keep waiting
-			if info.width == 0 && info.height == 0 {
-
-				vCodec, _ := p.GetProperty("video-codec", mpv.FormatString)
-				if isNonEmptyString(vCodec) {
-
-					// Video track exists but dimensions not yet loaded
-					continue
-				}
-
-				// No video codec
-				return nil, errNoVideoTrack
 			}
 
 			return info, nil
@@ -284,10 +271,46 @@ func (m *mpvPlayer) pollForActiveStream(p *mpv.Mpv) (*videoValidationInfo, error
 
 }
 
+// pollOneIteration performs a single check/parse cycle for the active stream
+func (m *mpvPlayer) pollOneIteration(p *mpv.Mpv) (*videoValidationInfo, bool, error) {
+
+	// Check for internal errors
+	if err := m.checkPlayerError(p); err != nil {
+		return nil, false, err
+	}
+
+	// Attempt to extract stream info
+	info, active := m.extractStreamInfo(p)
+	if !active {
+		return nil, false, nil
+	}
+
+	// If we have video codec but dimensions aren't ready yet, keep waiting
+	if info.width == 0 && info.height == 0 {
+
+		vCodec, err := p.GetProperty("video-codec", mpv.FormatString)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to get video codec: %w", err)
+		}
+		if isNonEmptyString(vCodec) {
+			// Video track exists but dimensions not yet loaded
+			return nil, false, nil
+		}
+
+		// No video codec
+		return nil, false, errNoVideoTrack
+	}
+
+	return info, true, nil
+}
+
 // checkPlayerError checks if the MPV player has encountered an error
 func (m *mpvPlayer) checkPlayerError(p *mpv.Mpv) error {
 
-	errProp, _ := p.GetProperty("error", mpv.FormatString)
+	errProp, err := p.GetProperty("error", mpv.FormatString)
+	if err != nil {
+		return fmt.Errorf("failed to get error property: %w", err)
+	}
 	if errProp != nil {
 
 		if errMsg, ok := errProp.(string); ok && errMsg != "" {
@@ -302,7 +325,10 @@ func (m *mpvPlayer) checkPlayerError(p *mpv.Mpv) error {
 // extractStreamInfo extracts video codec information and dimensions from the player
 func (m *mpvPlayer) extractStreamInfo(p *mpv.Mpv) (*videoValidationInfo, bool) {
 
-	vCodec, _ := p.GetProperty("video-codec", mpv.FormatString)
+	vCodec, err := p.GetProperty("video-codec", mpv.FormatString)
+	if err != nil {
+		return nil, false
+	}
 	hasCodec := isNonEmptyString(vCodec)
 
 	if !hasCodec {
@@ -313,12 +339,18 @@ func (m *mpvPlayer) extractStreamInfo(p *mpv.Mpv) (*videoValidationInfo, bool) {
 
 	if hasCodec {
 
-		val, _ := p.GetProperty("width", mpv.FormatInt64)
+		val, err := p.GetProperty("width", mpv.FormatInt64)
+		if err != nil {
+			return nil, false
+		}
 		if width, ok := val.(int64); ok {
 			info.width = int(width)
 		}
 
-		val, _ = p.GetProperty("height", mpv.FormatInt64)
+		val, err = p.GetProperty("height", mpv.FormatInt64)
+		if err != nil {
+			return nil, false
+		}
 		if height, ok := val.(int64); ok {
 			info.height = int(height)
 		}
@@ -524,7 +556,7 @@ func (m *mpvPlayer) setupEvents() error {
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
 func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
-	res, _ := queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
+	res, err := queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
 
 		// If no event generated before timeout, return an empty event
 		e := m.player.WaitEvent(timeout)
@@ -549,6 +581,10 @@ func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 
 		return &playerEvent{id: eventNone}, nil
 	})
+
+	if err != nil {
+		return nil
+	}
 
 	if res == nil {
 		return &playerEvent{id: eventNone}

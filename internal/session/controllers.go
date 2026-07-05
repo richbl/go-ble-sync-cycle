@@ -93,7 +93,7 @@ func (m *StateManager) performSessionStartup(ctx context.Context, shutdownMgr *s
 	}
 
 	// Check if user clicked 'Stop' during init
-	if err := ctx.Err(); err != nil {
+	if err = ctx.Err(); err != nil {
 		return fmt.Errorf(errFormat, errInitializeControllers, err)
 	}
 

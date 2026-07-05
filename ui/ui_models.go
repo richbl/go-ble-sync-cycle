@@ -16,6 +16,8 @@ const (
 	StatusStopped
 	StatusConnecting
 	StatusFailed
+
+	unknownStr = "Unknown"
 )
 
 // ObjectKind represents the logical object we are displaying
@@ -49,16 +51,16 @@ const (
 var statusTable = map[ObjectKind]map[Status]StatusPresentation{
 	ObjectBLE: {
 		StatusConnected:    {Display: "Connected", Icon: iconBLEConnected, CSSStyle: "success"},
-		StatusNotConnected: {Display: "Not Connected", Icon: iconBLENotConnected, CSSStyle: "error"},
-		StatusStopped:      {Display: "Stopped", Icon: iconBLENotConnected, CSSStyle: "error"},
+		StatusNotConnected: {Display: "Not Connected", Icon: iconBLENotConnected, CSSStyle: errStr},
+		StatusStopped:      {Display: "Stopped", Icon: iconBLENotConnected, CSSStyle: errStr},
 		StatusConnecting:   {Display: "Connecting...", Icon: iconBLEConnecting, CSSStyle: "warning"},
-		StatusFailed:       {Display: "Failed", Icon: iconBLENotConnected, CSSStyle: "error"},
+		StatusFailed:       {Display: "Failed", Icon: iconBLENotConnected, CSSStyle: errStr},
 	},
 	ObjectBattery: {
 		StatusConnected:    {Display: "Connected", Icon: iconBatteryConnected, CSSStyle: "success"},
-		StatusNotConnected: {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
-		StatusStopped:      {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
+		StatusNotConnected: {Display: unknownStr, Icon: iconBatteryNotConnected, CSSStyle: errStr},
+		StatusStopped:      {Display: unknownStr, Icon: iconBatteryNotConnected, CSSStyle: errStr},
 		StatusConnecting:   {Display: "Connecting...", Icon: iconBatteryConnecting, CSSStyle: "warning"},
-		StatusFailed:       {Display: "Unknown", Icon: iconBatteryNotConnected, CSSStyle: "error"},
+		StatusFailed:       {Display: unknownStr, Icon: iconBatteryNotConnected, CSSStyle: errStr},
 	},
 }

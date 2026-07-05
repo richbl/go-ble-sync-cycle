@@ -41,6 +41,8 @@ const (
 	// Divisor used to convert speed relative to playback rate
 	// e.g., a speed of 10 mph = 1.0x video playback (hence divisor of 10)
 	speedDivisor = 10.0
+
+	positionReset = "00:00:00"
 )
 
 // speedUnitConversion maps units of speed to their multiplier for consistent playback speed
@@ -142,7 +144,7 @@ func (p *PlaybackController) PlaybackPosition() (string, error) {
 
 	seconds, err := p.player.playbackPosition()
 	if err != nil {
-		return "00:00:00", err
+		return positionReset, err
 	}
 
 	return formatSeconds(seconds), nil

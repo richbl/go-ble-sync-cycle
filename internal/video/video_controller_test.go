@@ -58,7 +58,7 @@ var testConfigData = struct {
 }{
 	filename:        "test_video.mp4",
 	windowScale:     1.0,
-	SeekToPosition:  "00:00:00",
+	SeekToPosition:  positionReset,
 	updateInterval:  1.0,
 	speedMultiplier: 1.0,
 	speedThreshold:  0.1,
@@ -479,7 +479,7 @@ func TestFormatSeconds(t *testing.T) {
 		seconds  int64
 		expected string
 	}{
-		{"zero seconds", 0, "00:00:00"},
+		{"zero seconds", 0, positionReset},
 		{"less than a minute", 59, "00:00:59"},
 		{"one minute", 60, "00:01:00"},
 		{"one hour", 3600, "01:00:00"},

@@ -54,6 +54,12 @@ const (
 	errTypeFormat = "%w: %T"
 	errFormat     = "%v: %w"
 	errFormatRev  = "%w: %v"
+
+	alignLeft   = "left"
+	alignRight  = "right"
+	alignTop    = "top"
+	alignBottom = "bottom"
+	alignCenter = "center"
 )
 
 // Error messages
@@ -79,6 +85,11 @@ var (
 	errWindowScale         = errors.New("window_scale_factor must be 0.1-1.0")
 	errUnsupportedType     = errors.New("unsupported type")
 )
+
+// Precompiled regex for HH:MM:SS validation. Use MustCompile so the pattern is
+// validated at init time and we avoid ignoring a returned error from
+// regexp.MatchString.
+var hhmmssRegex = regexp.MustCompile(`^\d{2}:[0-5]\d:[0-5]\d$`)
 
 // Load loads the configuration from a TOML file using the provided flags
 func Load(configFile string) (*Config, error) {
@@ -256,9 +267,7 @@ func validateTimeFormat(input string) bool {
 // validateHHMMSSFormat checks if the provided string is a valid time in HH:MM:SS format
 func validateHHMMSSFormat(input string) bool {
 
-	// \d{2}     = exactly 2 digits for hours (00-99)
-	// [0-5]\d   = exactly 2 digits for minutes and seconds, bounded to 00-59
-	matched, _ := regexp.MatchString(`^\d{2}:[0-5]\d:[0-5]\d$`, input)
-
-	return matched
+	// Use the precompiled regex to avoid handling the error return from
+	// regexp.MatchString (the pattern is constant and validated at init)
+	return hhmmssRegex.MatchString(input)
 }

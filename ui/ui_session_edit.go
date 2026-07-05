@@ -19,7 +19,7 @@ import (
 
 // Maps for dropdown list widgets
 var (
-	logLevels      = []string{"debug", "info", "warn", "error"}
+	logLevels      = []string{"debug", "info", "warn", errStr}
 	speedUnits     = []string{"mph", "km/h"}
 	mediaPlayers   = []string{"mpv"}
 	targetDisplays = []string{""}
@@ -102,18 +102,18 @@ func (sc *SessionController) updateSaveButtonState() {
 	videoFileRow := p4.VideoFileRow
 
 	// Validate EntryRow fields
-	isTitleValid := titleEntry.Text() != "" && !titleEntry.HasCSSClass("error")
-	isBDAddrValid := bdAddrEntry.Text() != "" && !bdAddrEntry.HasCSSClass("error")
-	isTimeValid := timeEntry.Text() != "" && !timeEntry.HasCSSClass("error")
+	isTitleValid := titleEntry.Text() != "" && !titleEntry.HasCSSClass(errStr)
+	isBDAddrValid := bdAddrEntry.Text() != "" && !bdAddrEntry.HasCSSClass(errStr)
+	isTimeValid := timeEntry.Text() != "" && !timeEntry.HasCSSClass(errStr)
 
 	// Validate VideoFileRow
 	videoPath := videoFileRow.Subtitle()
 	isVideoValid := videoPath != "" && !strings.Contains(videoPath, placeholderNullVideoFile)
 
 	if isVideoValid {
-		videoFileRow.RemoveCSSClass("error")
+		videoFileRow.RemoveCSSClass(errStr)
 	} else {
-		videoFileRow.AddCSSClass("error")
+		videoFileRow.AddCSSClass(errStr)
 	}
 
 	canSave := isTitleValid && isBDAddrValid && isTimeValid && isVideoValid
@@ -650,7 +650,7 @@ func (sc *SessionController) deleteSession() {
 		return
 	}
 
-	title := "Unknown"
+	title := unknownStr
 	if cfg := sc.SessionManager.Config(); cfg != nil {
 		title = cfg.App.SessionTitle
 	}

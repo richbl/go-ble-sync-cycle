@@ -14,10 +14,10 @@ type ModeType int
 const (
 	errFormat = "%v: %w"
 )
-
 const (
 	CLI ModeType = iota
 	GUI
+	falseValue = "false"
 )
 
 // FlagInfo holds structural information about a flag
@@ -49,7 +49,7 @@ var (
 			Result:    &flags.Logging,
 			Name:      "log-console",
 			ShortName: "l",
-			Value:     "false",
+			Value:     falseValue,
 			Usage:     "Enable logging to the console",
 			Mode:      GUI,
 		},
@@ -57,7 +57,7 @@ var (
 			Result:    &flags.NoGUI,
 			Name:      "no-gui",
 			ShortName: "n",
-			Value:     "false",
+			Value:     falseValue,
 			Usage:     "Run the application without a graphical user interface (GUI)",
 			Mode:      CLI,
 		},
@@ -81,7 +81,7 @@ var (
 			Result:    &flags.Install,
 			Name:      "install",
 			ShortName: "i",
-			Value:     "false",
+			Value:     falseValue,
 			Usage:     "Install the BSC application to the local user environment",
 			Mode:      CLI,
 		},
@@ -89,7 +89,7 @@ var (
 			Result:    &flags.Uninstall,
 			Name:      "uninstall",
 			ShortName: "u",
-			Value:     "false",
+			Value:     falseValue,
 			Usage:     "Uninstall the BSC application from the local user environment",
 			Mode:      CLI,
 		},
@@ -97,7 +97,7 @@ var (
 			Result:    &flags.Help,
 			Name:      "help",
 			ShortName: "h",
-			Value:     "false",
+			Value:     falseValue,
 			Usage:     "Display this help message",
 			Mode:      CLI,
 		},

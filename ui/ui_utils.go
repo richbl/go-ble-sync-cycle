@@ -122,9 +122,9 @@ func bindValidator(entry *adw.EntryRow, pattern string, onUpdate func()) {
 
 		// Toggle error class based on regex
 		if reg.MatchString(text) {
-			entry.RemoveCSSClass("error")
+			entry.RemoveCSSClass(errStr)
 		} else {
-			entry.AddCSSClass("error")
+			entry.AddCSSClass(errStr)
 		}
 
 		// Trigger the callback if provided (e.g., to update button state)

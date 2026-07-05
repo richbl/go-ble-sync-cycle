@@ -51,15 +51,15 @@ func (vc *VideoConfig) validate() error {
 	}
 
 	validAlignX := map[string]bool{
-		"left":   true,
-		"center": true,
-		"right":  true,
+		alignLeft:   true,
+		alignCenter: true,
+		alignRight:  true,
 	}
 
 	validAlignY := map[string]bool{
-		"top":    true,
-		"center": true,
-		"bottom": true,
+		alignTop:    true,
+		alignCenter: true,
+		alignBottom: true,
 	}
 
 	if !validPlayer[vc.MediaPlayer] {
