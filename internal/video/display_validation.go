@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	gdk "github.com/diamondburned/gotk4/pkg/gdk/v4"
+	gio "github.com/diamondburned/gotk4/pkg/gio/v2"
+	gtk "github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
@@ -36,11 +36,13 @@ func ValidateDisplay(ctx context.Context, requestedName string) config.DisplayVa
 
 // findDisplayMonitor iterates over available monitors to find a match
 func findDisplayMonitor(ctx context.Context, requestedName string, monitors *gio.ListModel) config.DisplayValidationResult {
-	count := monitors.NItems()
+
+	count := int(monitors.NItems())
 	var available []string
 
-	for i := range count {
-		item := monitors.Item(i)
+	for i := range make([]struct{}, count) {
+
+		item := monitors.Item(uint(i))
 		if item == nil {
 			continue
 		}
@@ -56,7 +58,7 @@ func findDisplayMonitor(ctx context.Context, requestedName string, monitors *gio
 		}
 
 		if connector == requestedName {
-			return processMatchedDisplay(ctx, requestedName, i)
+			return processMatchedDisplay(ctx, requestedName, uint(i))
 		}
 	}
 
@@ -67,6 +69,7 @@ func findDisplayMonitor(ctx context.Context, requestedName string, monitors *gio
 		IsNonDefaultMonitor: false,
 		ActualDisplayName:   requestedName,
 	}
+
 }
 
 // processMatchedDisplay builds the result for a matched display
