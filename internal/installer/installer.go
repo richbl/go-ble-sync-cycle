@@ -74,7 +74,7 @@ func Install() error {
 
 	for _, dir := range dirs {
 
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err = os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 
@@ -196,7 +196,11 @@ func updateIconCache(iconDir string) {
 	themeDir := filepath.Dir(filepath.Dir(cleanDir))
 
 	cmd := exec.Command("gtk-update-icon-cache", "-f", "-t", "-q", themeDir)
-	_ = cmd.Run()
+	err = cmd.Run()
+	if err != nil {
+		// Silent fail, as the user's system may not have GTK installed
+		return
+	}
 
 }
 

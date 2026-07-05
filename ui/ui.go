@@ -16,6 +16,7 @@ import (
 
 const (
 	ApplicationID = "com.github.richbl.ble-sync-cycle"
+	errStr        = "error"
 )
 
 //go:embed assets/bsc_gui.ui

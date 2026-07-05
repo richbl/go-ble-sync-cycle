@@ -245,8 +245,8 @@ func TestLoadSessionMetadataValidationErrors(t *testing.T) {
     font_size = 40
 		margin_x = 10
 		margin_y = 10
-		align_x = "left"
-		align_y = "top"
+		align_x = alignLeft
+		align_y = alignTop
 `
 
 	createTestConfigFile(t, tempFile, configContent)

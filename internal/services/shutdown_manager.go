@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -123,8 +124,8 @@ func (sm *ShutdownManager) Shutdown() {
 	}
 
 	// Execute cleanup functions in reverse order
-	for i := len(sm.cleanup) - 1; i >= 0; i-- {
-		sm.cleanup[i]()
+	for _, fn := range slices.Backward(sm.cleanup) {
+		fn()
 	}
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, fmt.Sprintf("ShutdownManager object (id:%04d) shutdown complete", sm.InstanceID))

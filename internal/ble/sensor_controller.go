@@ -266,7 +266,9 @@ func (m *Controller) startScanning(ctx context.Context, found chan<- bluetooth.S
 
 			if foundOnce.CompareAndSwap(false, true) {
 				logger.Debug(ctx, logger.BLE, "BLE peripheral found; stopping scan...")
-				_ = adapter.StopScan()
+				if err := adapter.StopScan(); err != nil {
+					logger.Error(ctx, logger.BLE, fmt.Sprintf("failed to stop scan: %v", err))
+				}
 
 				select {
 				case found <- result:

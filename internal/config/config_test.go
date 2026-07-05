@@ -182,14 +182,14 @@ func TestVideoConfigValidate(t *testing.T) {
 		marginY           int
 		expectError       bool
 	}{
-		{"valid config", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, false},
-		{"invalid media player", "xyz", testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, defaultTimeout, 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid seek position", MediaPlayerMPV, testVideo, 0.5, "invalid", 1.0, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 3.1, 0.5, 20, "center", "bottom", 25, 25, true},
-		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 1.6, 20, "center", "bottom", 25, 25, true},
-		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 201, "center", "bottom", 25, 25, true},
+		{"valid config", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, false},
+		{"invalid media player", "xyz", testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid seek position", MediaPlayerMPV, testVideo, 0.5, "invalid", 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 3.1, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 1.6, 20, alignCenter, alignBottom, 25, 25, true},
+		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 201, alignCenter, alignBottom, 25, 25, true},
 	}
 
 	// Run tests
@@ -206,8 +206,8 @@ func TestVideoConfigValidate(t *testing.T) {
 				SpeedMultiplier:   tt.speedMultiplier,
 				OnScreenDisplay: VideoOSDConfig{
 					FontSize: tt.fontSize,
-					AlignX:   "center",
-					AlignY:   "bottom",
+					AlignX:   alignCenter,
+					AlignY:   alignBottom,
 					MarginX:  25,
 					MarginY:  25,
 				},

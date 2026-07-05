@@ -304,7 +304,7 @@ func (sc *SessionController) setupLoadButtonSignals() {
 		// Check if a session is currently running
 		if sc.SessionManager.IsRunning() {
 
-			activeTitle := "Unknown"
+			activeTitle := unknownStr
 			if cfg := sc.SessionManager.ActiveConfig(); cfg != nil {
 				activeTitle = cfg.App.SessionTitle
 			}
