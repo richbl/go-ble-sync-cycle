@@ -4,6 +4,9 @@ name: Mirror Wiki to Codeberg
 # 'workflow_dispatch' allows you to trigger this manually from the GitHub Actions tab.
 on: [gollum, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   mirror-wiki:
     runs-on: ubuntu-latest
