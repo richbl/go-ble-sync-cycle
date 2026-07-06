@@ -1,0 +1,178 @@
+# mirror-release-to-codeberg.yml
+#
+# Mirrors this repository's releases to Codeberg whenever a GitHub release
+# is published (or manually re-run for an existing tag)
+#
+# SETUP (do this once per repository):
+#   1. Create a Codeberg access token with write access to the target repo
+#   2. Add it as a repository (or organization) secret named CODEBERG_GLOBAL_ACCESS_TOKEN
+#   3. Copy this file to .github/workflows/ — no other edits are required
+#
+# HOW IT WORKS:
+#   • Concurrent runs for the same tag are queued (not cancelled) so two runs
+#     never race to create/upload assets on the same Codeberg release; runs
+#     for different tags proceed independently
+#   • Release metadata is fetched from GitHub via the GitHub CLI and mapped
+#     onto the fields Codeberg's release API expects
+#   • Any GitHub URLs in the release body are rewritten to their Codeberg
+#     equivalents so links remain valid on the mirror
+#   • The release is created on Codeberg first; only on success are the
+#     release's binary assets downloaded from GitHub and re-uploaded to
+#     Codeberg
+#   • A non-201 response from the Codeberg API fails the workflow with the
+#     response body printed for diagnosis
+
+name: Mirror Release to Codeberg
+
+on:
+  release:
+    types: [published]
+  # Allows you to trigger this manually from the Actions tab, e.g. to
+  # backfill a release that predates this workflow or to retry a failure
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Existing GitHub release tag to mirror (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# Queue concurrent runs for the same tag rather than canceling them
+# Canceling mid-run could leave a partially-created release (some but not
+# all assets uploaded) on Codeberg; queuing lets each run finish cleanly
+# before the next starts. Runs for different tags are independent and are
+# allowed to run in parallel.
+#
+concurrency:
+  group: mirror-release-to-codeberg-${{ github.repository }}-${{ inputs.tag_name || github.event.release.tag_name }}
+  cancel-in-progress: false
+
+# Minimal permissions — read-only on repository contents is enough because we
+# only read release data from GitHub and write to the external Codeberg API,
+# never back to GitHub
+#
+permissions:
+  contents: read
+
+jobs:
+  mirror-release:
+    runs-on: ubuntu-latest
+
+    # -------------------------------------------------------------------------
+    # All variables live here (though unlikely to edit on a per-repo basis)
+    # -------------------------------------------------------------------------
+    env:
+      CODEBERG_HOST: codeberg.org
+      CODEBERG_TOKEN: ${{ secrets.CODEBERG_GLOBAL_ACCESS_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Derived from GitHub context — no hard-coding required
+      REPO_SLUG: ${{ github.repository }}
+      TAG_NAME:  ${{ inputs.tag_name || github.event.release.tag_name }}
+
+    steps:
+      # Pinned to actions/checkout@v6.0.3 (SHA for supply-chain safety)
+      #
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      # ----------------------------------------------------------------------
+      # Fetch the release metadata from GitHub and map it onto the fields
+      # Codeberg's release API expects
+      # ----------------------------------------------------------------------
+      #
+      - name: Fetch GitHub release metadata
+        run: |
+          set -euo pipefail
+
+          echo "Mirroring release for tag: ${TAG_NAME}"
+
+          gh release view "${TAG_NAME}" --json tagName,name,isDraft,isPrerelease,targetCommitish,body > gh_release.json
+
+          jq '{
+            tag_name: .tagName,
+            target_commitish: .targetCommitish,
+            name: .name,
+            body: .body,
+            draft: .isDraft,
+            prerelease: .isPrerelease
+          }' gh_release.json > payload.json
+
+      # ----------------------------------------------------------------------
+      # Rewrite GitHub URLs → Codeberg URLs in the release body
+      #
+      # Kept consistent with the repository mirror workflow, which performs
+      # the same rewrite for README.md and wiki/ Markdown files
+      # ----------------------------------------------------------------------
+      #
+      - name: Rewrite GitHub URLs to Codeberg URLs in release body
+        run: |
+          set -euo pipefail
+
+          GITHUB_URL="https://github.com/${REPO_SLUG}"
+          CODEBERG_URL="https://${CODEBERG_HOST}/${REPO_SLUG}"
+
+          jq --arg gh "$GITHUB_URL" --arg cb "$CODEBERG_URL" \
+            '.body |= gsub($gh; $cb)' payload.json > final_payload.json
+
+          echo "Payload prepared for Codeberg:"
+          cat final_payload.json
+
+      # ----------------------------------------------------------------------
+      # Create the release on Codeberg
+      #
+      # 201 Created is the expected success response; anything else fails the
+      # workflow with the response body printed for diagnosis
+      # ----------------------------------------------------------------------
+      #
+      - name: Create release on Codeberg
+        run: |
+          set -euo pipefail
+
+          echo "Creating release on Codeberg..."
+
+          HTTP_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST "https://${CODEBERG_HOST}/api/v1/repos/${REPO_SLUG}/releases" \
+            -H "accept: application/json" \
+            -H "Authorization: token ${CODEBERG_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d @final_payload.json)
+
+          RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+          if [ "$HTTP_STATUS" -ne 201 ]; then
+            echo "::error::Failed to create release. HTTP Status: $HTTP_STATUS"
+            echo "::error::Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          RELEASE_ID=$(echo "$RESPONSE_BODY" | jq -r '.id')
+          echo "Successfully created Codeberg release (ID: $RELEASE_ID)"
+          echo "RELEASE_ID=${RELEASE_ID}" >> "$GITHUB_ENV"
+
+      # ----------------------------------------------------------------------
+      # Download the release's binary assets from GitHub and re-upload them
+      # to the Codeberg release created above
+      #
+      # Gracefully skips if the release has no assets
+      # ----------------------------------------------------------------------
+      #
+      - name: Mirror release assets to Codeberg
+        run: |
+          set -euo pipefail
+
+          echo "Downloading binary assets from GitHub..."
+          mkdir -p release_assets
+          gh release download "${TAG_NAME}" --dir release_assets || echo "No assets found or download skipped."
+
+          shopt -s nullglob
+          for file in release_assets/*; do
+            [ -f "$file" ] || continue
+            FILENAME=$(basename "$file")
+            echo "Uploading ${FILENAME} to Codeberg..."
+            curl -s -X POST "https://${CODEBERG_HOST}/api/v1/repos/${REPO_SLUG}/releases/${RELEASE_ID}/assets" \
+              -H "accept: application/json" \
+              -H "Authorization: token ${CODEBERG_TOKEN}" \
+              -F "attachment=@${file}"
+          done
+
+          echo "Codeberg release mirroring complete."
