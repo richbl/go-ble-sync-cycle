@@ -147,6 +147,10 @@ For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle pro
     * The Speed Section
     * The Video Section
     * The Video On-Screen Display Section
+      
+
+#### Project Details
+
 * FAQ
 * Roadmap
 * Acknowledgements
