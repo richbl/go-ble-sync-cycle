@@ -18,7 +18,7 @@ The default `config.toml` file is shown below:
 
 ```toml
 # BLE Sync Cycle Configuration
-# v0.64.2
+# v0.64.3
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters, excluding ", &, and <)
