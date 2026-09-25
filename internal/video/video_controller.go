@@ -255,6 +255,7 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 
 			if err := p.updateSpeedFromController(ctx, speedController); err != nil {
 				logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("speed update error: %v", err))
+				return err // TODO
 			}
 
 		case <-ctx.Done():

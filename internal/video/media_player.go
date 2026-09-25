@@ -11,20 +11,18 @@ import (
 // Error definitions
 var (
 	// Playback-specific errors
-	errInvalidTimeFormat         = errors.New("invalid time format")
-	errOSDUpdate                 = errors.New("failed to update OSD")
-	errUnsupportedVideoPlayer    = errors.New("unsupported video player specified")
-	errPlayerNotInitialized      = errors.New("media player not initialized")
-	errMediaParseTimeout         = errors.New("timeout waiting for media parsing")
-	errInvalidVideoDimensions    = errors.New("video dimensions are invalid")
-	errNoVideoTrack              = errors.New("video file does not contain a video track")
-	errFailedToCreatePlayer      = errors.New("failed to instantiate media player")
-	errStreamTimeout             = errors.New("timeout waiting for video stream")
-	errPlaybackEndedUnexpectedly = errors.New("playback ended unexpectedly")
-	errFailedToValidateVideo     = errors.New("failed to validate video file")
-	errFailedToLoadVideo         = errors.New("failed to load video")
-	errUnableToSeek              = errors.New("failed to seek to specified position in media player")
-	ErrSeekExceedsDuration       = errors.New("seek position exceeds video file duration")
+	errInvalidTimeFormat      = errors.New("invalid time format")
+	errOSDUpdate              = errors.New("failed to update OSD")
+	errUnsupportedVideoPlayer = errors.New("unsupported video player specified")
+	errPlayerNotInitialized   = errors.New("media player not initialized")
+	errMediaParseTimeout      = errors.New("timeout waiting for media parsing")
+	errInvalidVideoDimensions = errors.New("video dimensions are invalid")
+	errNoVideoTrack           = errors.New("video file does not contain a video track")
+	errFailedToCreatePlayer   = errors.New("failed to instantiate media player")
+	errFailedToValidateVideo  = errors.New("failed to validate video file")
+	errFailedToLoadVideo      = errors.New("failed to load video")
+	errUnableToSeek           = errors.New("failed to seek to specified position in media player")
+	ErrSeekExceedsDuration    = errors.New("seek position exceeds video file duration")
 
 	//
 	ErrVideoComplete = errors.New("video playback completed")
