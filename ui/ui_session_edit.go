@@ -317,7 +317,7 @@ func toggleSensitive(p4 *PageSessionEditor, enabled bool) {
 
 		field := v.Field(i)
 		if field.CanInterface() {
-			widget, ok := field.Interface().(interface{ SetSensitive(enabled bool) })
+			widget, ok := reflect.TypeAssert[interface{ SetSensitive(enabled bool) }](field)
 
 			if ok {
 				widget.SetSensitive(enabled)

@@ -342,7 +342,7 @@ func StartGUI() {
 	logger.Debug(logger.BackgroundCtx, logger.GUI, "ShutdownManager service created")
 
 	// Initialize the application
-	app := gtk.NewApplication(ApplicationID, gio.ApplicationFlagsNone)
+	app := gtk.NewApplication(ApplicationID, gio.ApplicationFlags(0))
 
 	app.ConnectActivate(func() {
 		setupGUIApplication(app, shutdownMgr)
