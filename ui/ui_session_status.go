@@ -389,23 +389,25 @@ func (sc *SessionController) startMetricsLoop() {
 
 		state := sc.SessionManager.SessionState()
 
-		// Check for async failure (e.g., invalid video file)
+		// Check for async failure (e.g., invalid video file) or normal video completion
 		if state == session.StateError {
 
 			errMsg := sc.SessionManager.ErrorMessage()
 
-			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session error")
-			logger.Error(logger.BackgroundCtx, logger.GUI, "session error: "+errMsg)
+			logger.Debug(logger.BackgroundCtx, logger.GUI, "metrics loop detected session state change")
 
-			// Present clean, friendly UI alerts based on the specific error
+			// Present clean, friendly UI alerts based on normal completion vs errors
 			switch {
 			case strings.Contains(errMsg, video.ErrVideoComplete.Error()):
+				logger.Info(logger.BackgroundCtx, logger.GUI, "..."+video.ErrVideoComplete.Error())
 				displayAlertDialog(sc.UI.Window, "The BSC Session has Ended", "The video playback has finished.\n\nSession stopped.")
 
 			case strings.Contains(errMsg, video.ErrSeekExceedsDuration.Error()):
+				logger.Error(logger.BackgroundCtx, logger.GUI, "session error: "+errMsg)
 				displayAlertDialog(sc.UI.Window, "BSC Session Load Error", errSeekExceedsDuration)
 
 			default:
+				logger.Error(logger.BackgroundCtx, logger.GUI, "session error: "+errMsg)
 				displayAlertDialog(sc.UI.Window, sessionError, "An unexpected session error has occurred.\n\nPlease review the BSC Session Log for details.")
 			}
 

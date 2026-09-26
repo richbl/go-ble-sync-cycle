@@ -24,13 +24,13 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
-// mpvPlayer is a wrapper around the go-mpv client
+// mpvPlayer is a wrapper around the go-mpv client package
 type mpvPlayer struct {
 	player *mpv.Mpv
 	mu     sync.RWMutex
 }
 
-// mpv-specific error definitions
+// mpv-specific errors
 var (
 	errMPVPlayback = errors.New("mpv playback error")
 )
@@ -38,14 +38,11 @@ var (
 // mpv timing constants
 const (
 	// maxFileLoadWait is the maximum time to wait for mpv to open and initialize
-	// a loaded file (signalled by MPV_EVENT_FILE_LOADED) before declaring a timeout.
-	// Applies to both the temporary headless validation instance and the playback
-	// instance via the shared waitForFileLoaded method.
+	// a loaded file (signalled by MPV_EVENT_FILE_LOADED)
 	maxFileLoadWait = 10 * time.Second
 
 	// maxDimensionWait is the maximum time to wait for the video width/height
-	// properties to become available after MPV_EVENT_FILE_LOADED. They are normally
-	// available immediately; this covers rare demuxer metadata lag.
+	// properties to become available after MPV_EVENT_FILE_LOADED
 	maxDimensionWait = 2 * time.Second
 
 	// dimensionPollInterval is the polling cadence used while waiting for video dimensions
@@ -148,14 +145,7 @@ func (m *mpvPlayer) setupDisplayTargeting(ctx context.Context, videoConfig confi
 	return nil
 }
 
-// validateVideoFile validates the video file using a temporary headless MPV instance.
-//
-// Validation is event-driven rather than property-polled: mpv signals a successful
-// load with MPV_EVENT_FILE_LOADED, and definitive load failures (missing file,
-// unsupported or corrupt container, decode failure) with MPV_EVENT_END_FILE, which
-// carries the actual error in its payload. There is no pollable "error" property
-// in mpv — the error data lives exclusively in the end-file event. Do not
-// reintroduce property polling here.
+// validateVideoFile validates the video file using a temporary headless MPV instance
 func (m *mpvPlayer) validateVideoFile(videoPath, position string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
@@ -172,20 +162,18 @@ func (m *mpvPlayer) validateVideoFile(videoPath, position string) error {
 			return err
 		}
 
-		// Load the file paused: mpv only needs to demux and probe streams,
-		// not decode or advance frames
+		// Load the file paused: mpv only needs to demux and probe streams
 		if err := tempMpv.Command([]string{"loadfile", videoPath, "replace", "0", "pause=yes"}); err != nil {
 			return fmt.Errorf(errFormat, errFailedToLoadVideo, err)
 		}
 
-		// Wait for a definitive outcome: loaded, or failed with mpv's actual error
+		// Wait for a definitive outcome: loaded, or failed with mpv's response
 		if err := m.waitForFileLoaded(tempMpv); err != nil {
 			return err
 		}
 
-		// MPV_EVENT_FILE_LOADED has fired: track selection is complete and
-		// per-file properties (video-codec, width, height, duration) are
-		// reliably available
+		// MPV_EVENT_FILE_LOADED has fired: validation properties (video-codec, width, height, and
+		// duration) are now available
 		if err := m.validateVideoTrack(tempMpv); err != nil {
 			return err
 		}
@@ -195,15 +183,12 @@ func (m *mpvPlayer) validateVideoFile(videoPath, position string) error {
 	})
 }
 
-// configureHeadless configures an mpv instance for headless validation operation.
-// This is a package-level function because it operates solely on its parameter
-// and does not require access to the mpvPlayer receiver.
+// configureHeadless configures an mpv instance for headless validation operation
 func configureHeadless(p *mpv.Mpv) error {
 
 	opts := []struct{ key, value string }{
 		{"vo", "null"},
 		{"ao", "null"},
-		{"ytdl", "no"},
 	}
 
 	for _, opt := range opts {
@@ -222,12 +207,7 @@ func configureHeadless(p *mpv.Mpv) error {
 }
 
 // waitForFileLoaded waits for a definitive file-load outcome from an mpv instance:
-// MPV_EVENT_FILE_LOADED on success, or MPV_EVENT_END_FILE (with the actual error)
-// on failure. This single implementation serves both the temporary headless
-// validation instance and the playback instance.
-//
-// Note: loadfile is asynchronous — its return code only indicates that the command
-// was queued, so the outcome must be learned from the event queue.
+// MPV_EVENT_FILE_LOADED on success, or MPV_EVENT_END_FILE (with error) on failure
 func (m *mpvPlayer) waitForFileLoaded(p *mpv.Mpv) error {
 
 	logger.Debug(logger.BackgroundCtx, logger.VIDEO, "waiting for mpv file-loaded event...")
@@ -254,16 +234,12 @@ func (m *mpvPlayer) waitForFileLoaded(p *mpv.Mpv) error {
 			case mpv.EventFileLoaded:
 				logger.Debug(logger.BackgroundCtx, logger.VIDEO, "mpv file-loaded event received")
 
-				// Discard any residual load-phase events so subsequent event
-				// processing starts from a clean queue (no-op for the
-				// temporary headless instance, which is destroyed after validation)
+				// Discard any residual load events
 				m.drainEvents(p)
 
 				return nil
 
 			case mpv.EventEnd:
-				// mpv reports load failures here, with the concrete error in
-				// the event payload
 				return m.handleEndFile(event)
 
 			case mpv.EventShutdown:
@@ -277,13 +253,7 @@ func (m *mpvPlayer) waitForFileLoaded(p *mpv.Mpv) error {
 }
 
 // handleEndFile processes an MPV_EVENT_END_FILE event received while waiting for
-// a file to load. Since EventFileLoaded has not yet been observed, every end-file
-// reason is treated as a load failure. Each reason produces a descriptive error
-// wrapping errFailedToLoadVideo so callers can match with errors.Is.
-//
-// Note: a file that ends during normal playback is not routed here; that case is
-// detected by the controller's event loop (eof-reached property / end-file event)
-// and reported as ErrVideoComplete.
+// a file to load
 func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 
 	endFile := event.EndFile()
@@ -313,20 +283,21 @@ func (m *mpvPlayer) handleEndFile(event *mpv.Event) error {
 
 }
 
-// validateVideoTrack confirms a loaded file contains a playable video track with
-// valid dimensions. It must be called after MPV_EVENT_FILE_LOADED, when track
-// selection is complete and per-file properties are available.
+// validateVideoTrack confirms a loaded file contains a playable video track with valid
+// dimensions
 func (m *mpvPlayer) validateVideoTrack(p *mpv.Mpv) error {
 
 	// After FILE_LOADED, an unavailable or empty video-codec reliably means
-	// "no playable video track" (e.g. an audio-only file)
+	// "no playable video track" (e.g. an audio-only file)... bad news!
 	vCodec, err := p.GetProperty("video-codec", mpv.FormatString)
-	if err != nil || !isNonEmptyString(vCodec) {
+	if err != nil {
+		return fmt.Errorf("%w: %w", errNoVideoTrack, err)
+	}
+	if !isNonEmptyString(vCodec) {
 		return errNoVideoTrack
 	}
 
-	// Dimensions normally accompany the codec but can lag in rare cases:
-	// wait briefly for them to settle
+	// Dimensions normally accompany the codec but can lag, so treat separately
 	info := m.waitForDimensions(p)
 	if info == nil || info.width <= 0 || info.height <= 0 {
 		return errInvalidVideoDimensions
@@ -338,8 +309,7 @@ func (m *mpvPlayer) validateVideoTrack(p *mpv.Mpv) error {
 	return nil
 }
 
-// waitForDimensions polls briefly for the video width/height properties to become
-// available, returning nil if they never do
+// waitForDimensions polls for the video width/height properties, returning nil if they never do
 func (m *mpvPlayer) waitForDimensions(p *mpv.Mpv) *videoValidationInfo {
 
 	timeout := time.After(maxDimensionWait)
@@ -362,9 +332,7 @@ func (m *mpvPlayer) waitForDimensions(p *mpv.Mpv) *videoValidationInfo {
 
 }
 
-// extractStreamInfo extracts the video codec and dimensions from an mpv instance.
-// It reports false when the video codec is not (yet) available; dimension values
-// may still be zero while demuxer metadata settles.
+// extractStreamInfo extracts the video codec and dimensions from an mpv instance
 func (m *mpvPlayer) extractStreamInfo(p *mpv.Mpv) (*videoValidationInfo, bool) {
 
 	vCodec, err := p.GetProperty("video-codec", mpv.FormatString)
@@ -389,12 +357,8 @@ func (m *mpvPlayer) extractStreamInfo(p *mpv.Mpv) (*videoValidationInfo, bool) {
 	return info, true
 }
 
-// validateSeekPosition checks if the requested seek position is within the video
-// duration. A zero seek position is always valid and skips the duration query.
-//
-// mpv's "duration" property is natively a double (seconds as floating point);
-// requesting FormatDouble avoids the precision loss that FormatInt64 can introduce
-// for fractional-second durations.
+// validateSeekPosition checks if the requested seek position is within the video duration
+// A zero seek position is valid (though useless), so skips the duration query
 func (m *mpvPlayer) validateSeekPosition(p *mpv.Mpv, position string) error {
 
 	// Parse requested seek position in milliseconds
@@ -408,7 +372,7 @@ func (m *mpvPlayer) validateSeekPosition(p *mpv.Mpv, position string) error {
 		return nil
 	}
 
-	// Get playback duration in milliseconds (mpv duration is natively double/seconds)
+	// Get playback duration in milliseconds
 	val, err := p.GetProperty("duration", mpv.FormatDouble)
 	if err != nil {
 		return fmt.Errorf("failed to get video duration: %w", err)
@@ -442,10 +406,10 @@ func (m *mpvPlayer) loadFile(path string) error {
 		if err := m.player.Command([]string{"loadfile", path, "replace", "0", "pause=yes"}); err != nil {
 			logger.Error(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("mpv command failed: %v", err))
 
-			return wrapError(errFailedToLoadVideo.Error(), err)
+			return fmt.Errorf("%w: %w", errFailedToLoadVideo, err)
 		}
 
-		// Wait for the file to load, or fail, via the shared event-driven wait
+		// Wait for the file to load (or fail spectacularly), via the shared event-driven wait
 		if err := m.waitForFileLoaded(m.player); err != nil {
 			return err
 		}
@@ -458,7 +422,11 @@ func (m *mpvPlayer) loadFile(path string) error {
 func (m *mpvPlayer) setSpeed(speed float64) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-		return wrapError("failed to set video playback speed", m.player.SetProperty("speed", mpv.FormatDouble, speed))
+		if err := m.player.SetProperty("speed", mpv.FormatDouble, speed); err != nil {
+			return fmt.Errorf("failed to set video playback speed: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -466,7 +434,11 @@ func (m *mpvPlayer) setSpeed(speed float64) error {
 func (m *mpvPlayer) setPause(paused bool) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-		return wrapError("failed to pause video", m.player.SetProperty("pause", mpv.FormatFlag, paused))
+		if err := m.player.SetProperty("pause", mpv.FormatFlag, paused); err != nil {
+			return fmt.Errorf("failed to pause video: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -508,13 +480,21 @@ func (m *mpvPlayer) setPlaybackSize(windowSize float64) error {
 
 		// Enable fullscreen if window size is 1.0 (100%)
 		if windowSize == 1.0 {
-			return wrapError("failed to enable fullscreen", m.player.SetOptionString("fullscreen", "yes"))
+			if err := m.player.SetOptionString("fullscreen", "yes"); err != nil {
+				return fmt.Errorf("failed to enable fullscreen: %w", err)
+			}
+
+			return nil
 		}
 
 		// Scale video window size
 		scaleValue := int(windowSize * 100)
 
-		return wrapError("failed to set window size", m.player.SetOptionString("autofit", fmt.Sprintf("%d%%x%d%%", scaleValue, scaleValue)))
+		if err := m.player.SetOptionString("autofit", fmt.Sprintf("%d%%x%d%%", scaleValue, scaleValue)); err != nil {
+			return fmt.Errorf("failed to set window size: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -527,7 +507,11 @@ func (m *mpvPlayer) setKeepOpen(keepOpen bool) error {
 			value = "yes"
 		}
 
-		return wrapError("failed to set keep-open media player option", m.player.SetOptionString("keep-open", value))
+		if err := m.player.SetOptionString("keep-open", value); err != nil {
+			return fmt.Errorf("failed to set keep-open media player option: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -535,7 +519,11 @@ func (m *mpvPlayer) setKeepOpen(keepOpen bool) error {
 func (m *mpvPlayer) seek(position string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-		return wrapError(errUnableToSeek.Error(), m.player.SetPropertyString("start", position))
+		if err := m.player.SetPropertyString("start", position); err != nil {
+			return fmt.Errorf("%w: %w", errUnableToSeek, err)
+		}
+
+		return nil
 	})
 }
 
@@ -572,12 +560,17 @@ func (m *mpvPlayer) setOSD(options osdConfig) error {
 func (m *mpvPlayer) setupEvents() error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-		return wrapError("failed to setup end-of-file observe event", m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag))
+
+		if err := m.player.ObserveProperty(0, "eof-reached", mpv.FormatFlag); err != nil {
+			return fmt.Errorf("failed to setup end-of-file observe event: %w", err)
+		}
+
+		return nil
 	})
 }
 
 // waitEvent waits for an mpv event and translates it to a generic playerEvent
-func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
+func (m *mpvPlayer) waitEvent(timeout float64) (*playerEvent, error) {
 
 	res, err := queryGuarded(&m.mu, func() bool { return m.player == nil }, func() (*playerEvent, error) {
 
@@ -590,8 +583,8 @@ func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 		switch e.EventID {
 
 		case mpv.EventPropertyChange:
-			// "eof-reached" is the reliable completion signal while keep-open=yes
-			// is active, since MPV_EVENT_END_FILE never fires in that mode
+			// "eof-reached" is the reliable completion signal while keep-open=yes is active, since
+			// MPV_EVENT_END_FILE will never fire in that mode
 			prop := e.Property()
 			if prop.Name == "eof-reached" && isTrueFlag(prop.Data) {
 				return &playerEvent{id: eventEndFile}, nil
@@ -605,19 +598,18 @@ func (m *mpvPlayer) waitEvent(timeout float64) *playerEvent {
 	})
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if res == nil {
-		return &playerEvent{id: eventNone}
+		return &playerEvent{id: eventNone}, nil
 	}
 
-	return res
+	return res, nil
 }
 
-// isTrueFlag reports whether an observed property value represents boolean true,
-// tolerating the different Go types go-mpv may use to surface MPV_FORMAT_FLAG
-// data across versions (bool, int, int64)
+// isTrueFlag reports whether an observed property value represents boolean true, tolerating the
+// different Go types go-mpv may use to surface MPV_FORMAT_FLAG data
 func isTrueFlag(data any) bool {
 
 	switch v := data.(type) {
@@ -637,7 +629,11 @@ func isTrueFlag(data any) bool {
 func (m *mpvPlayer) showOSDText(text string) error {
 
 	return execGuarded(&m.mu, func() bool { return m.player == nil }, func() error {
-		return wrapError("failed to show OSD text", m.player.SetOptionString("osd-msg1", text))
+		if err := m.player.SetOptionString("osd-msg1", text); err != nil {
+			return fmt.Errorf("failed to show OSD text: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -672,10 +668,7 @@ func (m *mpvPlayer) terminatePlayer() {
 	}
 }
 
-// drainEvents discards any pending events from an mpv instance's event queue.
-// The target handle is passed explicitly so the drain never depends on (or races
-// with) the receiver's player state. WaitEvent(0) is non-blocking: only events
-// already queued are discarded.
+// drainEvents discards any pending events from an mpv instance's event queue
 func (m *mpvPlayer) drainEvents(p *mpv.Mpv) {
 
 	for range 10 {

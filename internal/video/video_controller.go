@@ -107,7 +107,7 @@ func newOSDConfig(displayConfig config.VideoOSDConfig) osdConfig {
 // StartPlayback configures and starts playback of the media player
 func (p *PlaybackController) StartPlayback(ctx context.Context, speedController *speed.Controller) error {
 
-	logger.Info(ctx, logger.VIDEO, fmt.Sprintf("starting %s video playback...", p.videoConfig.MediaPlayer))
+	logger.Info(ctx, logger.VIDEO, "starting video playback...")
 
 	defer func() {
 		logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("terminating video controller object (id:%04d)...", p.InstanceID))
@@ -117,7 +117,7 @@ func (p *PlaybackController) StartPlayback(ctx context.Context, speedController 
 
 	// Configure the media player
 	if err := p.configurePlayback(ctx); err != nil {
-		return fmt.Errorf("failed to configure %s video playback: %w", p.videoConfig.MediaPlayer, err)
+		return fmt.Errorf("failed to configure video playback: %w", err)
 	}
 
 	// Start the event callback loop for the media player
@@ -170,12 +170,12 @@ func (p *PlaybackController) configurePlayback(ctx context.Context) error {
 
 	// Validate video file format using a tmp/headless MPV instance
 	if err := p.player.validateVideoFile(p.videoConfig.FilePath, p.videoConfig.SeekToPosition); err != nil {
-		return fmt.Errorf("%s: %s: %w", errFailedToValidateVideo.Error(), p.videoConfig.FilePath, err)
+		return fmt.Errorf("%w: %s: %w", errFailedToValidateVideo, p.videoConfig.FilePath, err)
 	}
 
 	// Since the video file has now been validated, load the video file into the media player
 	if err := p.player.loadFile(p.videoConfig.FilePath); err != nil {
-		return fmt.Errorf("%s: %s: %w", errFailedToLoadVideo.Error(), p.videoConfig.FilePath, err)
+		return fmt.Errorf("%w: %s: %w", errFailedToLoadVideo, p.videoConfig.FilePath, err)
 	}
 
 	// Configure common playback options after loadFile() for media player since some options are
@@ -255,11 +255,12 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 
 			if err := p.updateSpeedFromController(ctx, speedController); err != nil {
 				logger.Warn(ctx, logger.VIDEO, fmt.Sprintf("speed update error: %v", err))
-				return err // TODO
+
+				return err
 			}
 
 		case <-ctx.Done():
-			logger.Debug(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
+			logger.Info(ctx, logger.VIDEO, fmt.Sprintf("interrupt detected, stopping %s video playback...", p.videoConfig.MediaPlayer))
 
 			return nil
 		}
@@ -270,7 +271,11 @@ func (p *PlaybackController) eventLoop(ctx context.Context, speedController *spe
 // handlePlayerEvents handles callback events from the media player
 func (p *PlaybackController) handlePlayerEvents() error {
 
-	event := p.player.waitEvent(0)
+	event, err := p.player.waitEvent(0)
+	if err != nil {
+		return err
+	}
+
 	if event != nil && event.id == eventEndFile {
 		return fmt.Errorf("%w", ErrVideoComplete)
 	}

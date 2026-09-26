@@ -23,9 +23,7 @@ var (
 	errFailedToLoadVideo      = errors.New("failed to load video")
 	errUnableToSeek           = errors.New("failed to seek to specified position in media player")
 	ErrSeekExceedsDuration    = errors.New("seek position exceeds video file duration")
-
-	//
-	ErrVideoComplete = errors.New("video playback completed")
+	ErrVideoComplete          = errors.New("video playback completed")
 )
 
 // videoValidationInfo holds video properties discovered when validating a media file
@@ -67,7 +65,8 @@ type osdConfig struct {
 	displayTimeRemaining bool
 }
 
-// mediaPlayer defines the interface abstraction for a video player
+// mediaPlayer defines the interface abstraction for a video player, which allows for
+// future implementations of media players to be used interchangeably (yes, an abstraction layer)
 type mediaPlayer interface {
 
 	// Playback methods
@@ -87,20 +86,10 @@ type mediaPlayer interface {
 
 	// Event handling methods
 	setupEvents() error
-	waitEvent(timeout float64) *playerEvent
+	waitEvent(timeout float64) (*playerEvent, error)
 
 	// On Screen Display (OSD) methods
 	showOSDText(text string) error
-}
-
-// wrapError helper function adds return context only if an error occurred
-func wrapError(context string, err error) error {
-
-	if err == nil {
-		return nil
-	}
-
-	return fmt.Errorf(errFormat, context, err)
 }
 
 // execGuarded follows a lifecycle guard pattern to allow concurrent commands while the player is alive
