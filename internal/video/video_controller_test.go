@@ -3,6 +3,7 @@ package video
 import (
 	"bytes"
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -10,6 +11,12 @@ import (
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 	"github.com/richbl/go-ble-sync-cycle/internal/speed"
+)
+
+// Errors for testing
+var (
+	errUnderlyingValidationError = errors.New("underlying validation error")
+	errUnderlyingLoadError       = errors.New("underlying load error")
 )
 
 // mockMediaPlayer is a mock implementation of the mediaPlayer interface for testing
@@ -29,6 +36,7 @@ type mockMediaPlayer struct {
 	setSpeedErr          error
 	setPauseErr          error
 	showTextErr          error
+	waitEventErr         error
 	remainingTime        int64
 	remainingTimeErr     error
 	playbackPos          int64
@@ -227,15 +235,19 @@ func (m *mockMediaPlayer) playbackPosition() (int64, error) {
 }
 
 // waitEvent waits for a player event or times out
-func (m *mockMediaPlayer) waitEvent(timeout float64) *playerEvent {
+func (m *mockMediaPlayer) waitEvent(timeout float64) (*playerEvent, error) {
 
 	m.recordCall("waitEvent")
 
+	if m.waitEventErr != nil {
+		return nil, m.waitEventErr
+	}
+
 	select {
 	case e := <-m.eventChan:
-		return e
+		return e, nil
 	case <-time.After(time.Duration(timeout * float64(time.Second))):
-		return &playerEvent{id: eventNone}
+		return &playerEvent{id: eventNone}, nil
 	}
 }
 
@@ -556,6 +568,71 @@ func TestUpdateDisplay(t *testing.T) {
 
 		if mockPlayer.lastShowText != expectedText.String() {
 			t.Errorf("unexpected OSD text\ngot:  %q\nwant: %q", mockPlayer.lastShowText, expectedText.String())
+		}
+	})
+
+}
+
+// TestErrorWrapping verifies that sentinel errors are correctly wrapped using %w
+func TestErrorWrapping(t *testing.T) {
+
+	t.Run("errFailedToValidateVideo wrapping", func(t *testing.T) {
+		controller, mockPlayer, _ := setupTestController(t)
+		dummyErr := errUnderlyingValidationError
+		mockPlayer.validateVideoFileErr = dummyErr
+
+		err := controller.configurePlayback(logger.BackgroundCtx)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if !errors.Is(err, errFailedToValidateVideo) {
+			t.Errorf("expected errors.Is(err, errFailedToValidateVideo) to be true, got false. Error: %v", err)
+		}
+
+		if !errors.Is(err, dummyErr) {
+			t.Errorf("expected errors.Is(err, dummyErr) to be true, got false. Error: %v", err)
+		}
+	})
+
+	t.Run("errFailedToLoadVideo wrapping", func(t *testing.T) {
+		controller, mockPlayer, _ := setupTestController(t)
+		dummyErr := errUnderlyingLoadError
+		mockPlayer.loadFileErr = dummyErr
+
+		err := controller.configurePlayback(logger.BackgroundCtx)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if !errors.Is(err, errFailedToLoadVideo) {
+			t.Errorf("expected errors.Is(err, errFailedToLoadVideo) to be true, got false. Error: %v", err)
+		}
+
+		if !errors.Is(err, dummyErr) {
+			t.Errorf("expected errors.Is(err, dummyErr) to be true, got false. Error: %v", err)
+		}
+	})
+
+}
+
+// TestWaitEventErrorPropagation verifies that waitEvent errors propagate through handlePlayerEvents and eventLoop
+func TestWaitEventErrorPropagation(t *testing.T) {
+
+	t.Run("waitEvent error propagates up eventLoop", func(t *testing.T) {
+		controller, mockPlayer, speedCtrl := setupTestController(t)
+		dummyErr := errPlayerNotInitialized
+		mockPlayer.waitEventErr = dummyErr
+
+		ctx := logger.BackgroundCtx
+		err := controller.eventLoop(ctx, speedCtrl)
+
+		if err == nil {
+			t.Fatal("expected eventLoop to return an error when waitEvent fails, got nil")
+		}
+
+		if !errors.Is(err, dummyErr) {
+			t.Errorf("expected error to be %v, got %v", dummyErr, err)
 		}
 	})
 

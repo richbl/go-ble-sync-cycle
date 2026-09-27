@@ -248,6 +248,8 @@ func (m *StateManager) VideoTimeRemaining() string {
 
 	timeStr, err := m.controllers.videoPlayer.TimeRemaining()
 	if err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to get video time remaining: %v", err))
+
 		return noTime
 	}
 
@@ -267,6 +269,8 @@ func (m *StateManager) VideoPlaybackPosition() string {
 
 	timeStr, err := m.controllers.videoPlayer.PlaybackPosition()
 	if err != nil {
+		logger.Warn(logger.BackgroundCtx, logger.VIDEO, fmt.Sprintf("failed to get video playback position: %v", err))
+
 		return noTime
 	}
 
