@@ -12,30 +12,30 @@
 * Integrates with the [mpv](https://mpv.io) media player
 
 * Highly configurable TOML-based configuration files for:
-    * BLE sensor address (BD\_ADDR) and scan timeout
-    * Wheel circumference (for accurate speed)
-    * Speed units (mph or km/h)
-    * Speed smoothing for natural playback
-    * Video file selection with support for multiple file formats (mp4, mkv, etc.)
-    * Seek to a specific start time in the video
-    * Auto resume video playback from the last playback position
-    * Display options:
-        * On-screen display (OSD) for speed and time remaining
-        * Video window scaling (fullscreen, etc.)
-        * OSD position and font size
+  * BLE sensor address (BD\_ADDR) and scan timeout
+  * Wheel circumference (for accurate speed)
+  * Speed units (mph or km/h)
+  * Speed smoothing for natural playback
+  * Video file selection with support for multiple file formats (mp4, mkv, etc.)
+  * Seek to a specific start time in the video
+  * Auto resume video playback from the last playback position
+  * Display options:
+    * On-screen display (OSD) for speed and time remaining
+    * Video window scaling (fullscreen, etc.)
+    * OSD position and font size
 
 * Choice of running modes:
-    * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
-        * Cycling session selection
-        * Session status (including cycling speed, ride time, and session time remaining), and video playback
-        * Session logging
-        * BSC session creation, editing, and management
+  * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
+    * Cycling session selection
+    * Session status (including cycling speed, ride time, and session time remaining), and video playback
+    * Session logging
+    * BSC session creation, editing, and management
 
-    * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
-        * Application flags to override configuration file settings:
-            * Configuration file path (allows for multiple profiles)
-            * Video start time (seek)
-            * Help/usage information
+  * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
+    * Application flags to override configuration file settings:
+      * Configuration file path (allows for multiple profiles)
+      * Video start time (seek)
+      * Help/usage information
 
 * Support for video playback on a non-primary display, allowing users to utilize a dedicated big-screen monitor or TV for video output while keeping the application running on a separate display
 
