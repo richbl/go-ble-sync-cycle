@@ -13,23 +13,23 @@
 
 - <u>How do I use **BLE Sync Cycle**?</u>
 
-  See the [Basic Usage](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Overview) section
+  See the [Basic Usage](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage-%E2%80%90-Overview) section
 
 - <u>How do I configure **BLE Sync Cycle**?</u>
 
-  See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File) section for an understanding of the configuration options and fields available for editing.
+  See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage-%E2%80%90-Anatomy-of-a-BSC-TOML-File) section for an understanding of the configuration options and fields available for editing.
 
-    - When running **BLE Sync Cycle** in GUI mode, you can edit BSC TOML configuration files using the BSC Session Editor
+  - When running **BLE Sync Cycle** in GUI mode, you can edit BSC TOML configuration files using the BSC Session Editor
 
-    - When running **BLE Sync Cycle** in CLI mode (via the command-line in a terminal), you'll need to edit these BSC TOML configuration files manually
+  - When running **BLE Sync Cycle** in CLI mode (via the command-line in a terminal), you'll need to edit these BSC TOML configuration files manually
 
-    - > Hint: even if you decide to run **BLE Sync Cycle** in CLI mode, you can still use the BSC Session Editor (when running **BLE Sync Cycle** in GUI mode) to edit BSC TOML configuration files
+  - > Hint: even if you decide to run **BLE Sync Cycle** in CLI mode, you can still use the BSC Session Editor (when running **BLE Sync Cycle** in GUI mode) to edit BSC TOML configuration files
 
 - <u>My BLE sensor takes a long time to connect, and often times out. What can I do?</u>
 
   **This is normal**.
   
-  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage:-Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
+  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage-%E2%80%90-Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 - <u>What videos can be used in **BLE Sync Cycle**?</u>
 
@@ -37,16 +37,16 @@
 
   Regarding video file formats, the following formats are supported by **BLE Sync Cycle**:
 
-    - mp4
-    - mkv
-    - avi
-    - mov
-    - wmv
-    - flv
-    - webm
-    - m4v
-    - mpeg
-    - ogg
+  - mp4
+  - mkv
+  - avi
+  - mov
+  - wmv
+  - flv
+  - webm
+  - m4v
+  - mpeg
+  - ogg
   
   the only known file format that will not work with **BLE Sync Cycle** is the older `mpg` format: media players will often report an invalid file format error and/or various configuration features will simply fail silently. As a result, **BLE Sync Cycle** does not permit the use of `mpg` files for playback. If you have an existing `mpg` video file, it's highly recommended to convert it to a newer video format.
 
