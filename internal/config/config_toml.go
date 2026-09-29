@@ -34,7 +34,7 @@ const ConfigTemplate = `# BLE Sync Cycle Configuration (TOML)
   seek_to_position = "{{.Video.SeekToPosition}}"{{pad (printf "seek_to_position = \"%s\"" .Video.SeekToPosition)}}# Starting playback position in the video ("HH:MM:SS")
   auto_resume = {{.Video.AutoResume}}{{pad (printf "auto_resume = %t" .Video.AutoResume)}}# Resume video playback from last playback position (true/false)
   window_scale_factor = {{printf "%.1f" .Video.WindowScaleFactor}}{{pad (printf "window_scale_factor = %.1f" .Video.WindowScaleFactor)}}# Scales the size of the video window (0.1-1.0, where 1.0 = full screen)
-  update_interval_secs = {{printf "%.1f" .Video.UpdateIntervalSec}}{{pad (printf "update_interval_secs = %.1f" .Video.UpdateIntervalSec)}}# Frequency that the video player is sent speed updates (0.10-3.00 seconds)
+  update_interval_secs = {{printf "%.2f" .Video.UpdateIntervalSec}}{{pad (printf "update_interval_secs = %.2f" .Video.UpdateIntervalSec)}}# Frequency that the video player is sent speed updates (0.10-3.00 seconds)
   speed_multiplier = {{printf "%.1f" .Video.SpeedMultiplier}}{{pad (printf "speed_multiplier = %.1f" .Video.SpeedMultiplier)}}# Multiplier to control video playback rate (0.1-1.5, where 0.1 = slower, 1.0 = normal, 1.5 = faster playback)
   target_display_name = "{{.Video.TargetDisplayName}}"{{pad (printf "target_display_name = \"%s\"" .Video.TargetDisplayName)}}# Force playback to a specific monitor (e.g., "eDP-1") ("" to use default primary display)
 

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/ble"
+	"github.com/richbl/go-ble-sync-cycle/internal/lifecycle"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
-	"github.com/richbl/go-ble-sync-cycle/internal/services"
 	"github.com/richbl/go-ble-sync-cycle/internal/speed"
 	"github.com/richbl/go-ble-sync-cycle/internal/video"
 	"tinygo.org/x/bluetooth"
@@ -42,7 +42,7 @@ func (m *StateManager) StartSession() error {
 
 	logger.Debug(logger.BackgroundCtx, logger.APP, "session startup sequence starting...")
 
-	shutdownMgr := services.NewShutdownManager(30 * time.Second)
+	shutdownMgr := lifecycle.NewShutdownManager(30 * time.Second)
 	shutdownMgr.Start()
 	m.storeShutdownMgr(shutdownMgr)
 
@@ -81,7 +81,7 @@ func (m *StateManager) StartSession() error {
 }
 
 // performSessionStartup handles the initialization and connection logic for a session
-func (m *StateManager) performSessionStartup(ctx context.Context, shutdownMgr *services.ShutdownManager) error {
+func (m *StateManager) performSessionStartup(ctx context.Context, shutdownMgr *lifecycle.ShutdownManager) error {
 
 	logger.Debug(ctx, logger.APP, "initializing controllers...")
 
@@ -183,7 +183,7 @@ func (m *StateManager) StopSession() error {
 }
 
 // logControllersRelease logs the release of controller objects
-func (m *StateManager) logControllersRelease(shutdownMgr *services.ShutdownManager) {
+func (m *StateManager) logControllersRelease(shutdownMgr *lifecycle.ShutdownManager) {
 
 	if m.controllers == nil || shutdownMgr == nil {
 		return
@@ -375,7 +375,7 @@ func (m *StateManager) connectBLE(ctx context.Context, ctrl *controllers) (bluet
 }
 
 // startServices launches BLE and video services in background goroutines
-func (m *StateManager) startServices(ctx context.Context, ctrl *controllers, shutdownMgr *services.ShutdownManager) {
+func (m *StateManager) startServices(ctx context.Context, ctrl *controllers, shutdownMgr *lifecycle.ShutdownManager) {
 
 	m.runService(ctx, shutdownMgr, "BLE", func(ctx context.Context) error {
 		return ctrl.bleController.BLEUpdates(ctx, ctrl.speedController)
@@ -390,7 +390,7 @@ func (m *StateManager) startServices(ctx context.Context, ctrl *controllers, shu
 }
 
 // cleanupStartFailure handles cleaning manager state when session startup fails
-func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager) {
+func (m *StateManager) cleanupStartFailure(shutdownMgr *lifecycle.ShutdownManager) {
 
 	m.mu.Lock()
 
@@ -426,7 +426,7 @@ func (m *StateManager) cleanupStartFailure(shutdownMgr *services.ShutdownManager
 }
 
 // runService helper to launch a service with standard error handling and logging
-func (m *StateManager) runService(ctx context.Context, shutdownMgr *services.ShutdownManager, service string, action func(context.Context) error) {
+func (m *StateManager) runService(ctx context.Context, shutdownMgr *lifecycle.ShutdownManager, service string, action func(context.Context) error) {
 
 	logger.Debug(ctx, logger.APP, fmt.Sprintf("starting %s service goroutine", service))
 

@@ -2,17 +2,16 @@ package session
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
+	"github.com/richbl/go-ble-sync-cycle/internal/config"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
 )
 
-var (
-	configPath     = "../config/config_test.toml"
-	errLoadSession = errors.New("LoadSession() unexpected error: %v")
-	errTest        = errors.New("test error message")
-)
+var errTest = errors.New("test error message")
 
 // init is called to set the log level for tests
 func init() {
@@ -45,9 +44,10 @@ func TestNewManager(t *testing.T) {
 func TestLoadSession(t *testing.T) {
 
 	mgr := NewManager()
+	configPath := newTestConfigFile(t)
 
 	// Test loading a valid config
-	loadSession(t, configPath, mgr, errLoadSession.Error())
+	loadSession(t, configPath, mgr)
 
 	// Verify state changed to Loaded
 	if mgr.SessionState() != StateLoaded {
@@ -61,10 +61,8 @@ func TestLoadSession(t *testing.T) {
 	}
 
 	// Verify path is stored
-	expectedPath := configPath
-
-	if mgr.LoadedConfigPath() != expectedPath {
-		t.Errorf("LoadSession() path = %v, want %v", mgr.LoadedConfigPath(), expectedPath)
+	if mgr.LoadedConfigPath() != configPath {
+		t.Errorf("LoadSession() path = %v, want %v", mgr.LoadedConfigPath(), configPath)
 	}
 
 	// Verify IsLoaded returns true
@@ -85,7 +83,7 @@ func TestLoadSessionInvalidFile(t *testing.T) {
 	mgr := NewManager()
 
 	// Test loading a non-existent file
-	err := mgr.LoadTargetSession("nonexistent.toml")
+	err := mgr.LoadTargetSession(filepath.Join(t.TempDir(), "nonexistent.toml"))
 	if err == nil {
 		t.Error("LoadSession() expected error for non-existent file")
 	}
@@ -157,7 +155,7 @@ func TestReset(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	loadSession(t, configPath, mgr, errLoadSession.Error())
+	loadSession(t, newTestConfigFile(t), mgr)
 
 	// Verify session is loaded
 	if !mgr.IsLoaded() {
@@ -200,7 +198,7 @@ func TestConcurrentAccess(t *testing.T) {
 	mgr := NewManager()
 
 	// Load a session first
-	loadSession(t, configPath, mgr, errLoadSession.Error())
+	loadSession(t, newTestConfigFile(t), mgr)
 
 	var wg sync.WaitGroup
 	iterations := 100
@@ -265,18 +263,19 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 	mgr := NewManager()
 
 	// Load first session
-	loadSession(t, configPath, mgr, "LoadSession() first load failed: %v")
+	firstPath := newTestConfigFile(t)
+	loadSession(t, firstPath, mgr)
 
-	firstPath := mgr.LoadedConfigPath()
+	if mgr.LoadedConfigPath() != firstPath {
+		t.Errorf("First load path = %v, want %v", mgr.LoadedConfigPath(), firstPath)
+	}
 
-	// Load second session (same file, but simulates switching)
-	loadSession(t, configPath, mgr, "LoadSession() second load failed: %v")
+	// Load second session (a different file, which simulates switching)
+	secondPath := newTestConfigFile(t)
+	loadSession(t, secondPath, mgr)
 
-	secondPath := mgr.LoadedConfigPath()
-
-	// Verify both loads succeeded
-	if firstPath != secondPath {
-		t.Errorf("Paths differ: first=%v, second=%v", firstPath, secondPath)
+	if mgr.LoadedConfigPath() != secondPath {
+		t.Errorf("Second load path = %v, want %v", mgr.LoadedConfigPath(), secondPath)
 	}
 
 	// Verify state is still Loaded
@@ -286,13 +285,38 @@ func TestLoadSessionMultipleTimes(t *testing.T) {
 
 }
 
-// loadSession is a helper function that loads a valid session configuration
-func loadSession(t *testing.T, configPath string, mgr *StateManager, errMsg string) {
+// newTestConfigFile writes a valid session config (backed by a placeholder video file) to a
+// temporary directory, and returns the config file path
+//
+// Config validation only checks that the video file exists, so an empty placeholder is enough
+// here: session tests never need a playable video. Because the config uses absolute paths, the
+// tests don't depend on the working directory, or on files in any other package
+func newTestConfigFile(t *testing.T) string {
 
 	t.Helper()
-	err := mgr.LoadTargetSession(configPath)
-	if err != nil {
-		t.Fatalf(errMsg, err)
+
+	dir := t.TempDir()
+
+	videoPath := filepath.Join(dir, "test_video.mp4")
+	if err := os.WriteFile(videoPath, nil, 0600); err != nil {
+		t.Fatalf("failed to create placeholder video file: %v", err)
+	}
+
+	configPath := filepath.Join(dir, "test_session.toml")
+	if err := config.Save(configPath, config.NewDefault(videoPath), config.GetVersion()); err != nil {
+		t.Fatalf("failed to save test session config: %v", err)
+	}
+
+	return configPath
+}
+
+// loadSession is a helper function that loads a valid session configuration
+func loadSession(t *testing.T, configPath string, mgr *StateManager) {
+
+	t.Helper()
+
+	if err := mgr.LoadTargetSession(configPath); err != nil {
+		t.Fatalf("LoadTargetSession(%q) unexpected error: %v", configPath, err)
 	}
 
 }

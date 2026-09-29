@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
-	"github.com/richbl/go-ble-sync-cycle/ui/assets"
+	"github.com/richbl/go-ble-sync-cycle/internal/ui/assets"
 )
 
 const (
