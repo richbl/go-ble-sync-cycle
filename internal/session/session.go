@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/richbl/go-ble-sync-cycle/internal/config"
+	"github.com/richbl/go-ble-sync-cycle/internal/lifecycle"
 	"github.com/richbl/go-ble-sync-cycle/internal/logger"
-	"github.com/richbl/go-ble-sync-cycle/internal/services"
 )
 
 const (
@@ -60,7 +60,7 @@ type StateManager struct {
 	editConfigPath string
 
 	controllers  *controllers
-	shutdownMgr  *services.ShutdownManager
+	shutdownMgr  *lifecycle.ShutdownManager
 	errorMsg     string
 	state        State
 	mu           sync.RWMutex
@@ -339,7 +339,7 @@ func (m *StateManager) prepareStart() error {
 }
 
 // storeShutdownMgr stores the shutdown manager under lock
-func (m *StateManager) storeShutdownMgr(s *services.ShutdownManager) {
+func (m *StateManager) storeShutdownMgr(s *lifecycle.ShutdownManager) {
 
 	m.mu.Lock()
 	m.shutdownMgr = s

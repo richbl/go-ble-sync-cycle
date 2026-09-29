@@ -1,36 +1,42 @@
 package config
 
 import (
+	"errors"
+	"io/fs"
+	"path/filepath"
 	"testing"
-)
-
-const (
-	testVideo = "test_video.mp4"
 )
 
 // TestLoad tests the Load function
 func TestLoad(t *testing.T) {
 
-	// Define test cases
+	// Define test cases (errIs is optional, and only checked when the error chain allows it)
 	tests := []struct {
+		errIs       error
 		name        string
 		configFile  string
 		expectError bool
 	}{
 		{
-			name:        "valid config file",
-			configFile:  "config_test.toml",
-			expectError: false,
+			name:       "valid config file",
+			configFile: writeTestConfig(t, "valid.toml"),
 		},
 		{
-			name:        "invalid config file",
-			configFile:  "invalid_config.toml",
+			name:        "malformed config file",
+			configFile:  writeTestFile(t, "malformed.toml", malformedTOML),
 			expectError: true,
+		},
+		{
+			name:        "config file with missing video file",
+			configFile:  writeTestConfig(t, "missing_video.toml", withMissingVideoFile),
+			expectError: true,
+			errIs:       fs.ErrNotExist,
 		},
 		{
 			name:        "non-existent config file",
-			configFile:  "non_existent.toml",
+			configFile:  filepath.Join(t.TempDir(), "non_existent.toml"),
 			expectError: true,
+			errIs:       fs.ErrNotExist,
 		},
 	}
 
@@ -39,9 +45,17 @@ func TestLoad(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			_, err := Load(tt.configFile)
+			cfg, err := Load(tt.configFile)
 			if (err != nil) != tt.expectError {
-				t.Errorf("Load() error = %v, expectError %v", err, tt.expectError)
+				t.Fatalf("Load() error = %v, expectError %v", err, tt.expectError)
+			}
+
+			if tt.errIs != nil && !errors.Is(err, tt.errIs) {
+				t.Errorf("Load() error = %v, want error matching %v", err, tt.errIs)
+			}
+
+			if !tt.expectError && cfg == nil {
+				t.Error("Load() returned a nil config without an error")
 			}
 
 		})
@@ -164,32 +178,26 @@ func TestSpeedConfigValidate(t *testing.T) {
 // TestVideoConfigValidate tests the VideoConfig validate function
 func TestVideoConfigValidate(t *testing.T) {
 
-	const defaultTimeout = "00:00:30"
-
-	// Define test cases
+	// Define test cases: each one breaks a single setting of an otherwise valid VideoConfig, and
+	// names the error that setting must produce (nil means the config is valid), so a case can't
+	// pass because of some unrelated failure
 	tests := []struct {
-		name              string
-		mediaPlayer       string
-		filePath          string
-		windowScaleFactor float64
-		seekToPosition    string
-		updateIntervalSec float64
-		speedMultiplier   float64
-		fontSize          int
-		alignX            string
-		alignY            string
-		marginX           int
-		marginY           int
-		expectError       bool
+		mutate  func(vc *VideoConfig)
+		wantErr error
+		name    string
 	}{
-		{"valid config", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, false},
-		{"invalid media player", "xyz", testVideo, 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid file path", MediaPlayerMPV, "invalid_path.mp4", 0.5, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid window scale factor", MediaPlayerMPV, testVideo, 1.1, defaultTimeout, 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid seek position", MediaPlayerMPV, testVideo, 0.5, "invalid", 1.0, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid update interval", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 3.1, 0.5, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid speed multiplier", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 1.6, 20, alignCenter, alignBottom, 25, 25, true},
-		{"invalid font size", MediaPlayerMPV, testVideo, 0.5, defaultTimeout, 1.0, 0.5, 201, alignCenter, alignBottom, 25, 25, true},
+		{func(*VideoConfig) {}, nil, "valid config"},
+		{func(vc *VideoConfig) { vc.MediaPlayer = "xyz" }, errInvalidPlayer, "invalid media player"},
+		{func(vc *VideoConfig) { vc.FilePath = filepath.Join(filepath.Dir(vc.FilePath), "missing.mp4") }, fs.ErrNotExist, "missing video file"},
+		{func(vc *VideoConfig) { vc.WindowScaleFactor = 1.1 }, errWindowScale, "invalid window scale factor"},
+		{func(vc *VideoConfig) { vc.SeekToPosition = "invalid" }, errInvalidSeek, "invalid seek position"},
+		{func(vc *VideoConfig) { vc.UpdateIntervalSec = 3.1 }, errInvalidInterval, "invalid update interval"},
+		{func(vc *VideoConfig) { vc.SpeedMultiplier = 1.6 }, errSpeedMultiplier, "invalid speed multiplier"},
+		{func(vc *VideoConfig) { vc.OnScreenDisplay.FontSize = 201 }, errFontSize, "invalid font size"},
+		{func(vc *VideoConfig) { vc.OnScreenDisplay.AlignX = "invalid" }, errInvalidAlignX, "invalid OSD align x"},
+		{func(vc *VideoConfig) { vc.OnScreenDisplay.AlignY = "invalid" }, errInvalidAlignY, "invalid OSD align y"},
+		{func(vc *VideoConfig) { vc.OnScreenDisplay.MarginX = 301 }, errOSDMargin, "invalid OSD margin x"},
+		{func(vc *VideoConfig) { vc.OnScreenDisplay.MarginY = 601 }, errOSDMargin, "invalid OSD margin y"},
 	}
 
 	// Run tests
@@ -197,25 +205,12 @@ func TestVideoConfigValidate(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			vc := VideoConfig{
-				MediaPlayer:       tt.mediaPlayer,
-				FilePath:          tt.filePath,
-				WindowScaleFactor: tt.windowScaleFactor,
-				SeekToPosition:    tt.seekToPosition,
-				UpdateIntervalSec: tt.updateIntervalSec,
-				SpeedMultiplier:   tt.speedMultiplier,
-				OnScreenDisplay: VideoOSDConfig{
-					FontSize: tt.fontSize,
-					AlignX:   alignCenter,
-					AlignY:   alignBottom,
-					MarginX:  25,
-					MarginY:  25,
-				},
-			}
+			vc := NewDefault(newTestVideoFile(t)).Video
+			tt.mutate(&vc)
 
-			err := vc.validate()
-			if (err != nil) != tt.expectError {
-				t.Errorf("VideoConfig.validate() error = %v, expectError %v", err, tt.expectError)
+			// errors.Is(nil, nil) is true, so this covers the valid case as well
+			if err := vc.validate(); !errors.Is(err, tt.wantErr) {
+				t.Errorf("VideoConfig.validate() error = %v, want %v", err, tt.wantErr)
 			}
 
 		})
@@ -223,7 +218,7 @@ func TestVideoConfigValidate(t *testing.T) {
 
 }
 
-// TestVideoOSDConfigValidate tests the VideoOSDConfig validate function
+// TestValidateTimeFormat tests the validateTimeFormat function
 func TestValidateTimeFormat(t *testing.T) {
 
 	// Define test cases
@@ -257,7 +252,7 @@ func TestValidateTimeFormat(t *testing.T) {
 
 }
 
-// TestVideoOSDConfigValidate tests the VideoOSDConfig validate function
+// TestValidateField tests the validateField function
 func TestValidateField(t *testing.T) {
 
 	// Define test cases

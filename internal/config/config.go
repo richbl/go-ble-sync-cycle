@@ -121,7 +121,7 @@ func readConfigFile(path string, cfg *Config) (*Config, error) {
 
 	_, err := toml.DecodeFile(path, cfg)
 	if err != nil {
-		return nil, fmt.Errorf(errFormat, errInvalidConfigFile, err)
+		return nil, fmt.Errorf("%w: %w", errInvalidConfigFile, err)
 	}
 
 	return cfg, nil

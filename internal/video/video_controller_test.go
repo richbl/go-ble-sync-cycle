@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ var testConfigData = struct {
 	speedMultiplier float64
 	speedThreshold  float64
 }{
-	filename:        "test_video.mp4",
+	filename:        filepath.Join("..", "testdata", "test_video.mp4"),
 	windowScale:     1.0,
 	SeekToPosition:  positionReset,
 	updateInterval:  1.0,

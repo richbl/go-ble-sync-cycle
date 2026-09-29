@@ -2,22 +2,20 @@ package config
 
 import (
 	"errors"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"testing"
-)
-
-// Error messages
-var (
-	errFailedToCreateTempFile = errors.New("failed to create temp config file: %v")
 )
 
 // TestLoadSessionMetadataSuccess tests the successful loading of session metadata
 func TestLoadSessionMetadataSuccess(t *testing.T) {
 
 	t.Run("valid config with session title", func(t *testing.T) {
-		configFile := "config_test.toml"
 		expectedTitle := "Session Title"
+
+		configFile := writeTestConfig(t, "session.toml", func(cfg *Config) {
+			cfg.App.SessionTitle = expectedTitle
+		})
 
 		metadata, err := LoadSessionMetadata(configFile)
 
@@ -56,11 +54,15 @@ func TestLoadSessionMetadataErrors(t *testing.T) {
 	}{
 		{
 			name:       "non-existent file",
-			configFile: "non_existent.toml",
+			configFile: filepath.Join(t.TempDir(), "non_existent.toml"),
 		},
 		{
-			name:       "invalid config file",
-			configFile: "invalid_config.toml",
+			name:       "malformed config file",
+			configFile: writeTestFile(t, "malformed.toml", malformedTOML),
+		},
+		{
+			name:       "config file with missing video file",
+			configFile: writeTestConfig(t, "missing_video.toml", withMissingVideoFile),
 		},
 	}
 
@@ -84,125 +86,57 @@ func TestLoadSessionMetadataErrors(t *testing.T) {
 
 }
 
-// TestLoadSessionMetadataWithEmptyTitle tests behavior when session_title is empty
-func TestLoadSessionMetadataWithEmptyTitle(t *testing.T) {
+// TestLoadSessionMetadataMissingVideoFile tests that a missing video file is reported as the
+// reason a session config is invalid
+func TestLoadSessionMetadataMissingVideoFile(t *testing.T) {
 
-	// Create a temporary config file with empty session_title
-	tempDir := t.TempDir()
-	tempFile := filepath.Join(tempDir, "test_session.toml")
+	configFile := writeTestConfig(t, "missing_video.toml", withMissingVideoFile)
 
-	configContent := `
-[app]
-  session_title = ""
-  logging_level = "info"
-
-[ble]
-  sensor_bd_addr = "FA:46:1D:77:C8:E1"
-  scan_timeout_secs = 30
-
-[speed]
-  speed_threshold = 0.25
-  speed_units = "mph"
-  smoothing_window = 5
-  wheel_circumference_mm = 2155
-
-[video]
-  media_player = "mpv"
-  file_path = "test_video.mp4"
-  window_scale_factor = 1.0
-  seek_to_position = "00:00:00"
-  update_interval_secs = 0.1
-  speed_multiplier = 0.8
-	target_display_name = ""
-
-  [video.OSD]
-    display_cycle_speed = true
-    display_playback_speed = true
-    display_time_remaining = true
-    font_size = 40
-		margin_x = 10
-		margin_y = 10
-		align_x = "left"
-		align_y = "top"
-`
-
-	createTestConfigFile(t, tempFile, configContent)
-
-	// Test loading the config
-	metadata, err := LoadSessionMetadata(tempFile)
-	if err != nil {
-		t.Fatalf("LoadSessionMetadata() unexpected error: %v", err)
-	}
-
-	// Should use filename as fallback
-	expectedTitle := "test_session"
-	if metadata.Title != expectedTitle {
-		t.Errorf("LoadSessionMetadata() Title = %v, want %v (filename without extension)",
-			metadata.Title, expectedTitle)
-	}
-
-	if !metadata.IsValid {
-		t.Error("LoadSessionMetadata() metadata.IsValid should be true")
+	if _, err := LoadSessionMetadata(configFile); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("LoadSessionMetadata() error = %v, want error matching %v", err, fs.ErrNotExist)
 	}
 
 }
 
-// TestLoadSessionMetadataWithWhitespaceTitle tests behavior with whitespace-only title
-func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
+// TestLoadSessionMetadataTitleFallback tests that the config filename (without extension) is
+// used as the session title when session_title is empty or only whitespace
+func TestLoadSessionMetadataTitleFallback(t *testing.T) {
 
-	// Create a temporary config file with whitespace-only session_title
-	tempDir := t.TempDir()
-	tempFile := filepath.Join(tempDir, "whitespace_test.toml")
-
-	configContent := `
-[app]
-  session_title = "   "
-  logging_level = "info"
-
-[ble]
-  sensor_bd_addr = "FA:46:1D:77:C8:E1"
-  scan_timeout_secs = 30
-
-[speed]
-  speed_threshold = 0.25
-  speed_units = "mph"
-  smoothing_window = 5
-  wheel_circumference_mm = 2155
-
-[video]
-  media_player = "mpv"
-  file_path = "test_video.mp4"
-  window_scale_factor = 1.0
-  seek_to_position = "00:00:00"
-  update_interval_secs = 0.1
-  speed_multiplier = 0.8
-	target_display_name = ""
-
-  [video.OSD]
-    display_cycle_speed = true
-    display_playback_speed = true
-    display_time_remaining = true
-    font_size = 40
-		margin_x = 10
-		margin_y = 10
-		align_x = "left"
-		align_y = "top"
-`
-
-	createTestConfigFile(t, tempFile, configContent)
-
-	// Test loading the config
-	metadata, err := LoadSessionMetadata(tempFile)
-	if err != nil {
-		t.Fatalf("LoadSessionMetadata() unexpected error: %v", err)
+	// Define test cases
+	tests := []struct {
+		name          string
+		sessionTitle  string
+		filename      string
+		expectedTitle string
+	}{
+		{"empty title", "", "test_session.toml", "test_session"},
+		{"whitespace-only title", "   ", "whitespace_test.toml", "whitespace_test"},
 	}
 
-	// Should use filename as fallback when title is only whitespace
-	expectedTitle := "whitespace_test"
+	// Run tests
+	for _, tt := range tests {
 
-	if metadata.Title != expectedTitle {
-		t.Errorf("LoadSessionMetadata() Title = %v, want %v (filename without extension)",
-			metadata.Title, expectedTitle)
+		t.Run(tt.name, func(t *testing.T) {
+
+			configFile := writeTestConfig(t, tt.filename, func(cfg *Config) {
+				cfg.App.SessionTitle = tt.sessionTitle
+			})
+
+			metadata, err := LoadSessionMetadata(configFile)
+			if err != nil {
+				t.Fatalf("LoadSessionMetadata() unexpected error: %v", err)
+			}
+
+			if metadata.Title != tt.expectedTitle {
+				t.Errorf("LoadSessionMetadata() Title = %v, want %v (filename without extension)",
+					metadata.Title, tt.expectedTitle)
+			}
+
+			if !metadata.IsValid {
+				t.Error("LoadSessionMetadata() metadata.IsValid should be true")
+			}
+
+		})
 	}
 
 }
@@ -210,69 +144,21 @@ func TestLoadSessionMetadataWithWhitespaceTitle(t *testing.T) {
 // TestLoadSessionMetadataValidationErrors tests that validation errors are properly reported
 func TestLoadSessionMetadataValidationErrors(t *testing.T) {
 
-	// Create a temporary config file with invalid values
-	tempDir := t.TempDir()
-	tempFile := filepath.Join(tempDir, "invalid_values.toml")
+	// Create a config file that is well-formed TOML, but with an invalid log level
+	configFile := writeTestConfig(t, "invalid_values.toml", func(cfg *Config) {
+		cfg.App.LogLevel = "invalid_level"
+	})
 
-	configContent := `
-[app]
-  session_title = "Test Session"
-  logging_level = "invalid_level"
+	metadata, err := LoadSessionMetadata(configFile)
 
-[ble]
-  sensor_bd_addr = "FA:46:1D:77:C8:E1"
-  scan_timeout_secs = 30
-
-[speed]
-  speed_threshold = 0.25
-  speed_units = "mph"
-  smoothing_window = 5
-  wheel_circumference_mm = 2155
-
-[video]
-  media_player = "mpv"
-  file_path = "test_video.mp4"
-  window_scale_factor = 1.0
-  seek_to_position = "00:00:00"
-  update_interval_secs = 0.1
-  speed_multiplier = 0.8
-	target_display_name = ""
-
-  [video.OSD]
-    display_cycle_speed = true
-    display_playback_speed = true
-    display_time_remaining = true
-    font_size = 40
-		margin_x = 10
-		margin_y = 10
-		align_x = alignLeft
-		align_y = alignTop
-`
-
-	createTestConfigFile(t, tempFile, configContent)
-
-	// Test loading the invalid config
-	metadata, err := LoadSessionMetadata(tempFile)
-
-	// Should return an error
-	if err == nil {
-		t.Error("LoadSessionMetadata() expected error for invalid log level, got nil")
+	// Should fail validation (and not, say, TOML decoding)
+	if !errors.Is(err, errInvalidLogLevel) {
+		t.Errorf("LoadSessionMetadata() error = %v, want error matching %v", err, errInvalidLogLevel)
 	}
 
 	// metadata should be nil
 	if metadata != nil {
-		t.Error("LoadSessionMetadata() metadata.IsValid should be false for validation errors")
-	}
-
-}
-
-// createTestConfigFile creates a test config file
-func createTestConfigFile(t *testing.T, tempFile string, content string) {
-
-	t.Helper()
-	err := os.WriteFile(tempFile, []byte(content), 0600)
-	if err != nil {
-		t.Fatalf(errFailedToCreateTempFile.Error(), err)
+		t.Error("LoadSessionMetadata() should return nil metadata for validation errors")
 	}
 
 }

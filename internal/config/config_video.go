@@ -107,7 +107,7 @@ func (vc *VideoConfig) configValidationRanges() *[]validationRange {
 func checkForVideoFile(filename string) error {
 
 	if _, err := os.Stat(filename); err != nil {
-		return fmt.Errorf(errFormat, errVideoFile, err)
+		return fmt.Errorf("%w: %w", errVideoFile, err)
 	}
 
 	return nil
