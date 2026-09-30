@@ -18,7 +18,7 @@ In GUI (graphical user interface) mode, the application is started and run like 
 - Real-time logging is available directly within the application interface
 - Easy to edit and manage multiple BSC sessions
 
-> Note that in order to run **BLE Sync Cycle** in GUI mode, the application must be installed as a desktop application (see [Installing the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Installation-%E2%80%90-Installing-the-Application)) for details.
+> Note that in order to run **BLE Sync Cycle** in GUI mode, the application must be installed as a desktop application (see [Installing the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/installing-the-application)) for details.
 
 ### Running **BLE Sync Cycle** in CLI Mode
 
