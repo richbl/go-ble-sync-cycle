@@ -9,7 +9,7 @@ Once the **BLE Sync Cycle** application binary has been downloaded or built loca
 
 ### CLI Mode Installation
 
-To run **BLE Sync Cycle** in CLI mode, there is no additional work to be done: you can run the application locally from the command line with various configuration flags (see [Basic Usage: Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/cli-mode)).
+To run **BLE Sync Cycle** in CLI mode, there is no additional work to be done: you can run the application locally from the command line with various configuration flags (see [Basic Usage: Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/CLI-Mode)).
 
 ### GUI Mode Installation
 
