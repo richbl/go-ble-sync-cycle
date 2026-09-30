@@ -7,7 +7,7 @@
 
 ### A Go Environment
 
-- While the **BLE Sync Cycle** project offers the option for the download of a pre-compiled application binary, if you prefer to compile the executable locally, an operational [Go language](https://go.dev/) environment is required (with several additional libraries installed: see [Application-Dependencies](https://github.com/richbl/go-ble-sync-cycle/wiki/application-dependencies) for details).
+- While the **BLE Sync Cycle** project offers the option for the download of a pre-compiled application binary, if you prefer to compile the executable locally, an operational [Go language](https://go.dev/) environment is required (with several additional libraries installed: see [Application-Dependencies](https://github.com/richbl/go-ble-sync-cycle/wiki/Application-Dependencies) for details).
 
   > Once the **BLE Sync Cycle** application is compiled into an executable, it can be run without further dependencies on Go
 

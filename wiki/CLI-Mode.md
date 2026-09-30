@@ -15,9 +15,9 @@ To run **BLE Sync Cycle**, execute the following command:
 ./ble-sync-cycle --no-gui
 ```
 
-Note the use of the `--no-gui` (or `-n`) flag. This flag tells **BLE Sync Cycle** to run in CLI mode, rather than GUI mode. To learn more about running **BLE Sync Cycle** in GUI mode, see [Basic Usage: GUI Mode](https://github.com/richbl/go-ble-sync-cycle/wiki/gui-mode).
+Note the use of the `--no-gui` (or `-n`) flag. This flag tells **BLE Sync Cycle** to run in CLI mode, rather than GUI mode. To learn more about running **BLE Sync Cycle** in GUI mode, see [Basic Usage: GUI Mode](https://github.com/richbl/go-ble-sync-cycle/wiki/GUI-Mode).
 
-Be sure the default project `config.toml` is located in the current working directory (where you ran the `ble-sync-cycle` command), or see [Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/using-the-command-line-options) to learn how to override where **BLE Sync Cycle** looks for a configuration file.
+Be sure the default project `config.toml` is located in the current working directory (where you ran the `ble-sync-cycle` command), or see [Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/Using-the-Command-Line-Options) to learn how to override where **BLE Sync Cycle** looks for a configuration file.
 
 ### Monitoring the Session Log
 

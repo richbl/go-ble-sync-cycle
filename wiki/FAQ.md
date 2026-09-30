@@ -13,11 +13,11 @@
 
 - <u>How do I use **BLE Sync Cycle**?</u>
 
-  See the [Basic Usage](https://github.com/richbl/go-ble-sync-cycle/wiki/basic-usage-overview) section
+  See the [Basic Usage](https://github.com/richbl/go-ble-sync-cycle/wiki/Basic-Usage-Overview) section
 
 - <u>How do I configure **BLE Sync Cycle**?</u>
 
-  See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/anatomy-of-a-bsc-toml-file) section for an understanding of the configuration options and fields available for editing.
+  See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Anatomy-of-a-BSC-TOML-File) section for an understanding of the configuration options and fields available for editing.
 
   - When running **BLE Sync Cycle** in GUI mode, you can edit BSC TOML configuration files using the BSC Session Editor
 
@@ -29,7 +29,7 @@
 
   **This is normal**.
   
-  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/anatomy-of-a-bsc-toml-file) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
+  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 - <u>What videos can be used in **BLE Sync Cycle**?</u>
 
