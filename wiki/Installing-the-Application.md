@@ -9,11 +9,11 @@ Once the **BLE Sync Cycle** application binary has been downloaded or built loca
 
 ### CLI Mode Installation
 
-To run **BLE Sync Cycle** in CLI mode, there is no additional work to be done: you can run the application locally from the command line with various configuration flags (see [Basic Usage: Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/CLI-Mode)).
+To run **BLE Sync Cycle** in CLI Mode, there is no additional work to be done: you can run the application locally from the command line with various configuration flags (see [Basic Usage: Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/CLI-Mode)).
 
 ### GUI Mode Installation
 
-When running **BLE Sync Cycle** in GUI mode, the installation process requires that the **BLE Sync Cycle** application run it's internal installer/uninstaller.
+When running **BLE Sync Cycle** in GUI Mode, the installation process requires that the **BLE Sync Cycle** application run it's internal installer/uninstaller.
 
 To install **BLE Sync Cycle**, run the application binary with the `--install` flag. For example:
 
@@ -25,10 +25,10 @@ A successful installation will result in the following output:
 
 ```console
 18:23:43 [INF] [APP] ---------------------------------------------------
-18:23:43 [INF] [APP] BLE Sync Cycle v0.64.3 starting...
+18:23:43 [INF] [APP] BLE Sync Cycle v0.65.0 starting...
 18:23:43 [INF] [APP] ---------------------------------------------------
 
-Installing the following BLE Sync Cycle v0.64.3 files...
+Installing the following BLE Sync Cycle v0.65.0 files...
 
 Binary:       /home/richbl/.local/bin/ble-sync-cycle
 Desktop file: /home/richbl/.local/share/applications/com.github.richbl.ble-sync-cycle.desktop
@@ -37,7 +37,7 @@ Icon:         /home/richbl/.local/share/icons/hicolor/scalable/apps/com.github.r
 Installation completed successfully.
 
 18:23:43 [INF] [APP] ---------------------------------------------------
-18:23:43 [INF] [APP] BLE Sync Cycle v0.64.3 shutdown complete. Goodbye
+18:23:43 [INF] [APP] BLE Sync Cycle v0.65.0 shutdown complete. Goodbye
 18:23:43 [INF] [APP] ---------------------------------------------------
 ```
 
@@ -53,10 +53,10 @@ A successful uninstallation will result in the following output:
 
 ```console
 18:24:03 [INF] [APP] ---------------------------------------------------
-18:24:03 [INF] [APP] BLE Sync Cycle v0.64.3 starting...
+18:24:03 [INF] [APP] BLE Sync Cycle v0.65.0 starting...
 18:24:03 [INF] [APP] ---------------------------------------------------
 
-Uninstalling the following BLE Sync Cycle v0.64.3 files...
+Uninstalling the following BLE Sync Cycle v0.65.0 files...
 
 Binary:       /home/richbl/.local/bin/ble-sync-cycle
 Desktop file: /home/richbl/.local/share/applications/com.github.richbl.ble-sync-cycle.desktop
@@ -65,5 +65,5 @@ Icon:         /home/richbl/.local/share/icons/hicolor/scalable/apps/com.github.r
 Uninstallation completed successfully.
 
 18:24:03 [INF] [APP] ---------------------------------------------------
-18:24:03 [INF] [APP] BLE Sync Cycle v0.64.3 shutdown complete. Goodbye
+18:24:03 [INF] [APP] BLE Sync Cycle v0.65.0 shutdown complete. Goodbye
 18:24:03 [INF] [APP] ---------------------------------------------------

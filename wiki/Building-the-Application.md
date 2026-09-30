@@ -41,15 +41,15 @@ Note that this export is not required for a successful build: it simply removes 
 3. Build the application:
 
     ```console
-    go build -v -o ble-sync-cycle cmd/*
+    go build -v ./cmd/ble-sync-cycle
     ```
 
-    > Note the use of the `-v` (or `--verbose`) flag. This is useful the very first time the application is compiled, as it can take time to compile the application (~15-20 minutes). While this flag is optional, it's helpful to visually track the progression of the build process
+    > Note the use of the `-v` (or `--verbose`) flag. This is useful the very first time the application is compiled, as it can take time to compile the application (~15-20 minutes). While this flag is optional, it's helpful to visually track the progression of this lengthy build process
 
     To build an optimized executable (reduced binary size), run the following command:
 
     ```console
-    go build -ldflags="-s -w" -v -o ble-sync-cycle cmd/*
+    go build -ldflags="-s -w" -v ./cmd/ble-sync-cycle
     ```
 
     The resulting `build` command will create the`ble-sync-cycle` executable in the current directory.

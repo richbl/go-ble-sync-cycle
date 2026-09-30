@@ -5,13 +5,9 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-When running in CLI mode, **BLE Sync Cycle** supports several command-line option flags to override various configuration settings. These flags are:
+When running in CLI Mode, **BLE Sync Cycle** supports several command-line option flags to override various configuration settings. These flags are:
 
 ```console
-Usage: ble-sync-cycle [flags]
-
-The following flags are available when running in console/CLI mode:
-
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
   -s, --seek         Seek to a specific time in the video ('HH:MM:SS')
@@ -19,14 +15,14 @@ The following flags are available when running in console/CLI mode:
   -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message
 
-The following flag is available when running in GUI mode:
+The following flag is available when running in GUI Mode:
 
   -l, --log-console  Enable logging to the console
 ```
 
 ### Running **BLE Sync Cycle** in CLI Mode
 
-To run **BLE Sync Cycle** in CLI mode, you can use the `-n` (or `--no-gui`) command line option:
+To run **BLE Sync Cycle** in CLI Mode, you can use the `-n` (or `--no-gui`) command line option:
 
 ```console
 ./ble-sync-cycle --no-gui
@@ -34,7 +30,7 @@ To run **BLE Sync Cycle** in CLI mode, you can use the `-n` (or `--no-gui`) comm
 
 ### Setting the Configuration File Path
 
-When **BLE Sync Cycle** is first started in CLI mode, it looks for a default configuration file called `config.toml` in the current working directory. If you want  **BLE Sync Cycle** to look in a different location, you can specify the path and filename of the configuration file using the `-c` (or `--config`) command line option:
+When **BLE Sync Cycle** is first started in CLI Mode, it looks for a default configuration file called `config.toml` in the current working directory. If you want  **BLE Sync Cycle** to look in a different location, you can specify the path and filename of the configuration file using the `-c` (or `--config`) command line option:
 
 ```console
 ./ble-sync-cycle --no-gui --config /path/to/my-bsc-config.toml
@@ -78,12 +74,12 @@ The output of that command is as follows:
 
 ```console
 18:25:46 [INF] [APP] ---------------------------------------------------
-18:25:46 [INF] [APP] BLE Sync Cycle v0.64.3 starting...
+18:25:46 [INF] [APP] BLE Sync Cycle v0.65.0 starting...
 18:25:46 [INF] [APP] ---------------------------------------------------
 
 Usage: ble-sync-cycle [flags]
 
-The following flags are available when running in console/CLI mode:
+The following flags are available when running in console/CLI Mode:
 
   -n, --no-gui       Run the application without a graphical user interface (GUI)
   -c, --config       Path to the configuration file ('path/to/config.toml')
@@ -92,11 +88,11 @@ The following flags are available when running in console/CLI mode:
   -u, --uninstall    Uninstall the BSC application from the local user environment
   -h, --help         Display this help message
 
-The following flag is available when running in GUI mode:
+The following flag is available when running in GUI Mode:
 
   -l, --log-console  Enable logging to the console
 
 18:25:46 [INF] [APP] ---------------------------------------------------
-18:25:46 [INF] [APP] BLE Sync Cycle v0.64.3 shutdown complete. Goodbye
+18:25:46 [INF] [APP] BLE Sync Cycle v0.65.0 shutdown complete. Goodbye
 18:25:46 [INF] [APP] ---------------------------------------------------
 ```

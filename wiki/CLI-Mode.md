@@ -7,31 +7,31 @@
 
 ### CLI Mode: Running the Application from the Command Line
 
-To run the application, you need to first make sure that your Bluetooth devices are enabled and in range before running this command. On a computer or similar, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device (i.e., spinning the bicycle wheel).
+To run the **BLE Sync Cycle** application, you first need to make sure that your Bluetooth devices are enabled and in range before running this command. On a computer, you should have your Bluetooth radio turned on. On a BLE sensor, you typically "wake it up" by moving or shaking the device (i.e., spinning the bicycle wheel).
 
-To run **BLE Sync Cycle**, execute the following command:
+To start **BLE Sync Cycle**, run the following command:
 
 ```console
 ./ble-sync-cycle --no-gui
 ```
 
-Note the use of the `--no-gui` (or `-n`) flag. This flag tells **BLE Sync Cycle** to run in CLI mode, rather than GUI mode. To learn more about running **BLE Sync Cycle** in GUI mode, see [Basic Usage: GUI Mode](https://github.com/richbl/go-ble-sync-cycle/wiki/GUI-Mode).
+Note the use of the `--no-gui` (or `-n`) flag. This flag tells **BLE Sync Cycle** to run in CLI Mode, rather than GUI Mode. To learn more about running **BLE Sync Cycle** in GUI Mode, see [Basic Usage: GUI Mode](https://github.com/richbl/go-ble-sync-cycle/wiki/GUI-Mode).
 
 Be sure the default project `config.toml` is located in the current working directory (where you ran the `ble-sync-cycle` command), or see [Using the Command Line Options](https://github.com/richbl/go-ble-sync-cycle/wiki/Using-the-Command-Line-Options) to learn how to override where **BLE Sync Cycle** looks for a configuration file.
 
 ### Monitoring the Session Log
 
-The session log is output to the console when **BLE Sync Cycle** is running in CLI mode. This is the primary mechanism for reporting application information to the user.
+The session log is output to the console when **BLE Sync Cycle** is running in CLI Mode. This is the primary mechanism for reporting application information to the user.
 
-After starting `ble-sync-cycle`, you'll see the following output.
+After starting **BLE Sync Cycle**, you'll see the following output.
 
 Note that the output below was generated when `logging_level` is set to `debug` in the `config.toml` file. This means that all log message types (debug, info, warn, error, and fatal) will be displayed.
 
 ```console
 14:40:40 [INF] [APP] ---------------------------------------------------
-14:40:40 [INF] [APP] BLE Sync Cycle v0.64.3 starting...
+14:40:40 [INF] [APP] BLE Sync Cycle v0.65.0 starting...
 14:40:40 [INF] [APP] ---------------------------------------------------
-14:40:40 [DBG] [APP] running in CLI mode
+14:40:40 [DBG] [APP] running in CLI Mode
 14:40:40 [DBG] [APP] session startup sequence starting...
 14:40:40 [DBG] [APP] creating ShutdownManager object (id:0001)...
 14:40:40 [DBG] [APP] created ShutdownManager object (id:0001)
@@ -195,6 +195,6 @@ Finally, let's watch when the user stops the **BLE Sync Cycle** application...
 14:45:08 [DBG] [APP] ShutdownManager object (id:0001) shutdown complete
 14:45:08 [DBG] [APP] ShutdownManager object (id:0001) shutdown complete
 14:45:08 [INF] [APP] ---------------------------------------------------
-14:45:08 [INF] [APP] BLE Sync Cycle v0.64.3 shutdown complete. Goodbye
+14:45:08 [INF] [APP] BLE Sync Cycle v0.65.0 shutdown complete. Goodbye
 14:45:08 [INF] [APP] ---------------------------------------------------
 ```

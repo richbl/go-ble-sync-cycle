@@ -11,12 +11,12 @@
 
 * Integrates with the [mpv](https://mpv.io) media player
 
-* Highly configurable TOML-based configuration files for:
+* Highly configurable TOML-based file for setting up application options, including:
   * BLE sensor address (BD\_ADDR) and scan timeout
   * Wheel circumference (for accurate speed)
   * Speed units (mph or km/h)
   * Speed smoothing for natural playback
-  * Video file selection with support for multiple file formats (mp4, mkv, etc.)
+  * Video file selection with support for 10 file formats (mp4, mkv, avi, etc.)
   * Seek to a specific start time in the video
   * Auto resume video playback from the last playback position
   * Display options:
@@ -31,7 +31,7 @@
     * Session logging
     * BSC session creation, editing, and management
 
-  * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
+  * CLI Mode: a simple command-line interface for minimal operational overhead
     * Application flags to override configuration file settings:
       * Configuration file path (allows for multiple profiles)
       * Video start time (seek)
@@ -41,7 +41,7 @@
 
 * Configurable logging levels (debug, info, warn, error)
 
-* The battery level of the BLE sensor is checked and displayed on every session start, ensuring that users have sufficient battery life for an accurate training session
+* BLE sensor battery level is checked and displayed on every session start, ensuring that users have sufficient battery life for an accurate training session
 
 * Graceful handling of connection interrupts and system signals for a clean shutdown
 

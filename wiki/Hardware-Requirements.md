@@ -13,11 +13,13 @@
 
 - A computer that supports Bluetooth (4.0+), preferably with a large flat screen display to watch video playback
 
-For my own indoor cycling configuration, I use a Performance Travel Trac 3 fluid trainer. The BLE sensor used is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work.
+For my own indoor cycling configuration, I use a Performance Travel Trac 3 fluid trainer.
 
 ### A BLE Cycling Sensor
 
 - A Bluetooth Low Energy (BLE) Cycling Speed and Cadence (CSC) sensor, configured for speed
+
+The BLE sensor I use is a [Magene S3+ Speed/Cadence Dual Mode Sensor](https://www.magene.com/en/sensors/59-s3-speed-cadence-dual-mode-sensor.html) configured for speed, though any BLE-compliant sensor should work.
 
 ### Interested in Learning More about Bluetooth BLE?
 

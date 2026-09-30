@@ -16,6 +16,7 @@
 
 **BLE Sync Cycle** is a Go application designed to synchronize video playback with real-time cycling data from Bluetooth Low Energy (BLE) devices, such as cycling speed and cadence (CSC) sensors. This integration provides users with a more immersive and engaging indoor cycling experience by matching first-person video playback speed with their actual cycling pace.
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
 <img width="850" alt="Screenshot showing cycling trainer" src="https://raw.githubusercontent.com/richbl/go-ble-sync-cycle/refs/heads/main/.github/assets/trainer_0_hd.png">
 </p>
@@ -40,30 +41,30 @@ Here's a short (~60 seconds) YouTube video demonstrating how BLE Sync Cycle work
 * Integrates with the [mpv](https://mpv.io) media player
 
 * Highly configurable TOML-based configuration files for:
-    * BLE sensor address (BD\_ADDR) and scan timeout
-    * Wheel circumference (for accurate speed)
-    * Speed units (mph or km/h)
-    * Speed smoothing for natural playback
-    * Video file selection with support for multiple file formats (mp4, mkv, etc.)
-    * Seek to a specific start time in the video
-    * Auto resume video playback from the last playback position
-    * Display options:
-        * On-screen display (OSD) for speed and time remaining
-        * Video window scaling (fullscreen, etc.)
-        * OSD position and font size
+  * BLE sensor address (BD\_ADDR) and scan timeout
+  * Wheel circumference (for accurate speed)
+  * Speed units (mph or km/h)
+  * Speed smoothing for natural playback
+  * Video file selection with support for multiple file formats (mp4, mkv, etc.)
+  * Seek to a specific start time in the video
+  * Auto resume video playback from the last playback position
+  * Display options:
+    * On-screen display (OSD) for speed and time remaining
+    * Video window scaling (fullscreen, etc.)
+    * OSD position and font size
 
 * Choice of running modes:
-    * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
-        * Cycling session selection
-        * Session status (including cycling speed, ride time, and session time remaining), and video playback
-        * Session logging
-        * BSC session creation, editing, and management
+  * GUI Mode: a modern GTK4/Adwaita design with interactive graphical support for:
+    * Cycling session selection
+    * Session status (including cycling speed, ride time, and session time remaining), and video playback
+    * Session logging
+    * BSC session creation, editing, and management
 
     * CLI Mode: a simple command-line interface for real-time application status with minimal operational overhead
-        * Application flags to override configuration file settings:
-            * Configuration file path (allows for multiple profiles)
-            * Video start time (seek)
-            * Help/usage information
+      * Application flags to override configuration file settings:
+        * Configuration file path (allows for multiple profiles)
+        * Video start time (seek)
+        * Help/usage information
 
 * Support for video playback on a non-primary display, allowing users to utilize a dedicated big-screen monitor or TV for video output while keeping the application running on a separate display
 
@@ -135,19 +136,18 @@ For more information about **BLE Sync Cycle**, check out the [BLE Sync Cycle pro
 
 * Overview
 * Running the Application
-    * GUI Mode
-    * CLI Mode
-        * Using the Command Line Options
-            * Setting the Configuration File Path
-            * Seeking to a Specific Time in the Video
-            * Displaying Help in BLE Sync Cycle
+  * GUI Mode
+  * CLI Mode
+    * Using the Command Line Options
+      * Setting the Configuration File Path
+      * Seeking to a Specific Time in the Video
+      * Displaying Help in BLE Sync Cycle
 * Anatomy of a BSC TOML File
-    * The App Section
-    * The BLE Section
-    * The Speed Section
-    * The Video Section
-    * The Video On-Screen Display Section
-      
+  * The App Section
+  * The BLE Section
+  * The Speed Section
+  * The Video Section
+  * The Video On-Screen Display Section
 
 #### Project Details
 

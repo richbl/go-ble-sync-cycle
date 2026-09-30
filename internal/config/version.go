@@ -3,7 +3,7 @@ package config
 // Application name and version information
 const (
 	appName    = "BLE Sync Cycle"
-	appVersion = "v0.64.3"
+	appVersion = "v0.65.0"
 )
 
 // GetVersion returns the current application version
