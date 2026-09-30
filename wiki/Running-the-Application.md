@@ -9,7 +9,7 @@
 
 ### Running **BLE Sync Cycle** in GUI Mode
 
-In GUI (graphical user interface) mode, the application is started and run like any other graphical application. Some benefits of running in GUI mode include:
+In GUI (graphical user interface) mode, the application is started and run like any other graphical application. Some benefits of running in GUI Mode include:
 
 - Easy to start (available from the desktop environment's application menu)
 - Easy to visually track video progression and real-time cycling metrics during a cycling session
@@ -18,11 +18,11 @@ In GUI (graphical user interface) mode, the application is started and run like 
 - Real-time logging is available directly within the application interface
 - Easy to edit and manage multiple BSC sessions
 
-> Note that in order to run **BLE Sync Cycle** in GUI mode, the application must be installed as a desktop application (see [Installing the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Installing-the-Application)) for details.
+> Note that in order to run **BLE Sync Cycle** in GUI Mode, the application must first be installed as a desktop application (see [Installing the Application](https://github.com/richbl/go-ble-sync-cycle/wiki/Installing-the-Application)) for details.
 
 ### Running **BLE Sync Cycle** in CLI Mode
 
-In CLI (command line interface) mode, the application is started from the command line within a terminal. Some benefits of running in CLI mode include:
+In CLI (command line interface) mode, the application is started from the command line within a terminal. Some benefits of running in CLI Mode include:
 
 - Easy to run the application from anywhere within a terminal
 - The application can be configured with optional command-line configuration flags

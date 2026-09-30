@@ -9,7 +9,7 @@
 
 - <u>What is **BLE Sync Cycle**?</u>
 
-  In its simplest form, **BLE Sync Cycle makes video playback run faster when you pedal your bike faster, and slows down video playback when your pedaling slows**. And, when you stop your bike, video playback pauses.  
+  In its simplest form, **BLE Sync Cycle** makes video playback run faster when you pedal your bike faster, and slows down video playback when your pedaling slows. And when you stop your bike, video playback pauses.
 
 - <u>How do I use **BLE Sync Cycle**?</u>
 
@@ -19,17 +19,17 @@
 
   See the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Anatomy-of-a-BSC-TOML-File) section for an understanding of the configuration options and fields available for editing.
 
-  - When running **BLE Sync Cycle** in GUI mode, you can edit BSC TOML configuration files using the BSC Session Editor
+  - When running **BLE Sync Cycle** in GUI Mode, you can edit BSC TOML configuration files using the BSC Session Editor
 
-  - When running **BLE Sync Cycle** in CLI mode (via the command-line in a terminal), you'll need to edit these BSC TOML configuration files manually
+  - When running **BLE Sync Cycle** in CLI Mode (via the command-line in a terminal), you'll need to edit these BSC TOML configuration files manually
 
-  - > Hint: even if you decide to run **BLE Sync Cycle** in CLI mode, you can still use the BSC Session Editor (when running **BLE Sync Cycle** in GUI mode) to edit BSC TOML configuration files
+  - > Hint: even if you decide to run **BLE Sync Cycle** in CLI Mode, you can still use the BSC Session Editor (when running **BLE Sync Cycle** in GUI Mode) to edit BSC TOML configuration files
 
 - <u>My BLE sensor takes a long time to connect, and often times out. What can I do?</u>
 
   **This is normal**.
   
-  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
+  It takes time for a BLE peripheral (your bicycle speed sensor) to first advertise its services and characteristics, and then establish a connection with a central BLE device (your laptop or computer). The **BLE Sync Cycle** application will automatically time out and notify you of the event. The easiest solution is to just restart the session (or, if you're running in CLI Mode, restart **BLE Sync Cycle**), as that will usually give the BLE sensor enough time to establish a connection. If the issue persists,try increasing the `ble_connect_timeout` parameter in the `config.toml` file (see the [Anatomy of a BSC TOML File](https://github.com/richbl/go-ble-sync-cycle/wiki/Anatomy-of-a-BSC-TOML-File) section). Different BLE devices have different advertising intervals, so you may need to adjust this value accordingly.
 
 - <u>What videos can be used in **BLE Sync Cycle**?</u>
 

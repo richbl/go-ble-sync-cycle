@@ -1,5 +1,5 @@
 # BLE Sync Cycle Configuration
-# v0.64.3
+# v0.65.0
 
 [app]
   session_title = "Session Title" # Short description of the current cycling session (0-200 characters, excluding ", &, and <)

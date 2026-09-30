@@ -30,7 +30,7 @@ At a high level, **BLE Sync Cycle** coordinates with a BLE central device (such 
 
 ### 4. Application Shutdown
 
-1. The application shuts down on user interrupt, application exit, or at the end of video playback. The shutdown process coordinates with the BLE central device, the BLE peripheral device, and the media player to ensure a smooth and clean shutdown.
+1. The application shuts down on user interrupt, application exit (and when running in CLI Mode, at the end of video playback). The shutdown process coordinates with the BLE central device, the BLE peripheral device, and the media player to ensure a smooth and clean shutdown
 
 ## A More Technical View of the Application Workflow
 

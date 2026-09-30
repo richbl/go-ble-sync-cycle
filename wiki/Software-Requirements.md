@@ -13,14 +13,14 @@
 
 ### The mpv Media Player Library
 
-- The open source, cross-platform [mpv media player](https://mpv.io/) library, installed (e.g., `sudo apt-get install libmpv2`)
+- The open source, cross-platform [mpv media player](https://mpv.io/) library, installed (e.g., `sudo apt-get install libmpv2` or `sudo dnf install mpv-libs`)
 
   > Note that the [mpv](https://mpv.io/) media player itself does not need to be installed (just the mpv library)
 
 ### A First-Person View Cycling Video
 
-- A local video file for playback, preferably a first-person view cycling video.  Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas
+- A local video file for playback, preferably a first-person view cycling video. Check out [YouTube](https://www.youtube.com), [Vimeo](https://vimeo.com), [Pexels](https://www.pexels.com/videos/), or [DailyMotion](https://www.dailymotion.com/us), and search for "first person cycling" or "POV cycling" for some great ideas
 
 ### The Target Platform
 
-While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 through 25.10 on AMD and Intel processors, it should work across any comparable Unix-like platform and architecture
+While **BLE Sync Cycle** has been written and tested using Ubuntu 24.04 through 25.10 and Fedora 43 and 44 on AMD and Intel processors, it should work across any comparable Unix-like platform

@@ -5,17 +5,17 @@
 </p>
 <!-- markdownlint-enable MD033,MD041 -->
 
-Running **BLE Sync Cycle** in GUI mode is a simple process. To start **BLE Sync Cycle**, simply double-click the **BLE Sync Cycle** icon on your desktop.
+Running **BLE Sync Cycle** in GUI Mode is a simple process. To start **BLE Sync Cycle**, simply double-click the **BLE Sync Cycle** icon on your desktop or run from the application menu as you would with any other application.
 
-Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows idiomatic design principles from the [GNOME Human Interface Guideline](https://developer.gnome.org/hig/), application behavior should be familiar, easy to use, and consistent with other GNOME applications.
+Since **BLE Sync Cycle** is written using GTK4/Adwaita libraries, and follows idiomatic design principles from the [GNOME Human Interface Guideline](https://developer.gnome.org/hig/), application behavior should be familiar, easy to use, and consistent with other GTK4 applications.
 
 ### The BSC Sessions Page
 
-On application start, the **BSC Sessions** page is displayed, as shown below. This page is used to create and manage sessions, which are customized configuration files that allow you to configure the behavior of individual **BLE Sync Cycle** cycling sessions.
+On application start, the **BSC Sessions** page is displayed, as shown below. This page is used to list and manage sessions, which are customized configuration files that allow you to configure the behavior of individual **BLE Sync Cycle** cycling sessions.
 
-In it's most simplest form, a session is simply a file containing configuration data that tells **BLE Sync Cycle** what BLE device to connect to, and what video file to playback when the session begins. Additional configuration options are available for edit via the BSC Session Editor page.
+In its most simplest form, a BSC session is a file containing configuration data that tells **BLE Sync Cycle** what BLE device to connect to, and what video file to playback when the session begins. Additional configuration options are available for editing via the **BSC Session Editor** page.
 
-From this page, you can edit a session via the Edit Session button, or load a session via the Load Session button.
+From this page, you can edit a session via the **Edit Session** button, or load a session via the **Load Session** button.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
@@ -23,11 +23,11 @@ From this page, you can edit a session via the Edit Session button, or load a se
 </p>
 <!-- markdownlint-enable MD033 -->
 
-> Note that session files are stored in the `~/.config/com.github.richbl.ble-sync-cycle` directory. Each session file ends in `.toml`. **BLE Sync Cycle** will look here for session files and then display them on this page if they're valid BSC session files.
+> Note that session files are stored in the `~/.config/com.github.richbl.ble-sync-cycle` directory. Each session file ends in `.toml`. **BLE Sync Cycle** will look here for session files and then display them on this page (only if they're valid BSC session files).
 
 ### The BSC Session Status Page
 
-The **BSC Session Status** page is used to view the current status of a session and to control the session. From this page, you can start, pause, and stop a loaded BSC session. This page is where most of a **BLE Sync Cycle** user's time will be spent.
+The **BSC Session Status** page is used to view the current status of a session and to control the session. From this page, you can start, pause, and stop a loaded BSC session.
 
 The **Session Details** section displays the currently loaded session title and the path to the session file.
 
@@ -45,7 +45,7 @@ When a session is started, it must first connect to the configured BLE periphera
 
 Also note that the battery level of the BLE sensor will be displayed in the **BLE Sensor Connection** section.
 
-Note the sequence of images below and how the **BLE Sensor Connection** status changes as the connection process moves through various states.
+Note the sequence of images below and how the **BLE Sensor Connection** status changes as the connection process moves through various stages.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
@@ -183,12 +183,12 @@ The **On-Screen Display (OSD)** section displays the on-screen display (OSD) set
 
 After making changes to a BSC session, you can save the changes by clicking the **Save Session** button.
 
-If you want to save a new BSC session, click the **Save Session As...** button and enter a name for the new session.
+If you want to save a new BSC session, click the **Save As...** button and enter a name for the new session.
 
-> Importantly, newly created BSC session files should be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** looks for BSC session files
+> Importantly, newly created BSC session files should always be saved in the `~/.config/com.github.richbl.ble-sync-cycle` directory, as this is the location where **BLE Sync Cycle** looks for BSC session files
 
 ### Deleting BSC Sessions
 
-In the event a BSC session needs to be removed from the list of sessions, you can click the **Delete Session** to permanently remove the session currently in the Session Editor.
+In the event a BSC session needs to be removed from the list of sessions, you can click the **Delete** button to permanently remove the session currently loaded in the Session Editor.
 
 > Note that you will not be permitted to delete an actively-running BSC session. You must first stop that running session, and only then can you safely delete it.
